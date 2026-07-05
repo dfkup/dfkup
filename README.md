@@ -13,10 +13,14 @@
 </p>
 
 ## What is this?
-DFkup is a fast scripting language. It is designed to be fast, super simple so you **don't f*ck up!**
+DFkup is a fast scripting language. It is designed to be an enjoyable language, easy to learn and work with so you **don't f*ck up!**
 
 ## 😍 Key Features
-_todo_
+- Typed interpreted language
+- Written in Nim &bullet; Compiled &bullet; Super fast!
+- ARC/ORC Memory Management
+- Embeddable into other programming languages
+- Feature-rich
 
 ### Installation
 _todo_
@@ -30,7 +34,7 @@ _todo_
 
 |  |  |
 |---|---|
-| <a href="https://opencode.ai/go?ref=BHMEEK48QX"><img src="https://github.com/openpeeps/pistachio/blob/main/.github/opencode.png" alt="OpenCode"></a> | Switch to **Open-Source LLM models** via OpenCode AI, choosing from a variety of powerful models such as DeepSeek, Qwen, Kimi, GLM-5, MiniMax, MiMo. 🍕 [Use our referral link to get started!](https://opencode.ai/go?ref=BHMEEK48QX)|
+| <a href="https://opencode.ai/go?ref=BHMEEK48QX"><img src="https://github.com/openpeeps/pistachio/blob/main/.github/opencode.png" alt="OpenCode"></a> | Switch to **Open-Source LLMs** via OpenCode GO, choosing from a variety of powerful models such as DeepSeek, Qwen, Kimi, GLM-5, MiniMax, MiMo. 🍕 [Use our referral link to get started!](https://opencode.ai/go?ref=BHMEEK48QX)|
 
 ### 🎩 License
 LGPLv3 license. [Made by Humans from OpenPeeps](https://github.com/openpeeps).<br>

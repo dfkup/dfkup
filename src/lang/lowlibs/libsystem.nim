@@ -5,6 +5,7 @@
 #          https://dfkup.dev
 #          https://github.com/dfkup/dfkup
 
+import std/json
 import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 
@@ -35,6 +36,10 @@ proc initSystem*(script: Script, module: Module) =
   script.addProc(module, "echo", @[paramDef("x", ttyNil)], ttyVoid,
     proc (args: StackView, argc: int): Value =
       echo "nil")
+
+  script.addProc(module, "echo", @[paramDef("x", ttyJson)], ttyVoid,
+    proc (args: StackView, argc: int): Value =
+      echo $args[0].jsonVal)
 
   script.addProc(module, "&", @[paramDef("a", ttyString), paramDef("b", ttyString)], ttyString,
     proc (args: StackView, argc: int): Value =

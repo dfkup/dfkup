@@ -42,6 +42,7 @@ type
   DfkupLexerError* = object of CatchableError
 
 proc newLexer*(input: string): Lexer =
+  ## Create a new Lexer instance
   result.input = input
   result.pos = 0
   result.line = 1
@@ -149,13 +150,8 @@ proc nextToken*(lex: var Lexer): TokenTuple =
     lex.advance()
     result = initToken(lex, tkPlus, line, col, pos, wsno)
   of '-':
-    var peekPos = lex.pos + 1
-    while peekPos < lex.input.len and lex.input[peekPos] in {' ', '\t', '\r'}:
-      inc peekPos
-    if peekPos < lex.input.len and lex.input[peekPos] in {'0'..'9'}:
+    if lex.peek() in {'0'..'9'}:
       lex.advance()
-      while lex.current in {' ', '\t', '\r'}:
-        lex.advance()
       lex.strbuf.setLen(0)
       lex.strbuf.add('-')
       var isFloat = false
@@ -163,7 +159,8 @@ proc nextToken*(lex: var Lexer): TokenTuple =
         if lex.current != '_':
           lex.strbuf.add(lex.current)
         lex.advance()
-      if lex.current == '.' and lex.peek().isDigit():
+      let nextChar = lex.peek()
+      if lex.current == '.' and nextChar in {'0'..'9'}:
         isFloat = true
         lex.strbuf.add('.')
         lex.advance()
@@ -396,7 +393,8 @@ proc nextToken*(lex: var Lexer): TokenTuple =
       if lex.current != '_':
         lex.strbuf.add(lex.current)
       lex.advance()
-    if lex.current == '.' and lex.peek().isDigit():
+    let nextChar = lex.peek()
+    if lex.current == '.' and nextChar in {'0'..'9'}:
       isFloat = true
       lex.strbuf.add('.')
       lex.advance()
@@ -414,6 +412,8 @@ proc nextToken*(lex: var Lexer): TokenTuple =
         if lex.current != '_':
           lex.strbuf.add(lex.current)
         lex.advance()
+      return initToken(lex, tkFloat, move lex.strbuf, line, col, pos, wsno)
+    if isFloat:
       return initToken(lex, tkFloat, move lex.strbuf, line, col, pos, wsno)
     result = initToken(lex, tkInteger, move lex.strbuf, line, col, pos, wsno)
   else:

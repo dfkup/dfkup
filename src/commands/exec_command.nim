@@ -11,9 +11,10 @@ import pkg/kapsis/[runtime, cli]
 import pkg/kapsis/interactive/prompts
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 
-import ../lang/[parser, libsystem]
+import ../lang/parser
+import ../lang/lowlibs/[libsystem, libjson]
 
-proc execCommand*(v: Values) =
+proc runCommand*(v: Values) =
   ## Execute a DFkup script from file
   let filePath = $(v.get("script").getPath)
   if not fileExists(filePath):
@@ -36,6 +37,11 @@ proc execCommand*(v: Values) =
   let systemModule = newModule("system", some"system.dfkup")
   initSystem(script, systemModule)
   module.load(systemModule)
+
+  let jsonModule = newModule("json", some"json.dfkup")
+  initJson(script, jsonModule)
+  module.load(jsonModule)
+
   script.stdpos = script.procs.high
 
   try:

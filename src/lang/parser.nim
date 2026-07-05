@@ -230,13 +230,15 @@ proc parseBlock(p: var Parser, indentPos = 0,
       walk p; break
     elif not closingBlock and p.curr.col <= indentPos: break
     let subNode = p.parseStmt()
-    caseNotNil subNode:
+    if subNode != nil:
       stmts.add(subNode)
+    else:
+      break
   result = ast.newTree(nkBlock, stmts)
 
 prefixHandle parseForLoop:
   let tokenFor: TokenTuple = p.curr
-  if p.next.kind == tkIdentVar:
+  if p.next.kind in {tkIdentVar, tkIdentifier}:
     walk p
     var itemVar: Node
     if p.next is tkComma:
@@ -280,8 +282,7 @@ prefixHandle parseIf:
         let elifBlock: Node = p.parseBlock(tokenIf.col)
         caseNotNil elifBlock:
           children.add(@[elifExpr, elifBlock])
-    if p.curr is tkElse and p.curr.col == tokenIf.col:
-      let tokenElse = p.curr
+    if p.curr is tkElse:
       walk p
       let elseBlock: Node = p.parseBlock(tokenIf.col)
       caseNotNil elseBlock:
@@ -609,6 +610,7 @@ proc getPrecedence(op: string): int {.inline.} =
   of "or", "||": 2
   of "&": 6
   of "^": 25
+  of "=": 1
   else: 0
 
 proc isInfix(kind: TokenKind, minPrec = 0): (bool, int, string) {.inline.} =
@@ -687,7 +689,7 @@ prefixHandle parseStmt:
       if p.next.line == p.curr.line and p.next is tkLP:
         parseCall
       else:
-        parseIdent
+        parseExpression
     of tkVar, tkLet, tkConst: parseVar
     of tkIf: parseIf
     of tkWhile: parseWhileLoop
