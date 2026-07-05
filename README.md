@@ -15,12 +15,21 @@
 ## What is this?
 DFkup is a fast scripting language. It is designed to be an enjoyable language, easy to learn and work with so you **don't f*ck up!**
 
-## 😍 Key Features
-- Typed interpreted language
-- Written in Nim &bullet; Compiled &bullet; Super fast!
-- ARC/ORC Memory Management
-- Embeddable into other programming languages
-- Feature-rich
+## Key Features
+- Typed interpreted language with runtime type checking
+- Compiled to bytecode and executed on a stack-based virtual machine
+- Pratt parser for expressive and flexible syntax
+- Control flow: if/elif/else, for loops, while loops
+- Variable declarations: var (mutable), let (immutable), const (compile-time)
+- Function definitions with named parameters, return types, and generics
+- First-class function calls with positional and named arguments
+- Data literals: integers, floats, strings (single/double/triple-quoted, backtick)
+- String interpolation with $var syntax
+- Array and object storage (JSON-like) literals
+- Built-in JSON support: parse, dump, pretty-print, field access
+- Doc comments (/* */) and line comments (//)
+- Powered by [VanCode language framework](https://github.com/openpeeps/vancode)
+- Written in [Nim](github.com/nim-lang/nim)
 
 ### Installation
 _todo_
