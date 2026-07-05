@@ -475,6 +475,8 @@ proc nextToken*(lex: var Lexer): TokenTuple =
         result = initToken(lex, tkEcho, move lex.strbuf, line, col, pos, wsno)
       of "yield":
         result = initToken(lex, tkYield, move lex.strbuf, line, col, pos, wsno)
+      of "mod":
+        result = initToken(lex, tkMod, move lex.strbuf, line, col, pos, wsno)
       of "nil":
         result = initToken(lex, tkNil, move lex.strbuf, line, col, pos, wsno)
       else:

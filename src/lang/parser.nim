@@ -674,7 +674,7 @@ proc parseExpression(p: var Parser, minPrec = 0): Node =
           walk p
           let rhs = p.parseExpression(minPrec = prec + 1)
           caseNotNil rhs:
-            return ast.newCall(ast.newIdent(".."), lhs, rhs)
+            return ast.newCall(ast.newIdent("range"), lhs, rhs)
         let rhs = p.parseExpression(minPrec = prec + 1)
         lhs = ast.newTree(nkDot, lhs, rhs)
       else:

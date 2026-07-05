@@ -13,7 +13,13 @@
 </p>
 
 ## What is this?
-DFkup is a fast scripting language. It is designed to be an enjoyable language, easy to learn and work with so you **don't f*ck up!**
+DFkup is a fast, indent-based scripting language. Designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**.
+
+```
+var name: string = "dfkup"
+if 10 < 11:
+  echo name
+```
 
 ## Key Features
 - Typed interpreted language with runtime type checking
@@ -29,7 +35,7 @@ DFkup is a fast scripting language. It is designed to be an enjoyable language, 
 - Built-in JSON support: parse, dump, pretty-print, field access
 - Doc comments (/* */) and line comments (//)
 - Powered by [VanCode language framework](https://github.com/openpeeps/vancode)
-- Written in [Nim](github.com/nim-lang/nim)
+- Written in [Nim](https://github.com/nim-lang/nim)
 
 ### Installation
 _todo_

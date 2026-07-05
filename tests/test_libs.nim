@@ -37,3 +37,24 @@ suite "Libraries - JSON":
   test "keys":
     let r = run("let d = parse(\"{\\\"a\\\":1,\\\"b\\\":2}\")\njoin(keys(d), \",\")")
     check r == "a,b"
+
+suite "Libraries - OS":
+  test "fileExists":
+    check run("fileExists(\"tests/test_libs.nim\")") == "true"
+    check run("fileExists(\"nonexistent\")") == "false"
+  test "dirExists":
+    check run("dirExists(\"tests\")") == "true"
+  test "path operations":
+    let r = run("joinPath(\"a\", \"b\")")
+    check r == "a/b"
+  test "getCurrentDir":
+    let r = run("getCurrentDir()")
+    check r.len > 0
+  test "sleep":
+    check run("sleep(1)") == ""
+  test "getAppFilename":
+    let r = run("getAppFilename()")
+    check r.len > 0
+  test "getFileSize":
+    let r = run("getFileSize(\"tests/test_libs.nim\")")
+    check r != "0"
