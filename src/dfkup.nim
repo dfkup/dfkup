@@ -13,7 +13,7 @@ import ./lang/[parser, lowlibs/libsystem, lowlibs/libjson]
 type
   DfkupError* = object of CatchableError
 
-proc exec*(code: string, sourcePath: string, allowExprResult, disableJit: bool): string =
+proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetection: bool): string =
   ## Core execution: parse, compile, run a DFkup script.
   var program: Ast
   try:
@@ -43,7 +43,7 @@ proc exec*(code: string, sourcePath: string, allowExprResult, disableJit: bool):
   except CatchableError as e:
     raise newException(DfkupError, "codegen error: " & e.msg)
 
-  var prefs = VMPreferences(enableHotCodeDetection: disableJit, hotProcThreshold: 2)
+  var prefs = VMPreferences(enableHotCodeDetection: enableHotCodeDetection, hotProcThreshold: 2)
   var vmInstance = newVirtualMachine(prefs)
   when defined(vancodeJit):
     installJit(vmInstance)
@@ -54,13 +54,13 @@ proc exec*(code: string, sourcePath: string, allowExprResult, disableJit: bool):
   except CatchableError as e:
     raise newException(DfkupError, "runtime error: " & e.msg)
 
-proc runScript*(code: string, sourcePath = "script.dfkup", disableJit: bool = false): string =
+proc runScript*(code: string, sourcePath = "script.dfkup", enableHotCodeDetection: bool = true): string =
   ## Parse, compile, and execute a DFkup script from a string.
-  result = exec(code, sourcePath, false, disableJit)
+  result = exec(code, sourcePath, false, enableHotCodeDetection)
 
-proc runFile*(path: string, disableJit: bool = false): string =
+proc runFile*(path: string, enableHotCodeDetection: bool = true): string =
   ## Read a DFkup file, parse it, compile, and execute.
-  result = exec(readFile(path), path, false, disableJit)
+  result = exec(readFile(path), path, false, enableHotCodeDetection)
 
 when isMainModule:
   import pkg/kapsis
@@ -70,7 +70,7 @@ when isMainModule:
   proc runCommand*(v: Values) =
     let filePath = $(v.get("script").getPath)
     try:
-      let result = runFile(filePath, v.has("--nojit") == true)
+      let result = runFile(filePath, not v.has("--nojit"))
       if result.len > 0:
         echo result
     except DfkupError as e:
