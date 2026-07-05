@@ -13,7 +13,7 @@ import ./lang/[parser, lowlibs/libsystem, lowlibs/libjson]
 type
   DfkupError* = object of CatchableError
 
-proc exec*(code: string, sourcePath: string, allowExprResult: bool): string =
+proc exec*(code: string, sourcePath: string, allowExprResult, disableJit: bool): string =
   ## Core execution: parse, compile, run a DFkup script.
   var program: Ast
   try:
@@ -43,7 +43,7 @@ proc exec*(code: string, sourcePath: string, allowExprResult: bool): string =
   except CatchableError as e:
     raise newException(DfkupError, "codegen error: " & e.msg)
 
-  var prefs = VMPreferences(enableHotCodeDetection: true, hotProcThreshold: 2)
+  var prefs = VMPreferences(enableHotCodeDetection: disableJit, hotProcThreshold: 2)
   var vmInstance = newVirtualMachine(prefs)
   when defined(vancodeJit):
     installJit(vmInstance)
@@ -54,13 +54,13 @@ proc exec*(code: string, sourcePath: string, allowExprResult: bool): string =
   except CatchableError as e:
     raise newException(DfkupError, "runtime error: " & e.msg)
 
-proc runScript*(code: string, sourcePath = "script.dfkup"): string =
+proc runScript*(code: string, sourcePath = "script.dfkup", disableJit: bool = false): string =
   ## Parse, compile, and execute a DFkup script from a string.
-  result = exec(code, sourcePath, false)
+  result = exec(code, sourcePath, false, disableJit)
 
-proc runFile*(path: string): string =
+proc runFile*(path: string, disableJit: bool = false): string =
   ## Read a DFkup file, parse it, compile, and execute.
-  result = exec(readFile(path), path, false)
+  result = exec(readFile(path), path, false, disableJit)
 
 when isMainModule:
   import pkg/kapsis
@@ -70,7 +70,7 @@ when isMainModule:
   proc runCommand*(v: Values) =
     let filePath = $(v.get("script").getPath)
     try:
-      let result = runFile(filePath)
+      let result = runFile(filePath, v.has("--nojit") == true)
       if result.len > 0:
         echo result
     except DfkupError as e:
@@ -96,7 +96,7 @@ when isMainModule:
   initKapsis do:
     commands:
       -- "Scripting"
-      run path(script):
+      run path(script), ?bool("--nojit"):
         ## Run a DFkup script file
       ast path(script), ?bool("--dumptree"):
         ## Generate AST from a DFkup script file

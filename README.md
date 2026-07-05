@@ -15,11 +15,7 @@
 ## What is this?
 DFkup is a fast, indent-based scripting language. Designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**.
 
-```
-var name: string = "dfkup"
-if 10 < 11:
-  echo name
-```
+
 
 ## Key Features
 - Typed interpreted language with runtime type checking
