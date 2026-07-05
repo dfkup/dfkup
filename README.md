@@ -1,32 +1,37 @@
 <p align="center">
-  <img src="https://github.com/openpeeps/PKG/blob/main/.github/logo.png" width="90px"><br>
-  OpenPeeps repository template for developing libraries,<br>projects and other cool things. 👑 Written in Nim language
+  <img src="https://raw.githubusercontent.com/dfkup/dfkup/main/.github/dfkup.png" alt="DFkup logo" width="120px" height="120px"><br>
+  A fast scripting language
 </p>
 
 <p align="center">
-  <code>nimble install {PKG}</code>
+  <code>nimble install dfkup</code>
 </p>
 
 <p align="center">
-  <a href="https://openpeeps.github.io/{pkg}">API reference</a><br>
-  <img src="https://github.com/openpeeps/pistachio/workflows/test/badge.svg" alt="Github Actions">  <img src="https://github.com/openpeeps/pistachio/workflows/docs/badge.svg" alt="Github Actions">
+  <a href="https://dfkup.github.io/dfkup/">API reference</a><br>
+  <img src="https://github.com/dfkup/dfkup/workflows/test/badge.svg" alt="Github Actions">  <img src="https://github.com/dfkup/dfkup/workflows/docs/badge.svg" alt="Github Actions">
 </p>
+
+## What is this?
+DFkup is a fast scripting language. It is designed to be fast, super simple so you **don't f*ck up!**
 
 ## 😍 Key Features
-- [x] Open Source | `MIT` License
-- [x] Written in Nim language
+_todo_
 
-## Examples
-...
+### Installation
+_todo_
+
+### Examples
+_todo_
 
 ### ❤ Contributions & Support
-- 🐛 Found a bug? [Create a new Issue](https://github.com/openpeeps/pistachio/issues)
-- 👋 Wanna help? [Fork it!](https://github.com/openpeeps/pistachio/fork)
+- 🐛 Found a bug? [Create a new Issue](https://github.com/dfkup/dfkup/issues)
+- 👋 Wanna help? [Fork it!](https://github.com/dfkup/dfkup/fork)
 
 |  |  |
 |---|---|
 | <a href="https://opencode.ai/go?ref=BHMEEK48QX"><img src="https://github.com/openpeeps/pistachio/blob/main/.github/opencode.png" alt="OpenCode"></a> | Switch to **Open-Source LLM models** via OpenCode AI, choosing from a variety of powerful models such as DeepSeek, Qwen, Kimi, GLM-5, MiniMax, MiMo. 🍕 [Use our referral link to get started!](https://opencode.ai/go?ref=BHMEEK48QX)|
 
 ### 🎩 License
-MIT license. [Made by Humans from OpenPeeps](https://github.com/openpeeps).<br>
+LGPLv3 license. [Made by Humans from OpenPeeps](https://github.com/openpeeps).<br>
 Copyright OpenPeeps & Contributors &mdash; All rights reserved.
