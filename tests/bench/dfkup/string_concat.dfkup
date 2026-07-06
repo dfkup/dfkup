@@ -1,0 +1,9 @@
+fn concat(n: int): string =
+  var s = ""
+  var i = 0
+  while i < n:
+    s = s & "x"
+    i = i + 1
+  result = s
+
+echo len(concat(10000))
