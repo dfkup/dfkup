@@ -14,11 +14,10 @@
 </p>
 
 ## What is this?
-DFkup is a fast, indent-based scripting language. Designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**.
-
+This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") is a fast, indent-based scripting language. Designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**.
 
 ## Key Features
-- Typed interpreted language with runtime type checking
+- Interpreted language with runtime type checking
 - Compiled to bytecode and executed on a stack-based virtual machine
 - JIT Compilation powered by LibgccJIT
 - Pratt parser for expressive and flexible syntax
@@ -84,6 +83,14 @@ string_concat:
 
 ### Notes
 DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https://github.com/openpeeps/vancode) written in Nim. The JIT compiler is powered by [GNU GCC JIT](https://gcc.gnu.org/wiki/JIT) using the [libgccjit Nim bindings from here](https://github.com/openpeeps/gccjit.nim).
+
+## Roadmap
+- [ ] Add more tests
+- [ ] A stable VM
+- [ ] A stable JIT compiler
+- [ ] Add more benchmarks (including languages)
+- [ ] Publish a [Booyaka](https://github.com/openpeeps/booyaka) Documentation
+- [ ] Implement VanCode package manager API
 
 ### ❤ Contributions & Support
 - 🐛 Found a bug? [Create a new Issue](https://github.com/dfkup/dfkup/issues)
