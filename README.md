@@ -1,6 +1,7 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/dfkup/dfkup/main/.github/dfkup.png" alt="DFkup logo" width="80px" height="80px"><br>
-  A fast scripting language
+  A fast scripting language<br>
+  Typed interpreted &bullet; Stack-based VM &bullet; JIT Compiler
 </p>
 
 <p align="center">
@@ -16,10 +17,10 @@
 DFkup is a fast, indent-based scripting language. Designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**.
 
 
-
 ## Key Features
 - Typed interpreted language with runtime type checking
 - Compiled to bytecode and executed on a stack-based virtual machine
+- JIT Compilation powered by LibgccJIT
 - Pratt parser for expressive and flexible syntax
 - Control flow: if/elif/else, for loops, while loops
 - Variable declarations: var (mutable), let (immutable), const (compile-time)
@@ -38,6 +39,51 @@ _todo_
 
 ### Examples
 _todo_
+
+
+### Benchmarks
+```
+bash ./tests/bench/runall.sh 2>&1
+```
+
+```
+## Multi-Language Benchmark Results
+
+fib_recursive:
+  fib_recursive    dfkup        Time (mean ± σ):     286.4 ms ±   9.9 ms   
+  fib_recursive    node         Time (mean ± σ):      46.0 ms ±   0.7 ms   
+  fib_recursive    python3      Time (mean ± σ):     431.8 ms ±  33.7 ms   
+  fib_recursive    ruby         Time (mean ± σ):     249.1 ms ±   7.0 ms   
+  fib_recursive    luajit       Time (mean ± σ):      17.5 ms ±   3.6 ms   
+  fib_recursive    php83        Time (mean ± σ):      94.0 ms ±   1.4 ms   
+
+nested_loops:
+  nested_loops     dfkup        Time (mean ± σ):     369.5 ms ±   1.1 ms   
+  nested_loops     node         Time (mean ± σ):      39.2 ms ±   0.4 ms   
+  nested_loops     python3      Time (mean ± σ):      29.7 ms ±   7.4 ms   
+  nested_loops     ruby         Time (mean ± σ):      85.4 ms ±   7.0 ms   
+  nested_loops     luajit       Time (mean ± σ):       6.3 ms ±   1.0 ms   
+  nested_loops     php83        Time (mean ± σ):      23.2 ms ±   0.9 ms   
+
+prime_sieve:
+  prime_sieve      dfkup        Time (mean ± σ):     280.5 ms ±   1.0 ms   
+  prime_sieve      node         Time (mean ± σ):      38.3 ms ±   0.4 ms   
+  prime_sieve      python3      Time (mean ± σ):      24.4 ms ±   0.5 ms   
+  prime_sieve      ruby         Time (mean ± σ):      71.0 ms ±   5.3 ms   
+  prime_sieve      luajit       Time (mean ± σ):       5.4 ms ±   0.3 ms   
+  prime_sieve      php83        Time (mean ± σ):      22.5 ms ±   1.7 ms   
+
+string_concat:
+  string_concat    dfkup        Time (mean ± σ):      18.8 ms ±   1.8 ms   
+  string_concat    node         Time (mean ± σ):      37.9 ms ±   0.4 ms   
+  string_concat    python3      Time (mean ± σ):      22.3 ms ±   0.4 ms   
+  string_concat    ruby         Time (mean ± σ):      69.9 ms ±   4.5 ms   
+  string_concat    luajit       Time (mean ± σ):      10.9 ms ±   1.0 ms   
+  string_concat    php83        Time (mean ± σ):      22.3 ms ±   1.8 ms 
+```
+
+### Notes
+DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https://github.com/openpeeps/vancode) written in Nim. The JIT compiler is powered by [GNU GCC JIT](https://gcc.gnu.org/wiki/JIT) using the [libgccjit Nim bindings from here](https://github.com/openpeeps/gccjit.nim).
 
 ### ❤ Contributions & Support
 - 🐛 Found a bug? [Create a new Issue](https://github.com/dfkup/dfkup/issues)

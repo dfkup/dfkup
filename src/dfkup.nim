@@ -8,7 +8,7 @@
 import std/[options, os, strformat]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import pkg/vancode/interpreter/jit/jit
-import ./lang/[parser, lowlibs/libsystem, lowlibs/libjson]
+import ./lang/[parser, lowlibs/libsystem, lowlibs/libjson, lowlibs/libstrings, lowlibs/libsequtils]
 
 type
   DfkupError* = object of CatchableError
@@ -34,6 +34,14 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
   initJson(script, jsonModule)
   module.load(jsonModule)
 
+  let stringsModule = newModule("strings", some"strings.dfkup")
+  initStrings(script, stringsModule)
+  module.load(stringsModule)
+
+  let sequtilsModule = newModule("sequtils", some"sequtils.dfkup")
+  initSequtils(script, sequtilsModule)
+  module.load(sequtilsModule)
+
   script.stdpos = script.procs.high
 
   var gen = initCodeGen(script, module, mainChunk)
@@ -43,10 +51,11 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
   except CatchableError as e:
     raise newException(DfkupError, "codegen error: " & e.msg)
 
-  var prefs = VMPreferences(enableHotCodeDetection: enableHotCodeDetection, hotProcThreshold: 2)
+  var prefs = VMPreferences(enableHotCodeDetection: enableHotCodeDetection)
   var vmInstance = newVirtualMachine(prefs)
   when defined(vancodeJit):
     installJit(vmInstance)
+  vmInstance.prewarmScriptOps(script)
   try:
     let resultVal = vmInstance.interpret(script, mainChunk)
     if resultVal != nil and resultVal.typeId notin {tyNil}:
@@ -63,6 +72,9 @@ proc runFile*(path: string, enableHotCodeDetection: bool = true): string =
   result = exec(readFile(path), path, false, enableHotCodeDetection)
 
 when isMainModule:
+  #
+  # The CLI application
+  #
   import pkg/kapsis
   import pkg/kapsis/runtime
   import pkg/kapsis/interactive/prompts

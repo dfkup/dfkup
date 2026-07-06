@@ -1,0 +1,4 @@
+--define:vancodeJit
+--hints:off
+--verbosity:0
+--define:release
