@@ -576,6 +576,8 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkIdentifier:
       if p.next is tkLP and p.next.line == p.curr.line:
         parseCall
+      elif p.next.kind in Assignables and (p.next.line == p.curr.line or p.next.col > p.curr.col):
+        parseCall
       else:
         parseIdent
     of tkFor: parseForLoop
@@ -687,6 +689,8 @@ prefixHandle parseStmt:
     case p.curr.kind
     of tkIdentifier:
       if p.next.line == p.curr.line and p.next is tkLP:
+        parseCall
+      elif p.next.kind in Assignables and (p.next.line == p.curr.line or p.next.col > p.curr.col):
         parseCall
       else:
         parseExpression
