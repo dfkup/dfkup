@@ -50,36 +50,36 @@ bash ./tests/bench/runall.sh 2>&1
 ## Multi-Language Benchmark Results
 
 fib_recursive:
-  fib_recursive    dfkup        Time (mean ± σ):     286.4 ms ±   9.9 ms   
-  fib_recursive    node         Time (mean ± σ):      46.0 ms ±   0.7 ms   
-  fib_recursive    python3      Time (mean ± σ):     431.8 ms ±  33.7 ms   
-  fib_recursive    ruby         Time (mean ± σ):     249.1 ms ±   7.0 ms   
-  fib_recursive    luajit       Time (mean ± σ):      17.5 ms ±   3.6 ms   
-  fib_recursive    php83        Time (mean ± σ):      94.0 ms ±   1.4 ms   
+  fib_recursive    dfkup        Time (mean ± σ):     313.8 ms ±  22.0 ms   
+  fib_recursive    node         Time (mean ± σ):      48.3 ms ±   1.2 ms   
+  fib_recursive    python3      Time (mean ± σ):     433.5 ms ±  22.0 ms   
+  fib_recursive    ruby         Time (mean ± σ):     248.1 ms ±   7.1 ms   
+  fib_recursive    luajit       Time (mean ± σ):      16.5 ms ±   0.8 ms   
+  fib_recursive    php83        Time (mean ± σ):      98.5 ms ±   9.7 ms   
 
 nested_loops:
-  nested_loops     dfkup        Time (mean ± σ):     369.5 ms ±   1.1 ms   
-  nested_loops     node         Time (mean ± σ):      39.2 ms ±   0.4 ms   
-  nested_loops     python3      Time (mean ± σ):      29.7 ms ±   7.4 ms   
-  nested_loops     ruby         Time (mean ± σ):      85.4 ms ±   7.0 ms   
-  nested_loops     luajit       Time (mean ± σ):       6.3 ms ±   1.0 ms   
-  nested_loops     php83        Time (mean ± σ):      23.2 ms ±   0.9 ms   
+  nested_loops     dfkup        Time (mean ± σ):      37.9 ms ±   0.4 ms   
+  nested_loops     node         Time (mean ± σ):      41.5 ms ±   2.4 ms   
+  nested_loops     python3      Time (mean ± σ):      30.1 ms ±   2.7 ms   
+  nested_loops     ruby         Time (mean ± σ):      80.7 ms ±   3.9 ms   
+  nested_loops     luajit       Time (mean ± σ):       5.6 ms ±   0.5 ms   
+  nested_loops     php83        Time (mean ± σ):      24.0 ms ±   1.8 ms   
 
 prime_sieve:
-  prime_sieve      dfkup        Time (mean ± σ):     280.5 ms ±   1.0 ms   
-  prime_sieve      node         Time (mean ± σ):      38.3 ms ±   0.4 ms   
-  prime_sieve      python3      Time (mean ± σ):      24.4 ms ±   0.5 ms   
-  prime_sieve      ruby         Time (mean ± σ):      71.0 ms ±   5.3 ms   
+  prime_sieve      dfkup        Time (mean ± σ):     287.1 ms ±   6.2 ms   
+  prime_sieve      node         Time (mean ± σ):      39.4 ms ±   0.8 ms   
+  prime_sieve      python3      Time (mean ± σ):      25.5 ms ±   1.5 ms   
+  prime_sieve      ruby         Time (mean ± σ):      71.9 ms ±   3.4 ms   
   prime_sieve      luajit       Time (mean ± σ):       5.4 ms ±   0.3 ms   
-  prime_sieve      php83        Time (mean ± σ):      22.5 ms ±   1.7 ms   
+  prime_sieve      php83        Time (mean ± σ):      22.4 ms ±   0.7 ms   
 
 string_concat:
-  string_concat    dfkup        Time (mean ± σ):      18.8 ms ±   1.8 ms   
-  string_concat    node         Time (mean ± σ):      37.9 ms ±   0.4 ms   
-  string_concat    python3      Time (mean ± σ):      22.3 ms ±   0.4 ms   
-  string_concat    ruby         Time (mean ± σ):      69.9 ms ±   4.5 ms   
-  string_concat    luajit       Time (mean ± σ):      10.9 ms ±   1.0 ms   
-  string_concat    php83        Time (mean ± σ):      22.3 ms ±   1.8 ms 
+  string_concat    dfkup        Time (mean ± σ):      14.7 ms ±   1.0 ms   
+  string_concat    node         Time (mean ± σ):      39.6 ms ±   2.5 ms   
+  string_concat    python3      Time (mean ± σ):      22.8 ms ±   1.5 ms   
+  string_concat    ruby         Time (mean ± σ):      75.1 ms ±   8.4 ms   
+  string_concat    luajit       Time (mean ± σ):      11.0 ms ±   0.8 ms   
+  string_concat    php83        Time (mean ± σ):      21.7 ms ±   0.8 ms
 ```
 
 ### Notes
