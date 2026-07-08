@@ -10,6 +10,8 @@ import pkg/vancode/interpreter/[ast, codegen, chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 import ../parser
 
+import pkg/openparser/json
+
 proc compileCode*(script: Script, module: Module, code: string) =
   ## Parse and compile inline dfkup source into the given script and module.
   var astProgram: Ast
@@ -97,6 +99,17 @@ proc initSystem*(script: Script, module: Module) =
   script.addProc(module, "echo", @[paramDef("x", ttyJson)], ttyVoid,
     proc (args: StackView, argc: int): Value =
       echo $args[0].jsonVal)
+
+  script.addProc(module, "echo", @[paramDef("x", ttyPointer)], ttyVoid,
+    proc (args: StackView, argc: int): Value =
+      echo $args[0])
+
+  script.addProc(module, "echo", @[paramDef("x", ttyArray)], ttyVoid,
+    proc (args: StackView, argc: int): Value =
+      var vs = newSeq[Value](args[0].objectVal.fields.len)
+      for i, f in args[0].objectVal.fields: vs[i] = f.toValue
+      echo toJson(vs)
+  )
 
   script.addProc(module, "&", @[paramDef("a", ttyString), paramDef("b", ttyString)], ttyString,
     proc (args: StackView, argc: int): Value =

@@ -21,7 +21,7 @@ const
   MathOperators = {tkPlus, tkMinus, tkAsterisk, tkDivide, tkMod}
   LogicalOperators = {tkAnd, tkAndAnd, tkOr, tkOrOr}
   ComparisonOperators = {tkEq, tkNe, tkGt, tkGte, tkLt, tkLte}
-  Operators = ComparisonOperators + MathOperators + {tkAmp, tkAssign, tkCaret}
+  Operators = ComparisonOperators + MathOperators + {tkAmp, tkAssign, tkCaret, tkIs, tkIsNot}
   Strings = {tkSqString, tkString}
   Assignables = {tkBool, tkInteger, tkFloat, tkIdentifier, tkNil, tkIdentVar} + Strings
 
@@ -501,6 +501,15 @@ prefixHandle parseBreak:
   walk p
   p.walkOpt(tkScolon)
 
+prefixHandle parseDiscard:
+  result = ast.newTree(nkDiscard)
+  walk p
+  if p.curr.line == p.prev.line:
+    let exprNode = p.parseExpression()
+    caseNotNil exprNode:
+      result.add(exprNode)
+  p.walkOpt(tkScolon)
+
 prefixHandle parseReturn:
   result = ast.newTree(nkReturn)
   walk p
@@ -584,6 +593,7 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkWhile: parseWhileLoop
     of tkReturn: parseReturn
     of tkBreakCmd: parseBreak
+    of tkDiscardCmd: parseDiscard
     of tkFunc, tkFn: parseFunction
     of tkIterator: parseIterator
     of tkLP: parseParExpr
@@ -607,7 +617,7 @@ proc getPrecedence(op: string): int {.inline.} =
   of "*", "/", "%": 20
   of ".": 45
   of "[": 40
-  of "==", "!=", ">", "<", ">=", "<=": 5
+  of "==", "!=", ">", "<", ">=", "<=", "is", "isnot": 5
   of "and", "&&": 3
   of "or", "||": 2
   of "&": 6
@@ -638,6 +648,8 @@ proc isInfix(kind: TokenKind, minPrec = 0): (bool, int, string) {.inline.} =
   of tkAndAnd: opStr = "&&"
   of tkOr: opStr = "or"
   of tkOrOr: opStr = "||"
+  of tkIs: opStr = "is"
+  of tkIsNot: opStr = "isnot"
   else: return (false, 0, "")
   let prec = getPrecedence(opStr)
   result = (prec > minPrec, prec, opStr)
@@ -703,6 +715,7 @@ prefixHandle parseStmt:
     of tkEcho: parseEcho
     of tkReturn: parseReturn
     of tkBreakCmd: parseBreak
+    of tkDiscardCmd: parseDiscard
     of tkDoc: parseDocComment
     of tkType: parseTypeDef
     else: parseExpression

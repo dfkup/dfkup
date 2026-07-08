@@ -23,7 +23,7 @@ type
     tkBool, tkAt, tkCase, tkOf, tkElif, tkAnd, tkOr,
     tkType, tkLitObject, tkFn, tkIterator, tkMacro,
     tkBreakCmd, tkLet, tkConst, tkDiscardCmd, tkContinueCmd,
-    tkEcho, tkYield, tkUnknown
+    tkEcho, tkYield, tkIs, tkIsNot, tkUnknown
 
   TokenTuple* = tuple
     kind: TokenKind
@@ -431,6 +431,10 @@ proc nextToken*(lex: var Lexer): TokenTuple =
         result = initToken(lex, tkOf, move lex.strbuf, line, col, pos, wsno)
       of "if":
         result = initToken(lex, tkIf, move lex.strbuf, line, col, pos, wsno)
+      of "is":
+        result = initToken(lex, tkIs, move lex.strbuf, line, col, pos, wsno)
+      of "isnot":
+        result = initToken(lex, tkIsNot, move lex.strbuf, line, col, pos, wsno)
       of "elif":
         result = initToken(lex, tkElif, move lex.strbuf, line, col, pos, wsno)
       of "else":

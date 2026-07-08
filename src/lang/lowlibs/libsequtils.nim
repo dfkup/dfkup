@@ -6,7 +6,7 @@
 #          https://github.com/dfkup/dfkup
 
 import std/algorithm
-import pkg/vancode/interpreter/[ast, chunk, sym, value, codegen]
+import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib]
 
 proc valueEq(a, b: Value): bool =
@@ -28,175 +28,96 @@ proc valueLess(a, b: Value): bool =
   of tyString: result = a.stringVal[] < b.stringVal[]
   else:        result = false
 
+template makeArrayIntTy(module: Module): Sym =
+  let t = module.sym("array").clone
+  t.arrayTy = module.sym("int")
+  t
+
 proc initSequtils*(script: Script, module: Module) =
   module.initSystemTypes()
   script.initSystemOps(module)
 
-  # isEmpty
-  block:
-    let arrTy = module.sym("array")
-    let boolTy = module.sym("bool")
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("isEmpty"), impl = nil, nodeParams,
-      boolTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "isEmpty", @[paramDef("data", ttyArray)], ttyBool,
+    proc (args: StackView, argc: int): Value =
       result = initValue(args[0].objectVal.fields.len == 0)
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+  )
 
-  # contains
-  block:
-    let arrTy = module.sym("array")
-    let boolTy = module.sym("bool")
-    let intTy = module.sym("int")
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    nodeParams.add((ast.newIdent("val"), intTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("contains"), impl = nil, nodeParams,
-      boolTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "contains", @[paramDef("data", ttyArray), paramDef("val", ttyInt)], ttyBool,
+    proc (args: StackView, argc: int): Value =
       let needle = args[1]
-      for v in args[0].objectVal.fields:
-        if valueEq(v, needle):
+      for vs in args[0].objectVal.fields:
+        if valueEq(vs.toValue, needle):
           return initValue(true)
       result = initValue(false)
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+  )
 
-  # count
-  block:
-    let arrTy = module.sym("array")
-    let intTy = module.sym("int")
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    nodeParams.add((ast.newIdent("val"), intTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("count"), impl = nil, nodeParams,
-      intTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "count", @[paramDef("data", ttyArray), paramDef("val", ttyInt)], ttyInt,
+    proc (args: StackView, argc: int): Value =
       var c = 0
       let needle = args[1]
-      for v in args[0].objectVal.fields:
-        if valueEq(v, needle):
+      for vs in args[0].objectVal.fields:
+        if valueEq(vs.toValue, needle):
           inc c
       result = initValue(c.int64)
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+  )
 
-  # indexOf
-  block:
-    let arrTy = module.sym("array")
-    let intTy = module.sym("int")
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    nodeParams.add((ast.newIdent("val"), intTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("indexOf"), impl = nil, nodeParams,
-      intTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "indexOf", @[paramDef("data", ttyArray), paramDef("val", ttyInt)], ttyInt,
+    proc (args: StackView, argc: int): Value =
       let needle = args[1]
-      for i, v in args[0].objectVal.fields:
-        if valueEq(v, needle):
+      for i, vs in args[0].objectVal.fields:
+        if valueEq(vs.toValue, needle):
           return initValue(i.int64)
-      result = initValue(-1.int64)
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+      result = initValue((-1).int64)
+  )
 
-  # first
-  block:
-    let arrTy = module.sym("array")
-    let intTy = module.sym("int")
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("first"), impl = nil, nodeParams,
-      intTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "first", @[paramDef("data", ttyArray)], ttyInt,
+    proc (args: StackView, argc: int): Value =
       if args[0].objectVal.fields.len > 0:
-        result = args[0].objectVal.fields[0]
+        result = args[0].objectVal.fields[0].toValue
       else:
         result = initValue(0.int64)
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+  )
 
-  # last
-  block:
-    let arrTy = module.sym("array")
-    let intTy = module.sym("int")
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("last"), impl = nil, nodeParams,
-      intTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "last", @[paramDef("data", ttyArray)], ttyInt,
+    proc (args: StackView, argc: int): Value =
       let f = args[0].objectVal.fields
       if f.len > 0:
-        result = f[^1]
+        result = f[^1].toValue
       else:
         result = initValue(0.int64)
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+  )
 
-  # min
-  block:
-    let arrTy = module.sym("array")
-    let intTy = module.sym("int")
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("min"), impl = nil, nodeParams,
-      intTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "min", @[paramDef("data", ttyArray)], ttyInt,
+    proc (args: StackView, argc: int): Value =
       let f = args[0].objectVal.fields
       if f.len == 0:
         return initValue(0.int64)
-      result = f[0]
+      result = f[0].toValue
       for i in 1..<f.len:
-        if valueLess(f[i], result):
-          result = f[i]
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+        let vi = f[i].toValue
+        if valueLess(vi, result):
+          result = vi
+  )
 
-  # max
-  block:
-    let arrTy = module.sym("array")
-    let intTy = module.sym("int")
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("max"), impl = nil, nodeParams,
-      intTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "max", @[paramDef("data", ttyArray)], ttyInt,
+    proc (args: StackView, argc: int): Value =
       let f = args[0].objectVal.fields
       if f.len == 0:
         return initValue(0.int64)
-      result = f[0]
+      result = f[0].toValue
       for i in 1..<f.len:
-        if valueLess(result, f[i]):
-          result = f[i]
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+        let vi = f[i].toValue
+        if valueLess(result, vi):
+          result = vi
+  )
 
-  template makeArrayIntTy: Sym =
-    let t = module.sym("array").clone
-    t.arrayTy = module.sym("int")
-    t
+  let arrIntTy = makeArrayIntTy(module)
 
-  # distinct
-  block:
-    let arrTy = module.sym("array")
-    let retTy = makeArrayIntTy()
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("distinct"), impl = nil, nodeParams,
-      retTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "distinct", @[paramDef("data", ttyArray)], ttyArray,
+    proc (args: StackView, argc: int): Value =
       var seen: seq[Value]
-      for v in args[0].objectVal.fields:
+      for vs in args[0].objectVal.fields:
+        let v = vs.toValue
         var dup = false
         for s in seen:
           if valueEq(s, v):
@@ -206,107 +127,52 @@ proc initSequtils*(script: Script, module: Module) =
           seen.add(v)
       result = initArray(seen.len)
       for i, v in seen:
-        result.objectVal.fields[i] = v
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+        result.objectVal.fields[i] = v.toStorage
+    , returnTySym = arrIntTy
+  )
 
-  # concat
-  block:
-    let arrTy = module.sym("array")
-    let retTy = makeArrayIntTy()
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("a"), arrTy, nil, false, false))
-    nodeParams.add((ast.newIdent("b"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("concat"), impl = nil, nodeParams,
-      retTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "concat", @[paramDef("a", ttyArray), paramDef("b", ttyArray)], ttyArray,
+    proc (args: StackView, argc: int): Value =
       let a = args[0].objectVal.fields
       let b = args[1].objectVal.fields
       result = initArray(a.len + b.len)
-      for i, v in a:
-        result.objectVal.fields[i] = v
-      for i, v in b:
-        result.objectVal.fields[a.len + i] = v
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+      for i, vs in a:
+        result.objectVal.fields[i] = vs
+      for i, vs in b:
+        result.objectVal.fields[a.len + i] = vs
+    , returnTySym = arrIntTy
+  )
 
-  # reverse
-  block:
-    let arrTy = module.sym("array")
-    let retTy = makeArrayIntTy()
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("reverse"), impl = nil, nodeParams,
-      retTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "reverse", @[paramDef("data", ttyArray)], ttyArray,
+    proc (args: StackView, argc: int): Value =
       let f = args[0].objectVal.fields
       result = initArray(f.len)
-      for i, v in f:
-        result.objectVal.fields[^ (i + 1)] = v
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+      for i, vs in f:
+        result.objectVal.fields[^ (i + 1)] = vs
+    , returnTySym = arrIntTy
+  )
 
-  # flatten
-  block:
-    let arrTy = module.sym("array")
-    let retTy = makeArrayIntTy()
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("flatten"), impl = nil, nodeParams,
-      retTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
+  script.addProc(module, "flatten", @[paramDef("data", ttyArray)], ttyArray,
+    proc (args: StackView, argc: int): Value =
       var flat: seq[Value]
-      for v in args[0].objectVal.fields:
+      for vs in args[0].objectVal.fields:
+        let v = vs.toValue
         if v.typeId == tyArrayObject:
           for elem in v.objectVal.fields:
-            flat.add(elem)
+            flat.add(elem.toValue)
         else:
           flat.add(v)
       result = initArray(flat.len)
       for i, v in flat:
-        result.objectVal.fields[i] = v
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+        result.objectVal.fields[i] = v.toStorage
+    , returnTySym = arrIntTy
+  )
 
-  # join (array overload)
-  # block:
-  #   let arrTy = module.sym("array")
-  #   let stringTy = module.sym("string")
-  #   var nodeParams: seq[ProcParam]
-  #   nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-  #   nodeParams.add((ast.newIdent("sep"), stringTy, nil, false, false))
-  #   let (sym, theProc) = script.newProc(
-  #     ast.newIdent("join"), impl = nil, nodeParams,
-  #     stringTy, pkForeign, exported = true)
-  #   theProc.foreign = proc (args: StackView, argc: int): Value =
-  #     result = initValue("")
-  #     let sep = args[1].stringVal[]
-  #     for i, v in args[0].objectVal.fields:
-  #       if i > 0:
-  #         result.stringVal[] = result.stringVal[] & sep
-  #       case v.typeId
-  #       of tyInt:    result.stringVal[] = result.stringVal[] & $v.intVal
-  #       of tyFloat:  result.stringVal[] = result.stringVal[] & $v.floatVal
-  #       of tyString: result.stringVal[] = result.stringVal[] & v.stringVal[]
-  #       of tyBool:   result.stringVal[] = result.stringVal[] & $v.boolVal
-  #       else:        result.stringVal[] = result.stringVal[] & "<unknown>"
-  #   discard module.addCallable(sym, sym.name)
-  #   script.procs.add(theProc)
-
-  # sort
-  block:
-    let arrTy = module.sym("array")
-    let retTy = makeArrayIntTy()
-    var nodeParams: seq[ProcParam]
-    nodeParams.add((ast.newIdent("data"), arrTy, nil, false, false))
-    let (sym, theProc) = script.newProc(
-      ast.newIdent("sort"), impl = nil, nodeParams,
-      retTy, pkForeign, exported = true)
-    theProc.foreign = proc (args: StackView, argc: int): Value =
-      var f = args[0].objectVal.fields
+  script.addProc(module, "sort", @[paramDef("data", ttyArray)], ttyArray,
+    proc (args: StackView, argc: int): Value =
+      var f: seq[Value]
+      for vs in args[0].objectVal.fields:
+        f.add(vs.toValue)
       f.sort(proc(a, b: Value): int =
         if valueEq(a, b): return 0
         if valueLess(a, b): return -1
@@ -314,6 +180,11 @@ proc initSequtils*(script: Script, module: Module) =
       )
       result = initArray(f.len)
       for i, v in f:
-        result.objectVal.fields[i] = v
-    discard module.addCallable(sym, sym.name)
-    script.procs.add(theProc)
+        result.objectVal.fields[i] = v.toStorage
+    , returnTySym = arrIntTy
+  )
+
+  script.addProc(module, "add", @[paramDef("s", ttyArray), paramDef("item", ttyAny)], ttyVoid,
+    proc (args: StackView, argc: int): Value =
+      args[0].objectVal.fields.add(args[1].toStorage)
+  )

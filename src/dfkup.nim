@@ -8,7 +8,11 @@
 import std/[options, os, strformat]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import pkg/vancode/interpreter/jit/jit
-import ./lang/[parser, lowlibs/libsystem, lowlibs/libjson, lowlibs/libstrings, lowlibs/libsequtils]
+
+import ./lang/[parser]
+import ./lang/lowlibs/[libsystem, libjson, libstrings, libsequtils, libhttp]
+
+import pkg/openparser/json
 
 type
   DfkupError* = object of CatchableError
@@ -42,6 +46,10 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
   initSequtils(script, sequtilsModule)
   module.load(sequtilsModule)
 
+  let httpModule = newModule("http", some"http.dfkup")
+  initHttp(script, httpModule)
+  module.load(httpModule)
+
   script.stdpos = script.procs.high
 
   var gen = initCodeGen(script, module, mainChunk)
@@ -49,12 +57,31 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
   try:
     gen.genScript(program, none(string))
   except CatchableError as e:
-    raise newException(DfkupError, "codegen error: " & e.msg)
+    raise newException(DfkupError, e.msg)
 
-  var prefs = VMPreferences(enableHotCodeDetection: enableHotCodeDetection)
+  var prefs = VMPreferences(enableHotCodeDetection : enableHotCodeDetection)
   var vmInstance = newVirtualMachine(prefs)
-  when defined(vancodeJit):
+  when defined(vancodeJit) or defined(vancodeJitLlvm):
     installJit(vmInstance)
+  
+  # Create a synthetic Proc for the main chunk so the JIT can compile it
+  var mainProc = Proc(
+    name: "__main",
+    kind: pkNative,
+    chunk: mainChunk,
+    procId: script.procs.len,
+    paramCount: 0,
+    hasResult: false,
+    jitForeign: nil,
+    jitCallCount: 0,
+    jitCodePtr: nil,
+    jitMaxLocal: 0,
+    jitReturnBool: false,
+    jitRecompiled: false
+  )
+  script.procs.add(mainProc)
+  script.mainProc = mainProc
+
   vmInstance.prewarmScriptOps(script)
   try:
     let resultVal = vmInstance.interpret(script, mainChunk)
@@ -102,8 +129,13 @@ when isMainModule:
     except DfkupParserError as e:
       display(span("error", fgRed), span(&"{filePath}({e.ln},{e.col}): {e.msg}"))
       return
-    for node in program.nodes:
-      echo node.treeRepr
+  
+    # todo, write to a file when `-o:some/path.ast` is provided
+    if v.has("--dumptree") and v.get("--dumptree").getBool:
+      for node in program.nodes:
+        echo node.treeRepr
+    else:
+      echo toJson(program.nodes)
 
   initKapsis do:
     commands:
