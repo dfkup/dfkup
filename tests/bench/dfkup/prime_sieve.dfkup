@@ -16,4 +16,4 @@ fn sieve(n: int): int =
     i = i + 1
   result = count
 
-echo sieve(5000)
+echo sieve(30000)

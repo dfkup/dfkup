@@ -5,7 +5,7 @@ DFKUP_BIN="$BENCH_DIR/../../bin/dfkup"
 
 command -v hyperfine >/dev/null 2>&1 || { echo "hyperfine required"; exit 1; }
 
-BENCHMARKS="fib_recursive nested_loops prime_sieve string_concat"
+BENCHMARKS="fib_recursive nested_loops prime_sieve string_concat tail_recursive range_sum"
 HYPF="hyperfine --warmup 2 --min-runs 3"
 
 echo ""
