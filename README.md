@@ -14,16 +14,16 @@
 </p>
 
 ## What is this?
-This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") is a fast, indent-based scripting language. Designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**.
+This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, indent-based, scripting language, designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**.
 
 ## Key Features
 - Interpreted language with runtime type checking
-- Compiled to bytecode and executed on a stack-based virtual machine
-- JIT Compilation powered by LibgccJIT
+- Compiled to bytecode and executed on a Stack-based virtual machine
+- JIT Compilation powered by `Lib GCC JIT` or `LLVM`
 - Pratt parser for expressive and flexible syntax
-- Control flow: if/elif/else, for loops, while loops
-- Variable declarations: var (mutable), let (immutable), const (compile-time)
-- Function definitions with named parameters, return types, and generics
+- Control flow: `if`/`elif`/`else`, `for` loops, `while` loops
+- Variable declarations: `var` (mutable), `const` (compile-time)
+- Function definitions with named parameters, `return` types, and **generics**
 - First-class function calls with positional and named arguments
 - Data literals: integers, floats, strings (single/double/triple-quoted, backtick)
 - String interpolation with $var syntax
@@ -32,6 +32,10 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") is a fast, indent-based
 - Doc comments (/* */) and line comments (//)
 - Powered by [VanCode language framework](https://github.com/openpeeps/vancode)
 - Written in [Nim](https://github.com/nim-lang/nim)
+
+- Built-in Package Manager
+- Built-in Hot code reload and WebSocket Browser Sync reload
+- 
 
 ### Installation
 _todo_
