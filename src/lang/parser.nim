@@ -131,6 +131,8 @@ proc parseExpression(p: var Parser, minPrec = 0): Node
 proc parseIdent(p: var Parser, minPrec = 0): Node
 proc parseCall(p: var Parser, minPrec = 0): Node
 proc parseGenericType(p: var Parser, lhs: Node): Node
+proc parsePrefixPlus(p: var Parser, minPrec = 0): Node
+proc parsePrefixNegate(p: var Parser, minPrec = 0): Node
 
 prefixHandle parseBoolean:
   let v =
@@ -604,7 +606,18 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkVar, tkLet, tkConst: parseVar
     of tkDoc: parseDocComment
     of tkType: parseTypeDef
+    of tkPlus: parsePrefixPlus
+    of tkMinus: parsePrefixNegate
     else: nil
+
+prefixHandle parsePrefixPlus:
+  walk p
+  result = p.parseExpression(minPrec)
+
+prefixHandle parsePrefixNegate:
+  walk p
+  let expr = p.parseExpression(10)
+  result = ast.newInfix(ast.newIdent("-"), ast.newIntLit(0), expr)
 
 prefixHandle parsePrefix:
   let parseFn = p.getPrefixFn(minPrec)

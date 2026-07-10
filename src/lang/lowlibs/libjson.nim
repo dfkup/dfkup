@@ -11,6 +11,7 @@ import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 
 proc initJson*(script: Script, module: Module) =
+  ## This is a low-level procedure for initializing JSON module
   module.initSystemTypes()
   script.initSystemOps(module)
 

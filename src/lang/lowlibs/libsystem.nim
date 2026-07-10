@@ -111,6 +111,13 @@ proc initSystem*(script: Script, module: Module) =
       echo toJson(vs)
   )
 
+  script.addProc(module, "echo", @[paramDef("x", ttyObject)], ttyVoid,
+    proc (args: StackView, argc: int): Value =
+      echo toJsonStr(args[0])
+      # var obj = newJObject()
+      # for i, f in args[0].objectVal.fields: echo f
+  )
+
   script.addProc(module, "&", @[paramDef("a", ttyString), paramDef("b", ttyString)], ttyString,
     proc (args: StackView, argc: int): Value =
       result = initValue(args[0].stringVal[] & args[1].stringVal[]))

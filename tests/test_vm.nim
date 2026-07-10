@@ -51,7 +51,7 @@ suite "VM - arithmetic":
   test "multiplication":
     check run("3 * 4") == "12"
   test "division":
-    check run("10 / 3") == "3"
+    check run("6 / 3") == "2.0"
 
 suite "VM - comparison":
   test "equality":

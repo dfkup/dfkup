@@ -1,0 +1,247 @@
+//
+// DFkup Language Walkthrough
+// Run: dfkup run examples/basics.dfkup
+//
+
+//
+// Section 1: Variables & Types
+//
+
+var score = 42
+let lang = "dfkup"
+const MAX = 100
+var x: int = 10
+
+// int arithmetic
+let sum = 42 + 8
+echo sum
+
+let product = 3.14 * 2
+echo product
+
+echo 15 / 4
+
+// boolean operators
+echo true and false
+echo true or false
+echo 42 == 42
+echo 42 != 10
+
+//
+// Section 2: Functions
+//
+
+fn add(a, b: int): int =
+  result = a + b
+
+fn greet(name: string) =
+  echo "Hi, "
+  echo name
+
+echo add(10, 20)
+greet("World")
+
+// Recursive fib
+fn fib(n: int): int =
+  if n < 2:
+    result = n
+  else:
+    result = fib(n - 1) + fib(n - 2)
+
+let fib20 = fib(20)
+echo fib20
+
+fn abs(x: int): int =
+  if x < 0:
+    result = -x
+  else:
+    result = x
+
+let absVal = abs(-5)
+echo absVal
+
+//
+// Section 3: Control Flow
+//
+
+var temperature = 75
+if temperature > 80:
+  echo "hot"
+elif temperature > 60:
+  echo "nice"
+else:
+  echo "cool"
+
+// while loop
+var i = 1
+while i <= 5:
+  echo i
+  i = i + 1
+
+// FizzBuzz
+echo "--- FizzBuzz ---"
+var n = 1
+var fizz = 0
+var buzz = 0
+while n <= 15:
+  fizz = fizz + 1
+  buzz = buzz + 1
+  if fizz == 3:
+    if buzz == 5:
+      echo "FizzBuzz"
+      fizz = 0
+      buzz = 0
+    else:
+      echo "Fizz"
+      fizz = 0
+  elif buzz == 5:
+    echo "Buzz"
+    buzz = 0
+  else:
+    echo n
+  n = n + 1
+
+//
+// Section 4: Arrays & Sequtils
+//
+
+var scores: array[int]
+scores.add(85)
+scores.add(92)
+scores.add(78)
+scores.add(95)
+scores.add(88)
+
+echo scores
+echo len(scores)
+echo max(scores)
+echo min(scores)
+echo contains(scores, 92)
+echo sort(scores)
+
+let primes = [2, 3, 5, 7, 11]
+echo primes[0]
+echo primes[len(primes) - 1]
+
+let more = concat(primes, [13, 17, 19])
+echo more
+
+//
+// Section 5: For Loops & Iterators
+//
+
+for i in range(1, 5):
+  echo i
+
+for val in items(scores):
+  echo val
+
+// Nested loops with for-range
+for i in range(1, 5):
+  for j in range(1, 5):
+    echo i * j
+
+//
+// Section 6: String Operations
+//
+
+var s = "Hello" & " " & "World"
+echo s
+
+echo toUpper("hello")
+echo toLower("WORLD")
+echo capitalize("dfkup")
+echo replace("foo bar foo", "foo", "baz")
+echo startsWith("hello", "hel")
+echo endsWith("hello", "lo")
+echo contains("hello", "ell")
+echo repeat("ha", 3)
+echo strip("  spaced  ")
+
+let parts = split("a,b,c", ",")
+echo parts
+echo join(parts, " | ")
+
+echo parseInt("42")
+echo parseFloat("3.14")
+echo parseBool("true")
+
+//
+// Section 7: Objects
+//
+
+type User = object
+  name: string
+  age: int
+  email: string
+
+var alice = User(name: "Alice", age: 30, email: "alice@example.com")
+echo alice
+echo alice.name
+echo alice.age
+
+var config = {host: "localhost", port: 8080}
+echo config
+
+//
+// Section 8: JSON
+//
+
+let jsonStr = """{"name": "dfkup", "version": "0.2", "features": ["fast", "nim-like", "embedded"]}"""
+let data = parse(jsonStr)
+
+echo data
+echo pretty(data)
+
+echo get(data, "name", "")
+echo get(data, "missing", "N/A")
+
+for k in items(keys(data)):
+  echo k
+
+let features = get(data, "features", parse("[]"))
+for f in items(features):
+  echo f
+
+echo keys(data)
+echo values(data)
+
+//
+// Section 9: File I/O
+//
+
+let cwd = getCurrentDir()
+echo cwd
+
+let testFile = joinPath(cwd, "examples/hello.txt")
+writeFile(testFile, "Hello from DFkup!")
+
+if fileExists(testFile):
+  echo readFile(testFile)
+  echo getFileSize(testFile)
+
+removeFile(testFile)
+echo fileExists(testFile)
+
+let files = listDir(joinPath(cwd, "examples"))
+echo files
+
+//
+// Section 10: Putting It Together
+//
+fn fileStats(path: string) =
+  if fileExists(path) == false:
+    echo "not found"
+  else:
+    let content = readFile(path)
+    let charCount = len(content)
+    let lines = split(content, "\n")
+    let lineCount = len(lines)
+    let words = split(content, " ")
+    let wordCount = len(words)
+
+    echo charCount
+    echo wordCount
+    echo lineCount
+
+fileStats("examples/basics.dfkup")

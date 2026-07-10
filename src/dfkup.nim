@@ -89,6 +89,8 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
       result = $resultVal
   except CatchableError as e:
     raise newException(DfkupError, "runtime error: " & e.msg)
+  finally:
+    stopAsyncJit()
 
 proc runScript*(code: string, sourcePath = "script.dfkup", enableHotCodeDetection: bool = true): string =
   ## Parse, compile, and execute a DFkup script from a string.
