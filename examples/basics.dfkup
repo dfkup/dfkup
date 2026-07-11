@@ -1,18 +1,21 @@
-//
-// DFkup Language Walkthrough
-// Run: dfkup run examples/basics.dfkup
-//
+import "std/sequtils"
+import "std/strings"
+import "std/json"
 
-//
-// Section 1: Variables & Types
-//
+#
+# DFkup Language Walkthrough
+# Run: dfkup run examples/basics.dfkup
+#
 
+#
+# Section 1: Variables & Types
+#
 var score = 42
 let lang = "dfkup"
 const MAX = 100
 var x: int = 10
 
-// int arithmetic
+# int arithmetic
 let sum = 42 + 8
 echo sum
 
@@ -21,15 +24,19 @@ echo product
 
 echo 15 / 4
 
-// boolean operators
+# boolean operators
 echo true and false
 echo true or false
 echo 42 == 42
 echo 42 != 10
 
-//
-// Section 2: Functions
-//
+# assert - paren-less and paren syntax
+assert true
+assert(42 == 42)
+
+#
+# Section 2: Functions
+#
 
 fn add(a, b: int): int =
   result = a + b
@@ -41,7 +48,7 @@ fn greet(name: string) =
 echo add(10, 20)
 greet("World")
 
-// Recursive fib
+# Recursive fib
 fn fib(n: int): int =
   if n < 2:
     result = n
@@ -60,9 +67,9 @@ fn abs(x: int): int =
 let absVal = abs(-5)
 echo absVal
 
-//
-// Section 3: Control Flow
-//
+#
+# Section 3: Control Flow
+#
 
 var temperature = 75
 if temperature > 80:
@@ -72,13 +79,13 @@ elif temperature > 60:
 else:
   echo "cool"
 
-// while loop
+# while loop
 var i = 1
 while i <= 5:
   echo i
   i = i + 1
 
-// FizzBuzz
+# FizzBuzz
 echo "--- FizzBuzz ---"
 var n = 1
 var fizz = 0
@@ -101,9 +108,9 @@ while n <= 15:
     echo n
   n = n + 1
 
-//
-// Section 4: Arrays & Sequtils
-//
+#
+# Section 4: Arrays & Sequtils
+#
 
 var scores: array[int]
 scores.add(85)
@@ -126,24 +133,24 @@ echo primes[len(primes) - 1]
 let more = concat(primes, [13, 17, 19])
 echo more
 
-//
-// Section 5: For Loops & Iterators
-//
+#
+# Section 5: For Loops & Iterators
+#
 
-for i in range(1, 5):
+for i in 1..5:
   echo i
 
 for val in items(scores):
   echo val
 
-// Nested loops with for-range
+# Nested loops with for-range
 for i in range(1, 5):
   for j in range(1, 5):
     echo i * j
 
-//
-// Section 6: String Operations
-//
+#
+# Section 6: String Operations
+#
 
 var s = "Hello" & " " & "World"
 echo s
@@ -166,9 +173,9 @@ echo parseInt("42")
 echo parseFloat("3.14")
 echo parseBool("true")
 
-//
-// Section 7: Objects
-//
+#
+# Section 7: Objects
+#
 
 type User = object
   name: string
@@ -183,12 +190,12 @@ echo alice.age
 var config = {host: "localhost", port: 8080}
 echo config
 
-//
-// Section 8: JSON
-//
+#
+# Section 8: JSON
+#
 
 let jsonStr = """{"name": "dfkup", "version": "0.2", "features": ["fast", "nim-like", "embedded"]}"""
-let data = parse(jsonStr)
+let data = parseJson(jsonStr)
 
 echo data
 echo pretty(data)
@@ -199,16 +206,16 @@ echo get(data, "missing", "N/A")
 for k in items(keys(data)):
   echo k
 
-let features = get(data, "features", parse("[]"))
+let features = get(data, "features", parseJson("[]"))
 for f in items(features):
   echo f
 
 echo keys(data)
 echo values(data)
 
-//
-// Section 9: File I/O
-//
+#
+# Section 9: File I/O
+#
 
 let cwd = getCurrentDir()
 echo cwd
@@ -226,14 +233,15 @@ echo fileExists(testFile)
 let files = listDir(joinPath(cwd, "examples"))
 echo files
 
-//
-// Section 10: Putting It Together
-//
-fn fileStats(path: string) =
-  if fileExists(path) == false:
+#
+# Section 10: Putting It Together
+#
+fn fileStats(filePath: string) =
+  echo filePath
+  if fileExists(filePath) == false:
     echo "not found"
   else:
-    let content = readFile(path)
+    let content = readFile(filePath)
     let charCount = len(content)
     let lines = split(content, "\n")
     let lineCount = len(lines)
