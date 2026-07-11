@@ -5,12 +5,15 @@
 #          https://dfkup.dev
 #          https://github.com/dfkup/dfkup
 
-import std/[options, os, strformat]
+import std/[options, os, strformat, tables]
+
+import ./lang/transformers
+export transformers
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import pkg/vancode/interpreter/jit/jit
 
 import ./lang/[parser]
-import ./lang/lowlibs/[libsystem, libjson, libstrings, libsequtils, libhttp]
+import ./lang/lowlibs/[libsystem, libjson, libstrings, libsequtils, libhttp, libcli]
 
 import pkg/openparser/json
 
@@ -24,35 +27,50 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     parseScript(program, code)
   except DfkupParserError as e:
     raise newException(DfkupError, &"{sourcePath}({e.ln},{e.col}): {e.msg}")
-
   var
     mainChunk = newChunk(sourcePath)
     script = newScript(mainChunk)
     module = newModule(sourcePath.extractFilename, some(sourcePath))
 
-  let systemModule = newModule("system", some"system.dfkup")
+  let systemModule = newModule("system", some"system.timl")
   initSystem(script, systemModule)
   module.load(systemModule)
 
-  let jsonModule = newModule("json", some"json.dfkup")
-  initJson(script, jsonModule)
-  module.load(jsonModule)
+  var stdlibs: StandardLibrary = newTable[string, ModuleLibrary]()
 
-  let stringsModule = newModule("strings", some"strings.dfkup")
-  initStrings(script, stringsModule)
-  module.load(stringsModule)
+  stdlibs["json"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("json", some"json.dfkup")
+    m.load(sysMod)
+    initJson(scr, m)
+    return m
 
-  let sequtilsModule = newModule("sequtils", some"sequtils.dfkup")
-  initSequtils(script, sequtilsModule)
-  module.load(sequtilsModule)
+  stdlibs["strings"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("strings", some"strings.dfkup")
+    m.load(sysMod)
+    initStrings(scr, m)
+    return m
 
-  let httpModule = newModule("http", some"http.dfkup")
-  initHttp(script, httpModule)
-  module.load(httpModule)
+  stdlibs["sequtils"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("sequtils", some"sequtils.dfkup")
+    m.load(sysMod)
+    initSequtils(scr, m)
+    return m
+
+  stdlibs["http"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("http", some"http.dfkup")
+    m.load(sysMod)
+    initHttp(scr, m)
+    return m
+
+  stdlibs["cli"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("cli", some"cli.dfkup")
+    m.load(sysMod)
+    initCliLib(scr, m)
+    return m
 
   script.stdpos = script.procs.high
 
-  var gen = initCodeGen(script, module, mainChunk)
+  var gen = initCompiler(script, module, mainChunk, stdlibs = stdlibs)
   gen.allowExprResult = allowExprResult
   try:
     gen.genScript(program, none(string))

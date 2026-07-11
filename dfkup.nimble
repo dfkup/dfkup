@@ -1,9 +1,9 @@
 # Package
 
 version       = "0.1.0"
-author        = "George Lemon"
-description   = "A fast scripting language for cool kids!"
-license       = "MIT"
+author        = "OpenPeeps"
+description   = "A scripting language with VM + JIT compiler"
+license       = "LGPL-3.0-or-later"
 srcDir        = "src"
 bin           = @["dfkup"]
 binDir        = "bin"
@@ -15,6 +15,7 @@ requires "nim >= 2.2.0"
 requires "kapsis >= 0.3.4"
 requires "vancode >= 0.1.3"
 
+# mostly required for exporting as libraries
 requires "openparser >= 0.1.2"
 requires "marvdown >= 0.1.0"
 

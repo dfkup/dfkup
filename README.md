@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/dfkup/dfkup/main/.github/dfkup.png" alt="DFkup logo" width="80px" height="80px"><br>
   A fast scripting language<br>
-  Typed interpreted &bullet; Stack-based VM &bullet; JIT Compiler
+  Typed &bullet; Stack-based VM &bullet; JIT Compiler
 </p>
 
 <p align="center">
@@ -14,11 +14,14 @@
 </p>
 
 ## What is this?
-This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, indent-based, scripting language, designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**.
+This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, indent-based, scripting language, designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**
+
+> [!NOTE]
+> Totally unstable API!
 
 ## Key Features
 - Interpreted language with runtime type checking
-- Compiled to bytecode and executed on a Stack-based virtual machine
+- Compiled to bytecode and executed on a Stack-based Virtual Machine
 - JIT Compilation powered by **DynASM JIT** assembling code at runtime!
 - Pratt parser for expressive and flexible syntax
 - Control flow: `if`/`elif`/`else`, `for` loops, `while` loops
@@ -29,21 +32,15 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 - String interpolation with $var syntax
 - Array and object storage (JSON-like) literals
 - Built-in JSON support: parse, dump, pretty-print, field access
-- Doc comments (/* */) and line comments (//)
+- Doc comments (`##`) and line comments (`#`)
 - Powered by [VanCode language framework](https://github.com/openpeeps/vancode)
 - Written in [Nim](https://github.com/nim-lang/nim)
-
-
-### Feature rich library
-- Work with JSON
-- 
 
 ### Installation
 _todo_
 
 ### Examples
 _todo_
-
 
 ### Benchmarks
 ```
@@ -92,7 +89,7 @@ tail_recursive:
 _todo investigate why `tail_recursive` is not completed for all langs_
 
 ### Notes
-DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https://github.com/openpeeps/vancode) written in Nim. The JIT compiler is powered by [GNU GCC JIT](https://gcc.gnu.org/wiki/JIT) using the [libgccjit Nim bindings from here](https://github.com/openpeeps/gccjit.nim).
+DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https://github.com/openpeeps/vancode) written in Nim. The JIT compiler is powered by [DynASM](https://staff.fnwi.uva.nl/h.vandermeer/docs/lua/luajit/dynasm_features.html).
 
 ## Roadmap
 - [ ] Add more tests

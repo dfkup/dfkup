@@ -9,7 +9,7 @@ import std/strutils
 
 type
   TokenKind* = enum
-    tkEof, tkIdentifier, tkInteger, tkFloat, tkString,
+    tkEof, tkIdentifier, tkImport, tkInclude, tkInteger, tkFloat, tkString,
     tkPlus, tkMinus, tkAsterisk, tkDivide, tkMod, tkCaret,
     tkLC, tkRC, tkLP, tkRP, tkLB, tkRB,
     tkComma, tkDot, tkSemicolon, tkColon, tkScolon,
@@ -190,30 +190,30 @@ proc nextToken*(lex: var Lexer): TokenTuple =
     lex.advance()
     result = initToken(lex, tkAsterisk, line, col, pos, wsno)
   of '/':
-    if lex.peek() == '/':
-      lex.advance()
-      lex.advance()
-      lex.strbuf.setLen(0)
-      while lex.current != '\n' and lex.current != '\0':
-        lex.strbuf.add(lex.current)
-        lex.advance()
-      result = initToken(lex, tkComment, move lex.strbuf, line, col, pos, wsno)
-    elif lex.peek() == '*':
-      lex.advance()
-      lex.advance()
-      lex.strbuf.setLen(0)
-      var prev = '\0'
-      while not (prev == '*' and lex.current == '/') and lex.current != '\0':
-        if prev != '\0':
-          lex.strbuf.add(prev)
-        prev = lex.current
-        lex.advance()
-      if prev != '\0' and not (prev == '*' and lex.current == '/'):
-        lex.strbuf.add(prev)
-      if lex.current == '/':
-        lex.advance()
-      result = initToken(lex, tkDoc, move lex.strbuf, line, col, pos, wsno)
-    else:
+      # if lex.peek() == '/':
+      #   lex.advance()
+      #   lex.advance()
+      #   lex.strbuf.setLen(0)
+      #   while lex.current != '\n' and lex.current != '\0':
+      #     lex.strbuf.add(lex.current)
+      #     lex.advance()
+      #   result = initToken(lex, tkComment, move lex.strbuf, line, col, pos, wsno)
+      # elif lex.peek() == '*':
+      #   lex.advance()
+      #   lex.advance()
+      #   lex.strbuf.setLen(0)
+      #   var prev = '\0'
+      #   while not (prev == '*' and lex.current == '/') and lex.current != '\0':
+      #     if prev != '\0':
+      #       lex.strbuf.add(prev)
+      #     prev = lex.current
+      #     lex.advance()
+      #   if prev != '\0' and not (prev == '*' and lex.current == '/'):
+      #     lex.strbuf.add(prev)
+      #   if lex.current == '/':
+      #     lex.advance()
+      #   result = initToken(lex, tkDoc, move lex.strbuf, line, col, pos, wsno)
+      # else:
       lex.advance()
       result = initToken(lex, tkDivide, line, col, pos, wsno)
   of '%':
@@ -244,8 +244,20 @@ proc nextToken*(lex: var Lexer): TokenTuple =
     lex.advance()
     result = initToken(lex, tkDot, line, col, pos, wsno)
   of '#':
+    if lex.peek() == '#':
+      lex.advance()
+      lex.advance()
+      lex.strbuf.setLen(0)
+      while lex.current != '\n' and lex.current != '\0':
+        lex.strbuf.add(lex.current)
+        lex.advance()
+      return initToken(lex, tkDoc, move lex.strbuf, line, col, pos, wsno)
     lex.advance()
-    result = initToken(lex, tkId, line, col, pos, wsno)
+    lex.strbuf.setLen(0)
+    while lex.current != '\n' and lex.current != '\0':
+      lex.strbuf.add(lex.current)
+      lex.advance()
+    result = initToken(lex, tkComment, move lex.strbuf, line, col, pos, wsno)      
   of '?':
     lex.advance()
     result = initToken(lex, tkTernary, line, col, pos, wsno)
@@ -485,6 +497,10 @@ proc nextToken*(lex: var Lexer): TokenTuple =
         result = initToken(lex, tkMod, move lex.strbuf, line, col, pos, wsno)
       of "nil":
         result = initToken(lex, tkNil, move lex.strbuf, line, col, pos, wsno)
+      of "import":
+        result = initToken(lex, tkImport, move lex.strbuf, line, col, pos, wsno)
+      of "include":
+        result = initToken(lex, tkInclude, move lex.strbuf, line, col, pos, wsno)
       else:
         result = initToken(lex, tkIdentifier, move lex.strbuf, line, col, pos, wsno)
     else:

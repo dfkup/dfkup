@@ -13,6 +13,7 @@ type
   Parser* = object
     lex: Lexer
     prev, curr, next: TokenTuple
+    fwdDecl: seq[Node]
 
   DfkupParserError* = object of ValueError
     ln*, col*: int
@@ -130,6 +131,7 @@ proc parsePrefix(p: var Parser, minPrec = 0): Node
 proc parseExpression(p: var Parser, minPrec = 0): Node
 proc parseIdent(p: var Parser, minPrec = 0): Node
 proc parseCall(p: var Parser, minPrec = 0): Node
+proc parseImport(p: var Parser, minPrec = 0): Node
 proc parseGenericType(p: var Parser, lhs: Node): Node
 proc parsePrefixPlus(p: var Parser, minPrec = 0): Node
 proc parsePrefixNegate(p: var Parser, minPrec = 0): Node
@@ -435,6 +437,10 @@ prefixHandle parseFunction:
     let fnBlock: Node = p.parseBlock(fnpos, parseFnBlock = true)
     caseNotNil fnBlock:
       result = ast.newTree(nkProc, name, genericParams, formalParams, fnBlock)
+  else:
+    # forward declaration: function head without body
+    result = ast.newTree(nkProc, name, genericParams, formalParams, ast.newEmpty())
+    p.fwdDecl.add(result)
 
 prefixHandle parseIterator:
   let tokenIterator = p.curr.col
@@ -547,6 +553,20 @@ prefixHandle parseAssert:
     result.add(exprNode)
     p.walkOpt(tkScolon)
 
+prefixHandle parseImport:
+  if p.curr.value == "import":
+    walk p  # consume import
+    if p.curr.kind in Strings:
+      result = ast.newNode(nkImport)
+      result.add(ast.newStringLit(p.curr.value))
+      walk p  # consume string literal
+  elif p.curr.value == "include":
+    walk p  # consume include
+    if p.curr.kind in Strings:
+      result = ast.newNode(nkInclude)
+      result.add(ast.newStringLit(p.curr.value))
+      walk p  # consume string literal
+
 prefixHandle parseDocComment:
   result = ast.newNode(nkDocComment)
   result.comment = p.curr.value
@@ -618,6 +638,7 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkType: parseTypeDef
     of tkPlus: parsePrefixPlus
     of tkMinus: parsePrefixNegate
+    of tkImport, tkInclude: parseImport
     else: nil
 
 prefixHandle parsePrefixPlus:
@@ -742,6 +763,7 @@ prefixHandle parseStmt:
     of tkDiscardCmd: parseDiscard
     of tkDoc: parseDocComment
     of tkType: parseTypeDef
+    of tkImport, tkInclude: parseImport
     else: parseExpression
   if prefixFn != nil:
     return prefixFn(p)
@@ -758,3 +780,4 @@ proc parseScript*(astProgram: var Ast, code: string) =
       astProgram.nodes.add(node)
     do:
       p.curr.error(ErrUnexpectedToken % $p.curr.kind)
+  astProgram.forwardDecl = p.fwdDecl
