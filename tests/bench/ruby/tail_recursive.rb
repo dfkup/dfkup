@@ -1,0 +1,1 @@
+def tail_rec_sum(n, acc)\n  return n == 0 ? acc : tail_rec_sum(n - 1, acc + n)\nend\nputs tail_rec_sum(10000, 0)

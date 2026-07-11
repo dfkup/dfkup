@@ -1,0 +1,4 @@
+var x = 0
+for i in 0..1000:
+  x = x + 1
+echo x

@@ -61,7 +61,7 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
 
   var prefs = VMPreferences(enableHotCodeDetection : enableHotCodeDetection)
   var vmInstance = newVirtualMachine(prefs)
-  when defined(vancodeJit) or defined(vancodeJitLlvm):
+  when defined(vancodeJitDynasm):
     installJit(vmInstance)
   
   # Create a synthetic Proc for the main chunk so the JIT can compile it
@@ -83,14 +83,14 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
   script.mainProc = mainProc
 
   vmInstance.prewarmScriptOps(script)
+  when defined(vancodeJitDynasm):
+    detectRecursiveAndCompile(vmInstance, enableHotCodeDetection)
   try:
     let resultVal = vmInstance.interpret(script, mainChunk)
     if resultVal != nil and resultVal.typeId notin {tyNil}:
       result = $resultVal
   except CatchableError as e:
     raise newException(DfkupError, "runtime error: " & e.msg)
-  finally:
-    stopAsyncJit()
 
 proc runScript*(code: string, sourcePath = "script.dfkup", enableHotCodeDetection: bool = true): string =
   ## Parse, compile, and execute a DFkup script from a string.

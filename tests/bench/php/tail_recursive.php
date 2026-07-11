@@ -1,0 +1,1 @@
+<?php\nfunction tailRecSum($n, $acc) {\n  return $n === 0 ? $acc : tailRecSum($n - 1, $acc + $n);\n}\necho tailRecSum(10000, 0) . "\n";

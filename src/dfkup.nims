@@ -1,14 +1,12 @@
---define:vancodeJit
+--define:vancodeJitDynasm
 # --define:vancodeJitLog
-
-# --define:vancodeJitLlvm
 # switch("passL", "-Wl,-rpath,/opt/local/libexec/llvm-20/lib")
 
 --hints:off
 --verbosity:0
 --define:nimPreviewHashRef
 --define:supranimUseGlobalOnRequest
-# --define:release
+--define:release
 
 when defined dfkupDebug:
   --define:checkBounds

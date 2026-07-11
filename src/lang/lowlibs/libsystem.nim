@@ -118,6 +118,11 @@ proc initSystem*(script: Script, module: Module) =
       # for i, f in args[0].objectVal.fields: echo f
   )
 
+  script.addProc(module, "assert", @[paramDef("x", ttyBool)], ttyVoid,
+    proc (args: StackView, argc: int): Value =
+      if not args[0].boolVal:
+        raise newException(ValueError, "assertion failed"))
+
   script.addProc(module, "&", @[paramDef("a", ttyString), paramDef("b", ttyString)], ttyString,
     proc (args: StackView, argc: int): Value =
       result = initValue(args[0].stringVal[] & args[1].stringVal[]))

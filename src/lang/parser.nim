@@ -538,6 +538,15 @@ prefixHandle parseEcho:
     result.add(exprNode)
     p.walkOpt(tkScolon)
 
+prefixHandle parseAssert:
+  result = ast.newTree(nkCall)
+  result.add(ast.newIdent("assert"))
+  walk p
+  let exprNode: Node = p.parseExpression()
+  caseNotNil exprNode:
+    result.add(exprNode)
+    p.walkOpt(tkScolon)
+
 prefixHandle parseDocComment:
   result = ast.newNode(nkDocComment)
   result.comment = p.curr.value
@@ -603,6 +612,7 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkLC: parseObjectStorage
     of tkYield: parseYield
     of tkEcho: parseEcho
+    of tkAssert: parseAssert
     of tkVar, tkLet, tkConst: parseVar
     of tkDoc: parseDocComment
     of tkType: parseTypeDef
@@ -726,6 +736,7 @@ prefixHandle parseStmt:
     of tkFunc, tkFn: parseFunction
     of tkIterator: parseIterator
     of tkEcho: parseEcho
+    of tkAssert: parseAssert
     of tkReturn: parseReturn
     of tkBreakCmd: parseBreak
     of tkDiscardCmd: parseDiscard

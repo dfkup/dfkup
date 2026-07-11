@@ -1,0 +1,1 @@
+function tailRecSum(n, acc) { return n === 0 ? acc : tailRecSum(n - 1, acc + n); } console.log(tailRecSum(10000, 0));

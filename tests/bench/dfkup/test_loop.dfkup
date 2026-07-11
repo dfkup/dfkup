@@ -1,0 +1,3 @@
+var list: array[int]
+for i in 0..10000000:
+  list.add(i)

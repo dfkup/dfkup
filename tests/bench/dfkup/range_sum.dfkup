@@ -1,0 +1,9 @@
+fn range_sum(n: int): int =
+  var total = 0
+  var i = 0
+  while i <= n:
+    total = total + i
+    i = i + 1
+  result = total
+
+echo range_sum(10000000)

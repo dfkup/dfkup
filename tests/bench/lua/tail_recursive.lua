@@ -1,0 +1,1 @@
+function tail_rec_sum(n, acc)\n  if n == 0 then return acc end\n  return tail_rec_sum(n - 1, acc + n)\nend\nprint(tail_rec_sum(10000, 0))

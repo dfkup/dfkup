@@ -19,7 +19,7 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 ## Key Features
 - Interpreted language with runtime type checking
 - Compiled to bytecode and executed on a Stack-based virtual machine
-- JIT Compilation powered by `Lib GCC JIT` or `LLVM`
+- JIT Compilation powered by **DynASM JIT** assembling code at runtime!
 - Pratt parser for expressive and flexible syntax
 - Control flow: `if`/`elif`/`else`, `for` loops, `while` loops
 - Variable declarations: `var` (mutable), `const` (compile-time)
@@ -33,8 +33,9 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 - Powered by [VanCode language framework](https://github.com/openpeeps/vancode)
 - Written in [Nim](https://github.com/nim-lang/nim)
 
-- Built-in Package Manager
-- Built-in Hot code reload and WebSocket Browser Sync reload
+
+### Feature rich library
+- Work with JSON
 - 
 
 ### Installation
@@ -53,37 +54,42 @@ bash ./tests/bench/runall.sh 2>&1
 ## Multi-Language Benchmark Results
 
 fib_recursive:
-  fib_recursive    dfkup        Time (mean ± σ):     313.8 ms ±  22.0 ms   
-  fib_recursive    node         Time (mean ± σ):      48.3 ms ±   1.2 ms   
-  fib_recursive    python3      Time (mean ± σ):     433.5 ms ±  22.0 ms   
-  fib_recursive    ruby         Time (mean ± σ):     248.1 ms ±   7.1 ms   
-  fib_recursive    luajit       Time (mean ± σ):      16.5 ms ±   0.8 ms   
-  fib_recursive    php83        Time (mean ± σ):      98.5 ms ±   9.7 ms   
+  fib_recursive    dfkup        Time (mean ± σ):       8.8 ms ±   0.3 ms   
+  fib_recursive    node         Time (mean ± σ):      90.1 ms ±   2.9 ms   
+  fib_recursive    python3      Time (mean ± σ):      1.043 s ±  0.026 s   
+  fib_recursive    ruby         Time (mean ± σ):     524.8 ms ±   3.8 ms   
+  fib_recursive    luajit       Time (mean ± σ):      76.5 ms ±   2.6 ms   
+  fib_recursive    php83        Time (mean ± σ):     512.4 ms ±   0.9 ms   
 
 nested_loops:
-  nested_loops     dfkup        Time (mean ± σ):      37.9 ms ±   0.4 ms   
-  nested_loops     node         Time (mean ± σ):      41.5 ms ±   2.4 ms   
-  nested_loops     python3      Time (mean ± σ):      30.1 ms ±   2.7 ms   
-  nested_loops     ruby         Time (mean ± σ):      80.7 ms ±   3.9 ms   
-  nested_loops     luajit       Time (mean ± σ):       5.6 ms ±   0.5 ms   
-  nested_loops     php83        Time (mean ± σ):      24.0 ms ±   1.8 ms   
+  nested_loops     dfkup        Time (mean ± σ):      75.4 ms ±   5.2 ms   
+  nested_loops     node         Time (mean ± σ):      40.3 ms ±   0.3 ms   
+  nested_loops     python3      Time (mean ± σ):      29.2 ms ±   0.9 ms   
+  nested_loops     ruby         Time (mean ± σ):      84.0 ms ±   9.1 ms   
+  nested_loops     luajit       Time (mean ± σ):       5.5 ms ±   0.3 ms   
+  nested_loops     php83        Time (mean ± σ):      24.3 ms ±   1.5 ms   
 
 prime_sieve:
-  prime_sieve      dfkup        Time (mean ± σ):     287.1 ms ±   6.2 ms   
-  prime_sieve      node         Time (mean ± σ):      39.4 ms ±   0.8 ms   
-  prime_sieve      python3      Time (mean ± σ):      25.5 ms ±   1.5 ms   
-  prime_sieve      ruby         Time (mean ± σ):      71.9 ms ±   3.4 ms   
-  prime_sieve      luajit       Time (mean ± σ):       5.4 ms ±   0.3 ms   
-  prime_sieve      php83        Time (mean ± σ):      22.4 ms ±   0.7 ms   
+  prime_sieve      dfkup        Time (mean ± σ):     125.1 ms ±   9.1 ms   
+  prime_sieve      node         Time (mean ± σ):      40.3 ms ±   2.3 ms   
+  prime_sieve      python3      Time (mean ± σ):      25.8 ms ±   1.0 ms   
+  prime_sieve      ruby         Time (mean ± σ):      72.9 ms ±   3.9 ms   
+  prime_sieve      luajit       Time (mean ± σ):       5.5 ms ±   0.6 ms   
+  prime_sieve      php83        Time (mean ± σ):      23.0 ms ±   0.3 ms   
 
 string_concat:
-  string_concat    dfkup        Time (mean ± σ):      14.7 ms ±   1.0 ms   
-  string_concat    node         Time (mean ± σ):      39.6 ms ±   2.5 ms   
-  string_concat    python3      Time (mean ± σ):      22.8 ms ±   1.5 ms   
-  string_concat    ruby         Time (mean ± σ):      75.1 ms ±   8.4 ms   
-  string_concat    luajit       Time (mean ± σ):      11.0 ms ±   0.8 ms   
-  string_concat    php83        Time (mean ± σ):      21.7 ms ±   0.8 ms
+  string_concat    dfkup        Time (mean ± σ):      15.3 ms ±   1.2 ms   
+  string_concat    node         Time (mean ± σ):      43.1 ms ±   4.1 ms   
+  string_concat    python3      Time (mean ± σ):      24.4 ms ±   1.5 ms   
+  string_concat    ruby         Time (mean ± σ):      75.7 ms ±   6.9 ms   
+  string_concat    luajit       Time (mean ± σ):      12.4 ms ±   5.5 ms   
+  string_concat    php83        Time (mean ± σ):      22.8 ms ±   1.6 ms   
+
+tail_recursive:
+  tail_recursive   dfkup        Time (mean ± σ):     569.2 ms ±   2.2 ms   
 ```
+
+_todo investigate why `tail_recursive` is not completed for all langs_
 
 ### Notes
 DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https://github.com/openpeeps/vancode) written in Nim. The JIT compiler is powered by [GNU GCC JIT](https://gcc.gnu.org/wiki/JIT) using the [libgccjit Nim bindings from here](https://github.com/openpeeps/gccjit.nim).
