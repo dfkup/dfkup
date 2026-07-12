@@ -1,10 +1,20 @@
 name: docs
 on:
+  pull_request:
+    paths-ignore:
+      - LICENSE
+      - README.*
+      - examples
   push:
+    paths-ignore:
+      - LICENSE
+      - README.*
+      - examples
     tags:
       - '*.*.*'
     branches:
       - main
+  workflow_dispatch:
 env:
   nim-version: 'stable'
   nim-src: src/${{ github.event.repository.name }}.nim
