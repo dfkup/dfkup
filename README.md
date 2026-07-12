@@ -37,10 +37,20 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 - Written in [Nim](https://github.com/nim-lang/nim)
 
 ### Installation
-_todo_
+You need Nim. 
 
 ### Examples
-_todo_
+```
+A scripting language with VM + JIT compiler
+  (c) OpenPeeps | LGPL-3.0-or-later License  
+  Build Version: 0.1.0
+
+Scripting
+  run <script:path>           Run a DFkup script file
+          --nojit:bool
+  ast <script:path>           Generate AST from a DFkup script file
+          --dumptree:bool
+```
 
 ### Benchmarks
 ```
