@@ -1,4 +1,5 @@
 import std/unittest
+import ../src/lang/transformers
 import pkg/vancode/interpreter/ast
 import ../src/lang/parser
 

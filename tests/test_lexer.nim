@@ -86,7 +86,7 @@ suite "Lexer - special tokens":
     check tokens("$foo $bar_baz") == @["tkIdentVar", "tkIdentVar"]
     check tokenValues("$foo") == @["foo"]
   test "hash":
-    check tokens("#") == @["tkId"]
+    check tokens("#") == @["tkComment"]
   test "at":
     check tokens("@") == @["tkAt"]
   test "exclamation":
@@ -94,9 +94,9 @@ suite "Lexer - special tokens":
 
 suite "Lexer - comments":
   test "line comment":
-    check tokens("// this is a comment") == @["tkComment"]
-  test "block comment":
-    check tokens("/* doc */") == @["tkDoc"]
+    check tokens("# this is a comment") == @["tkComment"]
+  test "doc comment":
+    check tokens("## doc comment") == @["tkDoc"]
 
 suite "Lexer - string escapes":
   test "escaped chars":

@@ -1,4 +1,5 @@
 import std/[unittest, options]
+import ../src/lang/transformers
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import ../src/lang/[parser, lowlibs/libsystem]
 
@@ -51,7 +52,7 @@ suite "VM - arithmetic":
   test "multiplication":
     check run("3 * 4") == "12"
   test "division":
-    check run("6 / 3") == "2.0"
+    check run("6 / 3") == "2"
 
 suite "VM - comparison":
   test "equality":

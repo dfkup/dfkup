@@ -20,7 +20,7 @@ requires "openparser >= 0.1.2"
 requires "marvdown >= 0.1.0"
 
 requires "mimedb >= 0.1.0"
-requires "supranim >= 0.1.1"
+requires "supranim >= 0.1.2"
 
 requires "blackpaper >= 0.1.0"
 requires "e2ee >= 0.1.0"

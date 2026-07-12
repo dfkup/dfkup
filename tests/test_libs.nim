@@ -1,4 +1,5 @@
 import std/[unittest, options]
+import ../src/lang/transformers
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import ../src/lang/[parser, lowlibs/libsystem, lowlibs/libjson]
 
@@ -26,16 +27,16 @@ proc run(code: string): string =
 
 suite "Libraries - JSON":
   test "parse and dump":
-    let r = run("let d = parse(\"{\\\"a\\\":1}\")\ndump(d)")
+    let r = run("let d = parseJson(\"{\\\"a\\\":1}\")\ndumpJson(d)")
     check r == "{\"a\":1}"
   test "get string field":
-    let r = run("let d = parse(\"{\\\"n\\\":\\\"x\\\"}\")\nget(d, \"n\", \"\")")
+    let r = run("let d = parseJson(\"{\\\"n\\\":\\\"x\\\"}\")\nget(d, \"n\", \"\")")
     check r == "\"x\""
   test "get with default":
-    let r = run("let d = parse(\"{}\")\nget(d, \"k\", \"fallback\")")
+    let r = run("let d = parseJson(\"{}\")\nget(d, \"k\", \"fallback\")")
     check r == "\"fallback\""
   test "keys":
-    let r = run("let d = parse(\"{\\\"a\\\":1,\\\"b\\\":2}\")\njoin(keys(d), \",\")")
+    let r = run("let d = parseJson(\"{\\\"a\\\":1,\\\"b\\\":2}\")\njoin(keys(d), \",\")")
     check r == "a,b"
 
 suite "Libraries - OS":

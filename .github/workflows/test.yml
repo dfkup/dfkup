@@ -24,5 +24,11 @@ jobs:
           nim-version: ${{ matrix.nim-version }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: nimble install -Y
+      - name: Generate DynASM JIT C source
+        run: |
+          sudo apt-get update && sudo apt-get install -y lua5.3
+          VCDIR=$(ls -d $HOME/.nimble/pkgs2/vancode-* 2>/dev/null | head -1)
+          DYNDIR="$VCDIR/vancode/interpreter/jit/dynasm"
+          lua5.3 "$DYNDIR/dynasm.lua" -o "$DYNDIR/vancode_jit.c" "$DYNDIR/vancode_jit.dasc"
       - run: nim c -r src/${{ github.event.repository.name }}.nim
       - run: nimble test
