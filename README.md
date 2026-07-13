@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://dfkup.github.io/dfkup/">API reference</a><br>
+  <a href="https://marketplace.visualstudio.com/items?itemName=openpeeps.dfkup-vscode">VSCode Extension</a> | <a href="https://dfkup.github.io/dfkup/">API reference</a><br>
   <img src="https://github.com/dfkup/dfkup/workflows/test/badge.svg" alt="Github Actions">  <img src="https://github.com/dfkup/dfkup/workflows/docs/badge.svg" alt="Github Actions">
 </p>
 
