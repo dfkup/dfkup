@@ -55,7 +55,7 @@ proc initHttp*(script: Script, module: Module) =
         # to allow using the onRequest callback as a closure
         proc(req: var Request) {.gcsafe.} =
           {.gcsafe.}:
-            var body = "Hello from Nim server!"
+            var body: string
             if cb != nil:
               let path = req.path
               let meth = $req.httpMethod

@@ -13,7 +13,8 @@ import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import pkg/vancode/interpreter/jit/jit
 
 import ./lang/[parser]
-import ./lang/lowlibs/[libsystem, libjson, libstrings, libsequtils, libhttp, libcli]
+import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
+                  libhttp, libcli, libjson, libyaml]
 
 import pkg/openparser/json
 
@@ -42,6 +43,12 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     let m = newModule("json", some"json.dfkup")
     m.load(sysMod)
     initJson(scr, m)
+    return m
+
+  stdlibs["yaml"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("yaml", some"yaml.dfkup")
+    m.load(sysMod)
+    initYaml(scr, m)
     return m
 
   stdlibs["strings"] = proc(scr: Script, sysMod: Module): Module =

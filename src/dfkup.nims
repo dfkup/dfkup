@@ -6,7 +6,6 @@
 --verbosity:0
 --define:nimPreviewHashRef
 --define:supranimUseGlobalOnRequest
---define:release
 
 when defined dfkupDebug:
   --define:checkBounds

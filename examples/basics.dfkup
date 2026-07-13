@@ -238,9 +238,9 @@ echo files
 #
 fn fileStats(filePath: string) =
   echo filePath
-  if fileExists(filePath) == false:
+  if fileExists(filePath) == false {
     echo "not found"
-  else:
+  } else{ 
     let content = readFile(filePath)
     let charCount = len(content)
     let lines = split(content, "\n")
@@ -251,5 +251,7 @@ fn fileStats(filePath: string) =
     echo charCount
     echo wordCount
     echo lineCount
+  }
 
 fileStats("examples/basics.dfkup")
+
