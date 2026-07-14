@@ -52,7 +52,15 @@ jobs:
           assets="${{ env.APP_NAME }}_$(echo "$suffix" | tr '[:upper:]' '[:lower:]')"
           mkdir -p "dist/$assets"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cp "bin/${{ env.APP_NAME }}.exe" "dist/$assets/"
+            exe="${{ env.APP_NAME }}.exe"
+            # binary could be in bin/, project root, or elsewhere — find it
+            src=$(find . -maxdepth 2 -name "$exe" -type f | head -1)
+            if [ -z "$src" ]; then
+              echo "::error:: Binary not found. Searching..."
+              find . -name "$exe" -type f
+              exit 1
+            fi
+            cp "$src" "dist/$assets/"
           else
             cp "bin/${{ env.APP_NAME }}" "dist/$assets/"
           fi
