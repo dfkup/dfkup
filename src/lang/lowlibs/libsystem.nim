@@ -98,7 +98,11 @@ proc initSystem*(script: Script, module: Module) =
 
   script.addProc(module, "echo", @[paramDef("x", ttyJson)], ttyVoid,
     proc (args: StackView, argc: int): Value =
-      echo $args[0].jsonVal)
+      let j = args[0].jsonVal
+      if j.kind == JString:
+        echo j.getStr()
+      else:
+        echo $j)
 
   script.addProc(module, "echo", @[paramDef("x", ttyPointer)], ttyVoid,
     proc (args: StackView, argc: int): Value =
