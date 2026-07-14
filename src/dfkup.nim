@@ -14,7 +14,7 @@ import pkg/vancode/interpreter/jit/jit
 
 import ./lang/[parser]
 import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
-                  libhttp, libcli, libjson, libyaml]
+                  libhttp, libcli, libjson, libyaml, libregex]
 
 import pkg/openparser/json
 
@@ -73,6 +73,12 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     let m = newModule("cli", some"cli.dfkup")
     m.load(sysMod)
     initCliLib(scr, m)
+    return m
+
+  stdlibs["regex"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("regex", some"regex.dfkup")
+    m.load(sysMod)
+    initRegex(scr, m)
     return m
 
   script.stdpos = script.procs.high
