@@ -1,0 +1,4 @@
+nimTitle	libsystem	lang/lowlibs/libsystem.html	module lang/lowlibs/libsystem		0
+nim	compileCode	lang/lowlibs/libsystem.html#compileCode,Script,Module,string	proc compileCode(script: Script; module: Module; code: string)		15
+nim	InlineCode	lang/lowlibs/libsystem.html#InlineCode	const InlineCode		25
+nim	initSystem	lang/lowlibs/libsystem.html#initSystem,Script,Module	proc initSystem(script: Script; module: Module)		71

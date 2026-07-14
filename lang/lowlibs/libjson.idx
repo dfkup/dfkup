@@ -1,0 +1,2 @@
+nimTitle	libjson	lang/lowlibs/libjson.html	module lang/lowlibs/libjson		0
+nim	initJson	lang/lowlibs/libjson.html#initJson,Script,Module	proc initJson(script: Script; module: Module)		13

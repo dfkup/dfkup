@@ -1,0 +1,4 @@
+nimTitle	libhttp	lang/lowlibs/libhttp.html	module lang/lowlibs/libhttp		0
+nim	callCallback	lang/lowlibs/libhttp.html#callCallback,cstring,int32,ptr.int64,int32,ptr.int32	proc callCallback(procScript: cstring; procId: int32; flatArgs: ptr int64;\n             argc: int32; argTypes: ptr int32): int64		18
+nim	execCallback	lang/lowlibs/libhttp.html#execCallback,cstring,int32,ptr.int64,int32,ptr.int32	proc execCallback(procScript: cstring; procId: int32; flatArgs: ptr int64;\n             argc: int32; argTypes: ptr int32): int64		22
+nim	initHttp	lang/lowlibs/libhttp.html#initHttp,Script,Module	proc initHttp(script: Script; module: Module)		26

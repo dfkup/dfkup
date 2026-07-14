@@ -1,0 +1,2 @@
+nimTitle	libstrings	lang/lowlibs/libstrings.html	module lang/lowlibs/libstrings		0
+nim	initStrings	lang/lowlibs/libstrings.html#initStrings,Script,Module	proc initStrings(script: Script; module: Module)		12

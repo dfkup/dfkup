@@ -1,0 +1,7 @@
+nimTitle	dfkup	dfkup.html	module dfkup		0
+nim	DfkupError	dfkup.html#DfkupError	object DfkupError		22
+nim	exec	dfkup.html#exec,string,string,bool,bool	proc exec(code: string; sourcePath: string;\n     allowExprResult, enableHotCodeDetection: bool): string		24
+nim	runScript	dfkup.html#runScript,string,string,bool	proc runScript(code: string; sourcePath = "script.dfkup";\n          enableHotCodeDetection: bool = true): string		126
+nim	runFile	dfkup.html#runFile,string,bool	proc runFile(path: string; enableHotCodeDetection: bool = true): string		130
+nim	runCommand	dfkup.html#runCommand,Values	proc runCommand(v: Values)		142
+nim	astCommand	dfkup.html#astCommand,Values	proc astCommand(v: Values)		153

@@ -1,0 +1,2 @@
+nimTitle	libcli	lang/lowlibs/libcli.html	module lang/lowlibs/libcli		0
+nim	initCliLib	lang/lowlibs/libcli.html#initCliLib,Script,Module	proc initCliLib(script: Script; module: Module)		12

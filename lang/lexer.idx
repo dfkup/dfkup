@@ -1,0 +1,88 @@
+nimTitle	lexer	lang/lexer.html	module lang/lexer		0
+nim	tkEof	lang/lexer.html#tkEof	TokenKind.tkEof		11
+nim	tkIdentifier	lang/lexer.html#tkIdentifier	TokenKind.tkIdentifier		11
+nim	tkImport	lang/lexer.html#tkImport	TokenKind.tkImport		11
+nim	tkInclude	lang/lexer.html#tkInclude	TokenKind.tkInclude		11
+nim	tkInteger	lang/lexer.html#tkInteger	TokenKind.tkInteger		11
+nim	tkFloat	lang/lexer.html#tkFloat	TokenKind.tkFloat		11
+nim	tkString	lang/lexer.html#tkString	TokenKind.tkString		11
+nim	tkPlus	lang/lexer.html#tkPlus	TokenKind.tkPlus		11
+nim	tkMinus	lang/lexer.html#tkMinus	TokenKind.tkMinus		11
+nim	tkAsterisk	lang/lexer.html#tkAsterisk	TokenKind.tkAsterisk		11
+nim	tkDivide	lang/lexer.html#tkDivide	TokenKind.tkDivide		11
+nim	tkMod	lang/lexer.html#tkMod	TokenKind.tkMod		11
+nim	tkCaret	lang/lexer.html#tkCaret	TokenKind.tkCaret		11
+nim	tkLC	lang/lexer.html#tkLC	TokenKind.tkLC		11
+nim	tkRC	lang/lexer.html#tkRC	TokenKind.tkRC		11
+nim	tkLP	lang/lexer.html#tkLP	TokenKind.tkLP		11
+nim	tkRP	lang/lexer.html#tkRP	TokenKind.tkRP		11
+nim	tkLB	lang/lexer.html#tkLB	TokenKind.tkLB		11
+nim	tkRB	lang/lexer.html#tkRB	TokenKind.tkRB		11
+nim	tkComma	lang/lexer.html#tkComma	TokenKind.tkComma		11
+nim	tkDot	lang/lexer.html#tkDot	TokenKind.tkDot		11
+nim	tkSemicolon	lang/lexer.html#tkSemicolon	TokenKind.tkSemicolon		11
+nim	tkColon	lang/lexer.html#tkColon	TokenKind.tkColon		11
+nim	tkScolon	lang/lexer.html#tkScolon	TokenKind.tkScolon		11
+nim	tkAssign	lang/lexer.html#tkAssign	TokenKind.tkAssign		11
+nim	tkEq	lang/lexer.html#tkEq	TokenKind.tkEq		11
+nim	tkGt	lang/lexer.html#tkGt	TokenKind.tkGt		11
+nim	tkLt	lang/lexer.html#tkLt	TokenKind.tkLt		11
+nim	tkGte	lang/lexer.html#tkGte	TokenKind.tkGte		11
+nim	tkLte	lang/lexer.html#tkLte	TokenKind.tkLte		11
+nim	tkAndAnd	lang/lexer.html#tkAndAnd	TokenKind.tkAndAnd		11
+nim	tkOrOr	lang/lexer.html#tkOrOr	TokenKind.tkOrOr		11
+nim	tkIf	lang/lexer.html#tkIf	TokenKind.tkIf		11
+nim	tkElse	lang/lexer.html#tkElse	TokenKind.tkElse		11
+nim	tkWhile	lang/lexer.html#tkWhile	TokenKind.tkWhile		11
+nim	tkFor	lang/lexer.html#tkFor	TokenKind.tkFor		11
+nim	tkIn	lang/lexer.html#tkIn	TokenKind.tkIn		11
+nim	tkFunc	lang/lexer.html#tkFunc	TokenKind.tkFunc		11
+nim	tkReturn	lang/lexer.html#tkReturn	TokenKind.tkReturn		11
+nim	tkVar	lang/lexer.html#tkVar	TokenKind.tkVar		11
+nim	tkTrue	lang/lexer.html#tkTrue	TokenKind.tkTrue		11
+nim	tkFalse	lang/lexer.html#tkFalse	TokenKind.tkFalse		11
+nim	tkNil	lang/lexer.html#tkNil	TokenKind.tkNil		11
+nim	tkComment	lang/lexer.html#tkComment	TokenKind.tkComment		11
+nim	tkDoc	lang/lexer.html#tkDoc	TokenKind.tkDoc		11
+nim	tkTernary	lang/lexer.html#tkTernary	TokenKind.tkTernary		11
+nim	tkAmp	lang/lexer.html#tkAmp	TokenKind.tkAmp		11
+nim	tkPipe	lang/lexer.html#tkPipe	TokenKind.tkPipe		11
+nim	tkSqString	lang/lexer.html#tkSqString	TokenKind.tkSqString		11
+nim	tkStringLiteral	lang/lexer.html#tkStringLiteral	TokenKind.tkStringLiteral		11
+nim	tkNe	lang/lexer.html#tkNe	TokenKind.tkNe		11
+nim	tkExc	lang/lexer.html#tkExc	TokenKind.tkExc		11
+nim	tkId	lang/lexer.html#tkId	TokenKind.tkId		11
+nim	tkBacktick	lang/lexer.html#tkBacktick	TokenKind.tkBacktick		11
+nim	tkIdentVar	lang/lexer.html#tkIdentVar	TokenKind.tkIdentVar		11
+nim	tkIdentVarSafe	lang/lexer.html#tkIdentVarSafe	TokenKind.tkIdentVarSafe		11
+nim	tkBool	lang/lexer.html#tkBool	TokenKind.tkBool		11
+nim	tkAt	lang/lexer.html#tkAt	TokenKind.tkAt		11
+nim	tkCase	lang/lexer.html#tkCase	TokenKind.tkCase		11
+nim	tkOf	lang/lexer.html#tkOf	TokenKind.tkOf		11
+nim	tkElif	lang/lexer.html#tkElif	TokenKind.tkElif		11
+nim	tkAnd	lang/lexer.html#tkAnd	TokenKind.tkAnd		11
+nim	tkOr	lang/lexer.html#tkOr	TokenKind.tkOr		11
+nim	tkType	lang/lexer.html#tkType	TokenKind.tkType		11
+nim	tkLitObject	lang/lexer.html#tkLitObject	TokenKind.tkLitObject		11
+nim	tkFn	lang/lexer.html#tkFn	TokenKind.tkFn		11
+nim	tkIterator	lang/lexer.html#tkIterator	TokenKind.tkIterator		11
+nim	tkMacro	lang/lexer.html#tkMacro	TokenKind.tkMacro		11
+nim	tkBreakCmd	lang/lexer.html#tkBreakCmd	TokenKind.tkBreakCmd		11
+nim	tkLet	lang/lexer.html#tkLet	TokenKind.tkLet		11
+nim	tkConst	lang/lexer.html#tkConst	TokenKind.tkConst		11
+nim	tkDiscardCmd	lang/lexer.html#tkDiscardCmd	TokenKind.tkDiscardCmd		11
+nim	tkContinueCmd	lang/lexer.html#tkContinueCmd	TokenKind.tkContinueCmd		11
+nim	tkEcho	lang/lexer.html#tkEcho	TokenKind.tkEcho		11
+nim	tkAssert	lang/lexer.html#tkAssert	TokenKind.tkAssert		11
+nim	tkYield	lang/lexer.html#tkYield	TokenKind.tkYield		11
+nim	tkIs	lang/lexer.html#tkIs	TokenKind.tkIs		11
+nim	tkIsNot	lang/lexer.html#tkIsNot	TokenKind.tkIsNot		11
+nim	tkUnknown	lang/lexer.html#tkUnknown	TokenKind.tkUnknown		11
+nim	TokenKind	lang/lexer.html#TokenKind	enum TokenKind		11
+nim	TokenTuple	lang/lexer.html#TokenTuple	tuple TokenTuple		28
+nim	Lexer	lang/lexer.html#Lexer	object Lexer		36
+nim	DfkupLexerError	lang/lexer.html#DfkupLexerError	object DfkupLexerError		42
+nim	newLexer	lang/lexer.html#newLexer,string	proc newLexer(input: string): Lexer		44
+nim	error	lang/lexer.html#error,Lexer,string	proc error(l: var Lexer; msg: string)		79
+nim	nextToken	lang/lexer.html#nextToken,Lexer	proc nextToken(lex: var Lexer): TokenTuple		122
+nim	getToken	lang/lexer.html#getToken,Lexer	proc getToken(lex: var Lexer): TokenTuple		510

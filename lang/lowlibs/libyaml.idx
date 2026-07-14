@@ -1,0 +1,2 @@
+nimTitle	libyaml	lang/lowlibs/libyaml.html	module lang/lowlibs/libyaml		0
+nim	initYaml	lang/lowlibs/libyaml.html#initYaml,Script,Module	proc initYaml(script: Script; module: Module)		13

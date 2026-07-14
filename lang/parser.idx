@@ -1,0 +1,5 @@
+nimTitle	parser	lang/parser.html	module lang/parser		0
+nim	Parser	lang/parser.html#Parser	object Parser		13
+nim	DfkupParserError	lang/parser.html#DfkupParserError	object DfkupParserError		18
+nim	PrefixFunction	lang/parser.html#PrefixFunction	type PrefixFunction		59
+nim	parseScript	lang/parser.html#parseScript,Ast,string	proc parseScript(astProgram: var Ast; code: string)		771

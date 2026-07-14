@@ -1,0 +1,2 @@
+nimTitle	libregex	lang/lowlibs/libregex.html	module lang/lowlibs/libregex		0
+nim	initRegex	lang/lowlibs/libregex.html#initRegex,Script,Module	proc initRegex(script: Script; module: Module)		17

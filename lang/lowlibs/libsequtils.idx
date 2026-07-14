@@ -1,0 +1,2 @@
+nimTitle	libsequtils	lang/lowlibs/libsequtils.html	module lang/lowlibs/libsequtils		0
+nim	initSequtils	lang/lowlibs/libsequtils.html#initSequtils,Script,Module	proc initSequtils(script: Script; module: Module)		36
