@@ -22,11 +22,19 @@ run_one() {
     printf "  %-16s %-10s   -\n" "$bench" "$lang"
     return
   fi
-  local raw
-  raw=$($HYPF "$cmd $file" 2>&1)
-  local line
+  local raw line crashed
+  raw=$($HYPF --ignore-failure "$cmd $file" 2>&1) || true
+  if echo "$raw" | grep -q "Ignoring non-zero exit code"; then
+    crashed=1
+  fi
   line=$(echo "$raw" | grep "Time.*mean" | head -1 | sed 's/ \[User.*//')
-  printf "  %-16s %-10s %s\n" "$bench" "$lang" "$line"
+  if [ -n "$crashed" ]; then
+    printf "  %-16s %-10s   CRASHED\n" "$bench" "$lang"
+  elif [ -z "$line" ]; then
+    printf "  %-16s %-10s   -\n" "$bench" "$lang"
+  else
+    printf "  %-16s %-10s %s\n" "$bench" "$lang" "$line"
+  fi
 }
 
 for B in $BENCHMARKS; do
