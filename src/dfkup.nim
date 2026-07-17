@@ -96,22 +96,22 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     installJit(vmInstance)
   
   # Create a synthetic Proc for the main chunk so the JIT can compile it
-  var mainProc = Proc(
-    name: "__main",
-    kind: pkNative,
-    chunk: mainChunk,
-    procId: script.procs.len,
-    paramCount: 0,
-    hasResult: false,
-    jitForeign: nil,
-    jitCallCount: 0,
-    jitCodePtr: nil,
-    jitMaxLocal: 0,
-    jitReturnBool: false,
-    jitRecompiled: false
-  )
-  script.procs.add(mainProc)
-  script.mainProc = mainProc
+  # var mainProc = Proc(
+  #   name: "__main",
+  #   kind: pkNative,
+  #   chunk: mainChunk,
+  #   procId: script.procs.len,
+  #   paramCount: 0,
+  #   hasResult: false,
+  #   jitForeign: nil,
+  #   jitCallCount: 0,
+  #   jitCodePtr: nil,
+  #   jitMaxLocal: 0,
+  #   jitReturnBool: false,
+  #   jitRecompiled: false
+  # )
+  # script.procs.add(mainProc)
+  # script.mainProc = mainProc
 
   vmInstance.prewarmScriptOps(script)
   when defined(vancodeJitDynasm):
@@ -138,6 +138,7 @@ when isMainModule:
   import pkg/kapsis
   import pkg/kapsis/runtime
   import pkg/kapsis/interactive/prompts
+  import ./lang/repl
 
   proc runCommand*(v: Values) =
     let filePath = $(v.get("script").getPath)
@@ -149,6 +150,27 @@ when isMainModule:
       display(span("error", fgRed), span(e.msg))
     except IOError as e:
       display(span("error", fgRed), span(e.msg))
+
+  proc inlineCommand*(v: Values) =
+    var code: string
+    if v.has("code"):
+      code = v.get("code").getStr
+    elif paramCount() >= 1:
+      for i in 1..paramCount():
+        if code.len > 0: code.add(" ")
+        code.add(paramStr(i))
+    else:
+      display(span("error", fgRed), span("Usage: dfkup inline <code>"))
+      return
+    try:
+      let result = exec(code, "inline", allowExprResult = true, enableHotCodeDetection = false)
+      if result.len > 0:
+        echo result
+    except DfkupError as e:
+      display(span("error", fgRed), span(e.msg))
+
+  proc replCommand*(v: Values) =
+    runRepl()
 
   proc astCommand*(v: Values) =
     let filePath = $(v.get("script").getPath)
@@ -171,9 +193,14 @@ when isMainModule:
       echo toJson(program.nodes)
 
   initKapsis do:
+    defaultCommand "run"
     commands:
       -- "Scripting"
+      repl:
+        ## Start an interactive REPL session
       run path(script), ?bool("--nojit"):
         ## Run a DFkup script file
+      inline ?string(code):
+        ## Execute DFkup code inline
       ast path(script), ?bool("--dumptree"):
         ## Generate AST from a DFkup script file

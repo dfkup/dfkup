@@ -187,8 +187,8 @@ echo alice
 echo alice.name
 echo alice.age
 
-var config = {host: "localhost", port: 8080}
-echo config
+var john = {name: "John", age: 40, email: "john@example.com"}
+echo john
 
 #
 # Section 8: JSON
@@ -198,10 +198,10 @@ let jsonStr = """{"name": "dfkup", "version": "0.2", "features": ["fast", "nim-l
 let data = parseJson(jsonStr)
 
 echo data
-echo pretty(data)
+echo data.pretty()
 
-echo get(data, "name", "")
-echo get(data, "missing", "N/A")
+echo data.get("name", "")
+echo data.get("missing", "N/A")
 
 for k in items(keys(data)):
   echo k
@@ -232,6 +232,8 @@ echo fileExists(testFile)
 
 let files = listDir(joinPath(cwd, "examples"))
 echo files
+
+
 
 #
 # Section 10: Putting It Together

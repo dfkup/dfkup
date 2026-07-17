@@ -5,7 +5,7 @@
 #          https://dfkup.dev
 #          https://github.com/dfkup/dfkup
 
-import std/[json, os, options]
+import std/[json, os, options, osproc, strutils, envvars]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 import ../parser
@@ -183,6 +183,74 @@ proc initSystem*(script: Script, module: Module) =
         arr.add(entry)
       result = initValue(arr))
 
+  let arrStrTy = module.sym("array").clone
+  arrStrTy.arrayTy = module.sym("string")
+
+  script.addProc(module, "ls", @[paramDef("path", ttyString)], ttyArray,
+    proc (args: StackView, argc: int): Value =
+      var names: seq[string]
+      for kind, name in os.walkDir(args[0].stringVal[]):
+        names.add(name)
+      result = initArray(names.len)
+      for i, n in names:
+        result.objectVal.fields[i] = initValue(n).toStorage
+    , returnTySym = arrStrTy)
+
+  #
+  # Short utility aliases
+  #
+  script.addProc(module, "cd", @[paramDef("path", ttyString)], ttyBool,
+    proc (args: StackView, argc: int): Value =
+      try:
+        os.setCurrentDir(args[0].stringVal[])
+        result = initValue(true)
+      except:
+        result = initValue(false))
+
+  script.addProc(module, "cp", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyBool,
+    proc (args: StackView, argc: int): Value =
+      try:
+        os.copyFile(args[0].stringVal[], args[1].stringVal[])
+        result = initValue(true)
+      except:
+        result = initValue(false))
+
+  script.addProc(module, "mv", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyBool,
+    proc (args: StackView, argc: int): Value =
+      try:
+        os.moveFile(args[0].stringVal[], args[1].stringVal[])
+        result = initValue(true)
+      except:
+        result = initValue(false))
+
+  script.addProc(module, "rm", @[paramDef("path", ttyString)], ttyBool,
+    proc (args: StackView, argc: int): Value =
+      try:
+        os.removeFile(args[0].stringVal[])
+        result = initValue(true)
+      except:
+        try:
+          os.removeDir(args[0].stringVal[])
+          result = initValue(true)
+        except:
+          result = initValue(false))
+
+  script.addProc(module, "findExe", @[paramDef("exe", ttyString)], ttyString,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(os.findExe(args[0].stringVal[])))
+
+  script.addProc(module, "pwd", @[], ttyString,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(os.getCurrentDir()))
+
+  script.addProc(module, "putEnv", @[paramDef("key", ttyString), paramDef("val", ttyString)], ttyVoid,
+    proc (args: StackView, argc: int): Value =
+      envvars.putEnv(args[0].stringVal[], args[1].stringVal[]))
+
+  script.addProc(module, "delEnv", @[paramDef("key", ttyString)], ttyVoid,
+    proc (args: StackView, argc: int): Value =
+      envvars.delEnv(args[0].stringVal[]))
+
   #
   # Path operations
   #
@@ -246,6 +314,49 @@ proc initSystem*(script: Script, module: Module) =
   script.addProc(module, "getFileSize", @[paramDef("path", ttyString)], ttyInt,
     proc (args: StackView, argc: int): Value =
       result = initValue(os.getFileSize(args[0].stringVal[]).int64))
+
+  #
+  # Shell execution
+  #
+  script.addProc(module, "exec", @[paramDef("cmd", ttyString)], ttyBool,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(osproc.execCmd(args[0].stringVal[]) == 0))
+
+  script.addProc(module, "execOut", @[paramDef("cmd", ttyString)], ttyString,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(osproc.execCmdEx(args[0].stringVal[]).output))
+
+  #
+  # String formatting
+  #
+  script.addProc(module, "fmt", @[paramDef("tmpl", ttyString), paramDef("args", ttyObject)], ttyString,
+    proc (args: StackView, argc: int): Value =
+      var s = args[0].stringVal[]
+      let obj = args[1].objectVal
+      for i, key in obj.keys:
+        let valRep =
+          case obj.fields[i].typeId
+          of tyString: obj.fields[i].refVal.stringVal[]
+          of tyInt: $obj.fields[i].intVal
+          of tyFloat: $obj.fields[i].floatVal
+          of tyBool: $obj.fields[i].boolVal
+          else: "nil"
+        s = s.replace("{" & key & "}", valRep)
+      result = initValue(s))
+
+  #
+  # Stdin / pipe support
+  #
+  script.addProc(module, "readStdin", @[], ttyString,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(stdin.readAll()))
+
+  script.addProc(module, "readStdinLines", @[], ttyJson,
+    proc (args: StackView, argc: int): Value =
+      var lines = newJArray()
+      for line in stdin.lines:
+        lines.add(newJString(line))
+      result = initValue(lines))
 
   #
   # Built-in functions needed by iterators
