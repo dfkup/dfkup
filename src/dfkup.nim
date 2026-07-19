@@ -14,7 +14,8 @@ import pkg/vancode/interpreter/jit/jit
 
 import ./lang/[parser]
 import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
-                  libhttp, libcli, libjson, libyaml, libregex]
+                  libhttp, libcli, libjson, libyaml, libregex,
+                  libbrowser]
 
 import pkg/openparser/json
 
@@ -79,6 +80,12 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     let m = newModule("regex", some"regex.dfkup")
     m.load(sysMod)
     initRegex(scr, m)
+    return m
+
+  stdlibs["browser"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("browser", some"browser.dfkup")
+    m.load(sysMod)
+    initBrowser(scr, m)
     return m
 
   script.stdpos = script.procs.high

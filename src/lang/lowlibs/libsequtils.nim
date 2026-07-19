@@ -10,8 +10,8 @@ import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib]
 
 proc valueEq(a, b: Value): bool =
-  if a == nil and b == nil: return true
-  if a == nil or b == nil: return false
+  if a.typeId == tyNil and b.typeId == tyNil: return true
+  if a.typeId == tyNil or b.typeId == tyNil: return false
   if a.typeId != b.typeId: return false
   case a.typeId
   of tyBool:   result = a.boolVal == b.boolVal

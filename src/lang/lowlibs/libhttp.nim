@@ -56,14 +56,17 @@ proc initHttp*(script: Script, module: Module) =
         proc(req: var Request) {.gcsafe.} =
           {.gcsafe.}:
             var body: string
-            if cb != nil:
+            if cb.typeId != tyNil:
               let path = req.path
               let meth = $req.httpMethod
               var flatArgs: array[2, int64]
               var argTypes: array[2, int32]
-              flatArgs[0] = cast[int64](initValue(path))
+              var bridgeBuf: array[2, Value]
+              bridgeBuf[0] = initValue(path)
+              flatArgs[0] = cast[int64](bridgeBuf[0])
               argTypes[0] = tyString.int32
-              flatArgs[1] = cast[int64](initValue(meth))
+              bridgeBuf[1] = initValue(meth)
+              flatArgs[1] = cast[int64](bridgeBuf[1])
               argTypes[1] = tyString.int32
               let raw = execCallback(cstring(cb.procVal.procScript),
                 cb.procVal.procId.int32, addr flatArgs[0], 2, addr argTypes[0])

@@ -452,6 +452,19 @@ prefixHandle parseIterator:
     caseNotNil fnBlock:
       result = ast.newTree(nkIterator, name, genericParams, formalParams, fnBlock)
 
+prefixHandle parseCoroutine:
+  let coroPos = p.curr.col
+  walk p  # skip 'coro'
+  if p.curr.kind notin {tkFunc, tkFn}:
+    p.curr.error("expected 'func' or 'fn' after 'coro'")
+  walk p  # skip 'func'/'fn'
+  var name, genericParams, formalParams: Node
+  parseFunctionHead(p, isAnon = false, name, genericParams, formalParams)
+  if p.curr in {tkAssign, tkLC}:
+    let fnBlock: Node = p.parseBlock(coroPos, parseFnBlock = true)
+    caseNotNil fnBlock:
+      result = ast.newTree(nkCoroutine, name, genericParams, formalParams, fnBlock)
+
 prefixHandle parseCall:
   let fnName = ast.newIdent(p.curr.value, p.curr.line, p.curr.col)
   result = ast.newCall(fnName)
@@ -627,6 +640,7 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkDiscardCmd: parseDiscard
     of tkFunc, tkFn: parseFunction
     of tkIterator: parseIterator
+    of tkCoroutine: parseCoroutine
     of tkLP: parseParExpr
     of tkLB: parseArray
     of tkLC: parseObjectStorage

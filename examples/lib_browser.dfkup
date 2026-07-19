@@ -1,0 +1,93 @@
+# Browser automation examples
+# Run: dfkup run examples/browser_example.dfkup
+#
+# Requires Chrome/Chromium installed.
+
+import "std/browser"
+
+#
+# 1. Launch a headless browser and create a page
+#
+echo "--- 1. Launch browser ---"
+let browser = launchBrowser({headless: true})
+let page = newPage(browser)
+
+#
+# 2. Navigate to a URL
+#
+echo "--- 2. Navigate ---"
+page.goto("https://example.com")
+
+#
+# 3. Get page information (getters)
+#
+echo "--- 3. Page info ---"
+echo getTitle(page)
+echo getUrl(page)
+
+#
+# 4. Evaluate JavaScript
+#
+echo "--- 4. Evaluate JS ---"
+let js = page.evaluate("document.title")
+echo js
+
+#
+# 5. Take a screenshot
+#
+echo "--- 5. Screenshot ---"
+let ss = getScreenshot(page)
+echo len(ss)
+
+#
+# 6. Locator API (auto-waiting queries)
+#
+echo "--- 6. Locator API ---"
+let heading = page.locator("h1")
+echo getLocatorInnerText(heading)
+
+let links = page.locator("a")
+echo getLocatorCount(links)
+
+#
+# 7. Cookies
+#
+echo "--- 7. Cookies ---"
+page.setCookie({name: "session", value: "abc123"})
+let cs = getCookies(page)
+echo cs
+
+#
+# 8. Local storage
+#
+echo "--- 8. Local storage ---"
+page.setLocalStorage("key1", "value1")
+echo page.getLocalStorage("key1")
+
+#
+# 9. Set viewport
+#
+echo "--- 9. Viewport ---"
+page.setViewport(1024, 768)
+
+#
+# 10. UFCS syntax (page.method() instead of method(page))
+#
+echo "--- 10. UFCS ---"
+page.goto("https://example.com")
+echo page.getTitle()
+echo page.getUrl()
+
+#
+# 11. ElementHandle actions (click, type, etc.)
+#
+echo "--- 11. Element actions ---"
+let el = page.querySelector("h1")
+echo getInnerText(el)
+
+#
+# 12. Cleanup
+#
+echo "--- 12. Cleanup ---"
+browser.close()
+echo "done"

@@ -1,7 +1,7 @@
 import std/[tables, strformat, options, strutils]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import ./parser
-import ./lowlibs/[libsystem, libjson, libyaml, libstrings, libsequtils, libhttp, libcli, libregex]
+import ./lowlibs/[libsystem, libjson, libyaml, libstrings, libsequtils, libhttp, libcli, libregex, libbrowser]
 
 proc newStdlibs*(script: Script, systemModule: Module): StandardLibrary =
   result = newTable[string, ModuleLibrary]()
@@ -41,6 +41,12 @@ proc newStdlibs*(script: Script, systemModule: Module): StandardLibrary =
     initRegex(scr, m)
     return m
 
+  result["browser"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("browser", some"browser.dfkup")
+    m.load(sysMod)
+    initBrowser(scr, m)
+    return m
+
 type ReplSession* = object
   script*: Script
   module*: Module
@@ -73,7 +79,7 @@ proc evalRepl*(session: var ReplSession, code: string): string =
     return "compile error: " & e.msg
   try:
     let r = session.vm.interpret(session.script, chunk)
-    if r != nil and r.typeId notin {tyNil}:
+    if r.typeId notin {tyNil}:
       result = $r
   except CatchableError as e:
     result = "runtime error: " & e.msg

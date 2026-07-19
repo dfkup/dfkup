@@ -6,7 +6,7 @@
 #          https://github.com/dfkup/dfkup
 
 import std/[json, os, options, osproc, strutils, envvars]
-import pkg/vancode/interpreter/[ast, codegen, chunk, sym, value]
+import pkg/vancode/interpreter/[ast, codegen, chunk, sym, value, vm]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 import ../parser
 
@@ -405,6 +405,22 @@ proc initSystem*(script: Script, module: Module) =
       result = initValue((args[0].objectVal.fields.len - 1).int64)
     discard module.addCallable(highSym, highSym.name)
     script.procs.add(highProc)
+
+  #
+  # Coroutine builtins
+  #
+  script.addProc(module, "createCoro", @[paramDef("proc", ttyProc)], ttyCoroutine,
+    proc (args: StackView, argc: int): Value =
+      raise newException(ValueError, "createCoro must be used as a compiler intrinsic"))
+  script.addProc(module, "resume", @[paramDef("coro", ttyCoroutine), paramDef("args", ttyAny)], ttyAny,
+    proc (args: StackView, argc: int): Value =
+      raise newException(ValueError, "resume must be used as a compiler intrinsic"))
+  script.addProc(module, "status", @[paramDef("coro", ttyCoroutine)], ttyString,
+    proc (args: StackView, argc: int): Value =
+      if args[0].typeId != tyCoroutine or args[0].objectVal == nil or args[0].objectVal.foreign.data == nil:
+        return initValue("invalid")
+      let coro = cast[Coroutine](args[0].objectVal.foreign.data)
+      result = initValue($coro.state))
 
   #
   # Compile inline iterators
