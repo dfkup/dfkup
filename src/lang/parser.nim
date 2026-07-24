@@ -278,7 +278,7 @@ prefixHandle parseIf:
     let ifBlock: Node = p.parseBlock(tokenIf.col)
     caseNotNil ifBlock:
       children.add(ifBlock)
-    while p.curr is tkElif:
+    while p.curr is tkElif and p.curr.col == tokenIf.col:
       let tokenElif = p.curr
       walk p
       let elifExpr: Node = p.parseExpression()
@@ -286,7 +286,7 @@ prefixHandle parseIf:
         let elifBlock: Node = p.parseBlock(tokenIf.col)
         caseNotNil elifBlock:
           children.add(@[elifExpr, elifBlock])
-    if p.curr is tkElse:
+    if p.curr is tkElse and p.curr.col == tokenIf.col:
       walk p
       let elseBlock: Node = p.parseBlock(tokenIf.col)
       caseNotNil elseBlock:
