@@ -200,7 +200,7 @@ when isMainModule:
       echo toJson(program.nodes)
 
   initKapsis do:
-    defaultCommand "run"
+    defaultCommand: "run"
     commands:
       -- "Scripting"
       repl:
@@ -209,5 +209,5 @@ when isMainModule:
         ## Run a DFkup script file
       inline ?string(code):
         ## Execute DFkup code inline
-      ast path(script), ?bool("--dumptree"):
+      ast path("script"), ?bool("--dumptree"):
         ## Generate AST from a DFkup script file
