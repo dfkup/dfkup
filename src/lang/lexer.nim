@@ -375,14 +375,44 @@ proc nextToken*(lex: var Lexer): TokenTuple =
         lex.advance()
       result = initToken(lex, tkString, move lex.strbuf, line, col, pos, wsno)
   of '`':
-    lex.advance()
-    lex.strbuf.setLen(0)
-    while lex.current != '`' and lex.current != '\0' and lex.current != '\n':
-      lex.strbuf.add(lex.current)
+    if lex.peek() == '`' and lex.peek(2) == '`':
+      # Markdown-style fenced string: ```lang
+      #   multi line content
+      # ```
       lex.advance()
-    if lex.current == '`':
       lex.advance()
-    result = initToken(lex, tkBacktick, move lex.strbuf, line, col, pos, wsno)
+      lex.advance()
+      lex.strbuf.setLen(0)
+      # skip the optional language tag on the same line
+      while lex.current notin {'\n', '\r', '\0'} and lex.current != '`':
+        lex.advance()
+      # skip the newline after the opening fence
+      if lex.current == '\r':
+        lex.advance()
+      if lex.current == '\n':
+        lex.advance()
+      # read the content until the closing fence
+      while lex.current != '\0':
+        if lex.current == '`' and lex.peek() == '`' and lex.peek(2) == '`':
+          lex.advance()
+          lex.advance()
+          lex.advance()
+          break
+        lex.strbuf.add(lex.current)
+        lex.advance()
+      # strip the trailing newline right before the closing fence
+      while lex.strbuf.len > 0 and lex.strbuf[^1] in {'\n', '\r'}:
+        lex.strbuf.setLen(lex.strbuf.len - 1)
+      result = initToken(lex, tkString, move lex.strbuf, line, col, pos, wsno)
+    else:
+      lex.advance()
+      lex.strbuf.setLen(0)
+      while lex.current != '`' and lex.current != '\0' and lex.current != '\n':
+        lex.strbuf.add(lex.current)
+        lex.advance()
+      if lex.current == '`':
+        lex.advance()
+      result = initToken(lex, tkBacktick, move lex.strbuf, line, col, pos, wsno)
   of '@':
     lex.advance()
     lex.strbuf.setLen(0)

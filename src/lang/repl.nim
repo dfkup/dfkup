@@ -69,7 +69,7 @@ proc evalRepl*(session: var ReplSession, code: string): string =
   try:
     parseScript(program, code)
   except DfkupParserError as e:
-    return "parse error: " & e.msg
+    return "parse error: (" & $e.ln & "," & $e.col & "): " & e.msg
   var chunk = newChunk("repl")
   var gen = initCompiler(session.script, session.module, chunk, stdlibs = session.stdlibs)
   gen.allowExprResult = true

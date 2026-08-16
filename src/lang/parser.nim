@@ -29,7 +29,7 @@ const
 proc error(tk: TokenTuple, msg: string) =
   raise (ref DfkupParserError)(
     ln: tk.line, col: tk.col,
-    msg: ErrorFmt % ["", $tk.line, $tk.col, msg]
+    msg: msg
   )
 
 proc skipNextComment(p: var Parser) =
@@ -275,18 +275,20 @@ prefixHandle parseIf:
   let ifExpr: Node = p.parseExpression()
   caseNotNil ifExpr:
     var children = @[ifExpr]
+    var braced = p.curr is tkLC
     let ifBlock: Node = p.parseBlock(tokenIf.col)
     caseNotNil ifBlock:
       children.add(ifBlock)
-    while p.curr is tkElif and p.curr.col == tokenIf.col:
+    while p.curr is tkElif and (braced or p.curr.col == tokenIf.col):
       let tokenElif = p.curr
       walk p
       let elifExpr: Node = p.parseExpression()
       caseNotNil elifExpr:
+        braced = p.curr is tkLC
         let elifBlock: Node = p.parseBlock(tokenIf.col)
         caseNotNil elifBlock:
           children.add(@[elifExpr, elifBlock])
-    if p.curr is tkElse and p.curr.col == tokenIf.col:
+    if p.curr is tkElse and (braced or p.curr.col == tokenIf.col):
       walk p
       let elseBlock: Node = p.parseBlock(tokenIf.col)
       caseNotNil elseBlock:
