@@ -8,7 +8,7 @@
 import std/[net, httpcore]
 import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
-import pkg/supranim/network/backends/webserver_powpow
+import pkg/supranim/network/webserver
 
 type
   DfkupWebServer = ref object

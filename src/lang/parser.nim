@@ -279,7 +279,11 @@ prefixHandle parseIf:
     let ifBlock: Node = p.parseBlock(tokenIf.col)
     caseNotNil ifBlock:
       children.add(ifBlock)
-    while p.curr is tkElif and (braced or p.curr.col == tokenIf.col):
+    # `elif`/`else` are allowed when:
+    #   - the block is brace-delimited, OR
+    #   - still on the same line (single-line `if: a else: b`), OR
+    #   - indentation-based block at matching column
+    while p.curr is tkElif and (braced or p.curr.line == tokenIf.line or p.curr.col == tokenIf.col):
       let tokenElif = p.curr
       walk p
       let elifExpr: Node = p.parseExpression()
@@ -288,7 +292,7 @@ prefixHandle parseIf:
         let elifBlock: Node = p.parseBlock(tokenIf.col)
         caseNotNil elifBlock:
           children.add(@[elifExpr, elifBlock])
-    if p.curr is tkElse and (braced or p.curr.col == tokenIf.col):
+    if p.curr is tkElse and (braced or p.curr.line == tokenIf.line or p.curr.col == tokenIf.col):
       walk p
       let elseBlock: Node = p.parseBlock(tokenIf.col)
       caseNotNil elseBlock:
