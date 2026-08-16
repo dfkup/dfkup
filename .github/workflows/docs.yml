@@ -7,4 +7,4 @@ jobs:
   release:
     permissions:
       contents: write
-    uses: nimbase/setup-nim-action/.github/workflows/docs.yml@main
+    uses: nimbase/setup-nim-action/.github/workflows/docs_clue.yml@main
