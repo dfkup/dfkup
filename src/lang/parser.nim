@@ -8,6 +8,7 @@
 import std/[macros, strutils]
 import pkg/vancode/interpreter/[errors, ast]
 import ./lexer
+import ./staticeval
 
 type
   Parser* = object
@@ -135,6 +136,7 @@ proc parseImport(p: var Parser, minPrec = 0): Node
 proc parseGenericType(p: var Parser, lhs: Node): Node
 proc parsePrefixPlus(p: var Parser, minPrec = 0): Node
 proc parsePrefixNegate(p: var Parser, minPrec = 0): Node
+proc parsePrefixNot(p: var Parser, minPrec = 0): Node
 
 prefixHandle parseBoolean:
   let v =
@@ -235,7 +237,11 @@ proc parseBlock(p: var Parser, indentPos = 0,
     elif not closingBlock and p.curr.col <= indentPos: break
     let subNode = p.parseStmt()
     if subNode != nil:
-      stmts.add(subNode)
+      if subNode.kind == nkStatic:
+        # inline the selected `when` branch into the enclosing scope
+        stmts.add(subNode.children)
+      else:
+        stmts.add(subNode)
     else:
       break
   result = ast.newTree(nkBlock, stmts)
@@ -298,6 +304,52 @@ prefixHandle parseIf:
       caseNotNil elseBlock:
         children.add(elseBlock)
     result = ast.newTree(nkIf, children)
+
+prefixHandle parseWhen:
+  ## Compile-time conditional, mirroring Nim's `when`. The condition is
+  ## evaluated at parse time and only the selected branch is emitted,
+  ## inlined into the enclosing scope (via an nkStatic marker node).
+  let tokenWhen: TokenTuple = p.curr
+  walk p
+  var selected = newSeq[Node](0)
+  var matched = false
+  var braced: bool
+  let condExpr: Node = p.parseExpression()
+  caseNotNil condExpr:
+    braced = p.curr is tkLC
+    let whenBlock: Node = p.parseBlock(tokenWhen.col)
+    caseNotNil whenBlock:
+      try:
+        if evalStaticBool(condExpr):
+          selected = whenBlock.children
+          matched = true
+      except StaticEvalError as e:
+        raise (ref DfkupParserError)(ln: e.ln, col: e.col, msg: e.msg)
+    while p.curr is tkElif and (braced or p.curr.line == tokenWhen.line or p.curr.col == tokenWhen.col):
+      let tokenElif: TokenTuple = p.curr
+      walk p
+      let elifExpr: Node = p.parseExpression()
+      caseNotNil elifExpr:
+        braced = p.curr is tkLC
+        let elifBlock: Node = p.parseBlock(tokenWhen.col)
+        caseNotNil elifBlock:
+          if not matched:
+            try:
+              if evalStaticBool(elifExpr):
+                selected = elifBlock.children
+                matched = true
+            except StaticEvalError as e:
+              raise (ref DfkupParserError)(ln: e.ln, col: e.col, msg: e.msg)
+    if p.curr is tkElse and (braced or p.curr.line == tokenWhen.line or p.curr.col == tokenWhen.col):
+      walk p
+      let elseBlock: Node = p.parseBlock(tokenWhen.col)
+      caseNotNil elseBlock:
+        if not matched:
+          selected = elseBlock.children
+          matched = true
+  # always return a node (never nil) so block/script loops don't stop;
+  # parseBlock/parseScript splice nkStatic children into the statement list
+  result = ast.newTree(nkStatic, selected)
 
 prefixHandle parseIdent:
   result = ast.newIdent(p.curr.value)
@@ -658,6 +710,7 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkType: parseTypeDef
     of tkPlus: parsePrefixPlus
     of tkMinus: parsePrefixNegate
+    of tkNot, tkExc: parsePrefixNot
     of tkImport, tkInclude: parseImport
     else: nil
 
@@ -669,6 +722,11 @@ prefixHandle parsePrefixNegate:
   walk p
   let expr = p.parseExpression(10)
   result = ast.newInfix(ast.newIdent("-"), ast.newIntLit(0), expr)
+
+prefixHandle parsePrefixNot:
+  walk p
+  let expr = p.parseExpression(9)
+  result = ast.newTree(nkPrefix, ast.newIdent("not"), expr)
 
 prefixHandle parsePrefix:
   let parseFn = p.getPrefixFn(minPrec)
@@ -772,6 +830,7 @@ prefixHandle parseStmt:
         parseExpression
     of tkVar, tkLet, tkConst: parseVar
     of tkIf: parseIf
+    of tkWhen: parseWhen
     of tkWhile: parseWhileLoop
     of tkFor: parseForLoop
     of tkFunc, tkFn: parseFunction
@@ -797,7 +856,11 @@ proc parseScript*(astProgram: var Ast, code: string) =
   while p.curr.kind != tkEof:
     let node: Node = p.parseStmt()
     caseNotNil node:
-      astProgram.nodes.add(node)
+      if node.kind == nkStatic:
+        # inline the selected `when` branch into the top-level scope
+        astProgram.nodes.add(node.children)
+      else:
+        astProgram.nodes.add(node)
     do:
       p.curr.error(ErrUnexpectedToken % $p.curr.kind)
   astProgram.forwardDecl = p.fwdDecl

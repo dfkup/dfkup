@@ -1,4 +1,4 @@
-import std/[unittest, options]
+import std/[unittest, options, os]
 import ../src/lang/transformers
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import ../src/lang/[parser, lowlibs/libsystem, lowlibs/libjson]
@@ -47,7 +47,7 @@ suite "Libraries - OS":
     check run("dirExists(\"tests\")") == "true"
   test "path operations":
     let r = run("joinPath(\"a\", \"b\")")
-    check r == "a/b"
+    check r == joinPath("a", "b")
   test "getCurrentDir":
     let r = run("getCurrentDir()")
     check r.len > 0

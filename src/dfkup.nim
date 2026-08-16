@@ -102,24 +102,6 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
   when defined(vancodeJitDynasm):
     installJit(vmInstance)
   
-  # Create a synthetic Proc for the main chunk so the JIT can compile it
-  # var mainProc = Proc(
-  #   name: "__main",
-  #   kind: pkNative,
-  #   chunk: mainChunk,
-  #   procId: script.procs.len,
-  #   paramCount: 0,
-  #   hasResult: false,
-  #   jitForeign: nil,
-  #   jitCallCount: 0,
-  #   jitCodePtr: nil,
-  #   jitMaxLocal: 0,
-  #   jitReturnBool: false,
-  #   jitRecompiled: false
-  # )
-  # script.procs.add(mainProc)
-  # script.mainProc = mainProc
-
   vmInstance.prewarmScriptOps(script)
   when defined(vancodeJitDynasm):
     detectRecursiveAndCompile(vmInstance, enableHotCodeDetection)

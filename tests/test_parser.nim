@@ -80,6 +80,33 @@ suite "Parser - control flow":
     let nodes = parse("for x in items: echo x")
     check nodes[0].kind == nkFor
 
+suite "Parser - when (compile-time)":
+  test "true condition inlines selected branch":
+    let nodes = parse("when true: var x = 10")
+    check nodes.len == 1
+    check nodes[0].kind == nkVar
+  test "false condition emits nothing (no else)":
+    let nodes = parse("when false: echo 1")
+    check nodes.len == 0
+  test "false condition selects else branch":
+    let nodes = parse("when false: echo 1 else: echo 2")
+    check nodes.len == 1
+    check nodes[0].kind == nkCall
+    check nodes[0][0].ident == "echo"
+    check nodes[0][1].intVal == 2
+  test "elif chain selects matching branch":
+    let nodes = parse("when 1 == 2: echo 1 elif 2 == 2: echo 2 else: echo 3")
+    check nodes.len == 1
+    check nodes[0].kind == nkCall
+    check nodes[0][1].intVal == 2
+  test "constant arithmetic condition":
+    let nodes = parse("when 2 + 2 == 4: let a = 5")
+    check nodes.len == 1
+    check nodes[0].kind == nkLet
+  test "non-static condition raises parser error":
+    expect DfkupParserError:
+      discard parse("when someVar == 1: echo 1")
+
 suite "Parser - statements":
   test "echo":
     let nodes = parse("echo 42")

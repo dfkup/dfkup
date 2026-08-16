@@ -72,6 +72,8 @@ suite "Lexer - identifiers and keywords":
   test "keywords":
     check tokens("if elif else for while in and or") ==
       @["tkIf", "tkElif", "tkElse", "tkFor", "tkWhile", "tkIn", "tkAnd", "tkOr"]
+  test "when and not":
+    check tokens("when not") == @["tkWhen", "tkNot"]
   test "declaration keywords":
     check tokens("var let const fn func return") ==
       @["tkVar", "tkLet", "tkConst", "tkFn", "tkFunc", "tkReturn"]
