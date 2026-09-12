@@ -5,3 +5,6 @@ echo rootTag(d)          # "svg"
 echo nodeCount(d)        # 2
 echo countTag(d, "rect") # 1
 echo toSvg(d)
+
+let f = parseSvgFile("tests/fixtures/sample.svg")
+echo rootTag(f)          # "svg"

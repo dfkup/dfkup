@@ -48,6 +48,10 @@ proc initToml*(script: Script, module: Module) =
     proc (args: StackView, argc: int): Value =
       result = wrapNode(parseTOML(args[0].stringVal[])))
 
+  script.addProc(module, "parseTomlFile", @[paramDef("path", ttyString)], ttyPointer,
+    proc (args: StackView, argc: int): Value =
+      result = wrapNode(parseTOML(readFile(args[0].stringVal[]))))
+
   script.addProc(module, "get", @[paramDef("data", ttyPointer),
       paramDef("key", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =
@@ -87,7 +91,7 @@ proc initToml*(script: Script, module: Module) =
     proc (args: StackView, argc: int): Value =
       result = initValue(getNode(args[0]).get(args[1].stringVal[]) != nil))
 
-  script.addProc(module, "dumpToml", @[paramDef("data", ttyPointer)], ttyString,
+  script.addProc(module, "getToml", @[paramDef("data", ttyPointer)], ttyString,
     proc (args: StackView, argc: int): Value =
       result = initValue(dumpTOML(getNode(args[0]))))
 

@@ -40,6 +40,10 @@ proc initXml*(script: Script, module: Module) =
     proc (args: StackView, argc: int): Value =
       result = wrapNode(fromXml(args[0].stringVal[])))
 
+  script.addProc(module, "parseXmlFile", @[paramDef("path", ttyString)], ttyPointer,
+    proc (args: StackView, argc: int): Value =
+      result = wrapNode(fromXml(readFile(args[0].stringVal[]))))
+
   script.addProc(module, "tagName", @[paramDef("node", ttyPointer)], ttyString,
     proc (args: StackView, argc: int): Value =
       let n = getNode(args[0])
@@ -92,7 +96,7 @@ proc initXml*(script: Script, module: Module) =
             break
       result = wrapNode(found))
 
-  script.addProc(module, "toXml", @[paramDef("node", ttyPointer)], ttyString,
+  script.addProc(module, "getXml", @[paramDef("node", ttyPointer)], ttyString,
     proc (args: StackView, argc: int): Value =
       let n = getNode(args[0])
       if n == nil:

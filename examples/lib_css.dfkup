@@ -4,4 +4,7 @@ let s = parseCss("h1, h2 { color: red; margin: 0 auto; } .x { margin: red; }")
 echo ruleCount(s)    # 2
 echo selectors(s)
 echo cssValidate(s)
-echo dumpCss(s)
+echo getCss(s)
+
+let f = parseCssFile("tests/fixtures/sample.css")
+echo ruleCount(f)    # 1

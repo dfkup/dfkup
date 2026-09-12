@@ -220,8 +220,8 @@ echo values(data)
 let cwd = getCurrentDir()
 echo cwd
 
-# let testFile = joinPath(cwd, "examples/hello.txt")
-# writeFile(testFile, "Hello from DFkup!")
+let testFile = joinPath(cwd, "examples/hello.txt")
+writeFile(testFile, "Hello from DFkup!")
 
 if fileExists(testFile) {
   echo readFile(testFile)
@@ -232,9 +232,9 @@ removeFile(testFile)
 echo fileExists(testFile)
 
 let files = listDir(joinPath(cwd, "examples"))
-echo files
-
-
+for file in files {
+  echo file["name"]
+}
 
 #
 # Section 10: Putting It Together

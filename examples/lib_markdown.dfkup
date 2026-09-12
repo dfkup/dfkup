@@ -1,10 +1,18 @@
 import "std/markdown"
 import "std/json"
 
-let doc = "# Hello\n\nworld\n\n## Sub\n"
-echo markdownTitle(doc)
-echo markdownToc(doc)
-echo markdownHasHeadings(doc)
-echo markdownToHtml(doc)
-echo markdownToHtmlOpts(doc, parseJson("{\"anchors\": false}"))
-echo markdownMeta("---\ntitle: Hi\n---\n\nbody")
+let md = parseMarkdown("# Hello\n\nworld\n\n## Sub\n")
+echo md.getTitle()
+echo md.getHeadings()
+echo md.hasHeadings()
+echo md.getHtml()
+echo parseMarkdown("# No anchors\n", parseJson("{\"anchors\": false}")).getHtml()
+echo parseMarkdown("---\ntitle: Hi\n---\n\nbody").getMeta()
+
+let fmd = parseMarkdownFile("tests/fixtures/sample.md")
+echo fmd.getTitle()
+echo fmd.getHeadings()
+echo fmd.getMeta()
+echo fmd.hasHeadings()
+echo fmd.hasFootnotes()
+echo fmd.getJson()

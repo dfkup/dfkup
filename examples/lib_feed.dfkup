@@ -4,3 +4,6 @@ let f = parseAtom("<?xml version=\"1.0\"?><feed xmlns=\"http://www.w3.org/2005/A
 echo entryCount(f)   # 1
 echo entries(f)
 echo toAtomXml(f)
+
+let g = parseAtomFile("tests/fixtures/sample.atom")
+echo entryCount(g)   # 1

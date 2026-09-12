@@ -12,6 +12,12 @@ import pkg/openparser/[html, yaml]
 import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 
+type
+  MarkdownDoc = ref object
+    md: Markdown
+    html: string
+    rendered: bool
+
 proc yamlNodeToJson(n: YamlNode): JsonNode =
   if n == nil:
     return newJNull()
@@ -68,38 +74,57 @@ proc buildOptions(opts: JsonNode): MarkdownOptions =
     parseYaml: optBool(opts, "parseYaml", true)
   )
 
+proc wrapDoc(doc: MarkdownDoc): Value =
+  result = initValue(tyPointer, doc)
+  result.objectVal.foreign.tag = "MarkdownDoc"
+
+proc getDoc(v: Value): MarkdownDoc =
+  result = cast[MarkdownDoc](v.objectVal.foreign.data)
+
+proc ensureRendered(doc: MarkdownDoc) =
+  ## Render once and cache: marvdown fills heading selectors during toHtml,
+  ## so every selector-based getter must render first.
+  if not doc.rendered:
+    var m = doc.md
+    doc.html = m.toHtml()
+    doc.rendered = true
+
 proc initMarkdown*(script: Script, module: Module) =
   module.initSystemTypes()
   script.initSystemOps(module)
 
-  script.addProc(module, "markdownToHtml", @[paramDef("md", ttyString)], ttyString,
+  script.addProc(module, "parseMarkdown", @[paramDef("source", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =
-      result = initValue(marvdown.toHtml(args[0].stringVal[])))
+      result = wrapDoc(MarkdownDoc(md: newMarkdown(args[0].stringVal[]))))
 
-  script.addProc(module, "markdownToHtmlOpts", @[paramDef("md", ttyString),
-      paramDef("opts", ttyJson)], ttyString,
+  script.addProc(module, "parseMarkdown", @[paramDef("source", ttyString),
+      paramDef("opts", ttyJson)], ttyPointer,
     proc (args: StackView, argc: int): Value =
       let opts = buildOptions(args[1].jsonVal)
-      var md = newMarkdown(args[0].stringVal[], opts)
-      result = initValue(md.toHtml()))
+      result = wrapDoc(MarkdownDoc(md: newMarkdown(args[0].stringVal[], opts))))
 
-  script.addProc(module, "markdownToJson", @[paramDef("md", ttyString)], ttyJson,
+  script.addProc(module, "parseMarkdownFile", @[paramDef("path", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =
-      var md = newMarkdown(args[0].stringVal[])
-      result = initValue(parseJson(md.toJson())))
+      result = wrapDoc(MarkdownDoc(md: newMarkdown(readFile(args[0].stringVal[])))))
 
-  script.addProc(module, "markdownTitle", @[paramDef("md", ttyString)], ttyString,
+  script.addProc(module, "parseMarkdownFile", @[paramDef("path", ttyString),
+      paramDef("opts", ttyJson)], ttyPointer,
     proc (args: StackView, argc: int): Value =
-      var md = newMarkdown(args[0].stringVal[])
-      discard md.toHtml()
-      result = initValue(md.getTitle()))
+      let opts = buildOptions(args[1].jsonVal)
+      result = wrapDoc(MarkdownDoc(md: newMarkdown(readFile(args[0].stringVal[]), opts))))
 
-  script.addProc(module, "markdownToc", @[paramDef("md", ttyString)], ttyJson,
+  script.addProc(module, "getHtml", @[paramDef("doc", ttyPointer)], ttyString,
     proc (args: StackView, argc: int): Value =
-      var md = newMarkdown(args[0].stringVal[])
-      discard md.toHtml()
+      let doc = getDoc(args[0])
+      ensureRendered(doc)
+      result = initValue(doc.html))
+
+  script.addProc(module, "getHeadings", @[paramDef("doc", ttyPointer)], ttyJson,
+    proc (args: StackView, argc: int): Value =
+      let doc = getDoc(args[0])
+      ensureRendered(doc)
       var arr = newJArray()
-      for item in md.getSelectorItems():
+      for item in doc.md.getSelectorItems():
         var o = newJObject()
         o["level"] = %(item.level)
         o["anchor"] = %(item.anchor)
@@ -107,16 +132,16 @@ proc initMarkdown*(script: Script, module: Module) =
         arr.add(o)
       result = initValue(arr))
 
-  script.addProc(module, "markdownHasHeadings", @[paramDef("md", ttyString)], ttyBool,
+  script.addProc(module, "getTitle", @[paramDef("doc", ttyPointer)], ttyString,
     proc (args: StackView, argc: int): Value =
-      var md = newMarkdown(args[0].stringVal[])
-      discard md.toHtml()
-      result = initValue(md.hasSelectors()))
+      let doc = getDoc(args[0])
+      ensureRendered(doc)
+      result = initValue(doc.md.getTitle()))
 
-  script.addProc(module, "markdownMeta", @[paramDef("md", ttyString)], ttyJson,
+  script.addProc(module, "getMeta", @[paramDef("doc", ttyPointer)], ttyJson,
     proc (args: StackView, argc: int): Value =
-      var md = newMarkdown(args[0].stringVal[])
-      let header = md.getHeader()
+      let doc = getDoc(args[0])
+      let header = doc.md.getHeader()
       if header == nil:
         result = initValue(newJNull())
       else:
@@ -125,7 +150,18 @@ proc initMarkdown*(script: Script, module: Module) =
           o[k] = yamlNodeToJson(v)
         result = initValue(o))
 
-  script.addProc(module, "markdownHasFootnotes", @[paramDef("md", ttyString)], ttyBool,
+  script.addProc(module, "hasHeadings", @[paramDef("doc", ttyPointer)], ttyBool,
     proc (args: StackView, argc: int): Value =
-      var md = newMarkdown(args[0].stringVal[])
-      result = initValue(md.hasFootnotes()))
+      let doc = getDoc(args[0])
+      ensureRendered(doc)
+      result = initValue(doc.md.hasSelectors()))
+
+  script.addProc(module, "hasFootnotes", @[paramDef("doc", ttyPointer)], ttyBool,
+    proc (args: StackView, argc: int): Value =
+      let doc = getDoc(args[0])
+      result = initValue(doc.md.hasFootnotes()))
+
+  script.addProc(module, "getJson", @[paramDef("doc", ttyPointer)], ttyJson,
+    proc (args: StackView, argc: int): Value =
+      let doc = getDoc(args[0])
+      result = initValue(parseJson(doc.md.toJson())))

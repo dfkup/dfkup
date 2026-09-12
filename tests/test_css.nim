@@ -34,5 +34,7 @@ suite "CSS":
   test "validate flags bad values":
     check run("let s = parseCss(\"p { margin: red; display: bogus; color: blue; }\")\ncssValidate(s)") == "{\"total\":3,\"invalid\":2,\"valid\":false,\"errors\":[{\"selector\":\"p\",\"property\":\"margin\",\"value\":\"red\",\"message\":\"Value does not match property syntax\"},{\"selector\":\"p\",\"property\":\"display\",\"value\":\"bogus\",\"message\":\"Value does not match property syntax\"}]}"
   test "dump sheet":
-    let r = run("let s = parseCss(\"h1 { color: red; }\")\ndumpCss(s)")
+    let r = run("let s = parseCss(\"h1 { color: red; }\")\ngetCss(s)")
     check r.len > 10
+  test "parse file":
+    check run("let s = parseCssFile(\"tests/fixtures/sample.css\")\nruleCount(s)") == "1"

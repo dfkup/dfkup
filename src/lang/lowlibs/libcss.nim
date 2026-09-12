@@ -76,7 +76,12 @@ proc initCss*(script: Script, module: Module) =
       result = initValue(tyPointer, CssBox(sheet: parseCss(args[0].stringVal[])))
       result.objectVal.foreign.tag = "CSSStylesheet")
 
-  script.addProc(module, "dumpCss", @[paramDef("sheet", ttyPointer)], ttyString,
+  script.addProc(module, "parseCssFile", @[paramDef("path", ttyString)], ttyPointer,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(tyPointer, CssBox(sheet: parseCss(readFile(args[0].stringVal[]))))
+      result.objectVal.foreign.tag = "CSSStylesheet")
+
+  script.addProc(module, "getCss", @[paramDef("sheet", ttyPointer)], ttyString,
     proc (args: StackView, argc: int): Value =
       result = initValue($getSheet(args[0])))
 

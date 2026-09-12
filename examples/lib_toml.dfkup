@@ -7,4 +7,7 @@ echo getInt(d, "owner.age")    # 30
 echo getArray(d, "owner.ports")
 echo hasKey(d, "owner.name")   # true
 echo toJson(d)
-echo dumpToml(d)
+echo getToml(d)
+
+let f = parseTomlFile("tests/fixtures/sample.toml")
+echo getStr(f, "title")  # "hi"

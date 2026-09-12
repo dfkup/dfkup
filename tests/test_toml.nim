@@ -42,6 +42,9 @@ suite "TOML":
     check run("let d = parseToml(\"a = 1\")\ngetStr(d, \"b\")") == ""
     check run("let d = parseToml(\"a = 1\")\ngetInt(d, \"b\")") == "0"
   test "toJson bridge":
-    check run("let d = parseToml(\"title = \\\"hi\\\"\nage = 30\")\ntoJson(d)") == "{\"title\":\"hi\",\"age\":30}"
-  test "dumpToml round trip":
-    check run("let d = parseToml(\"title = \\\"hi\\\"\")\ndumpToml(d)") == "title = \"hi\"\n"
+    check run("let d = parseToml(\"title = \\\"hi\\\"\\nage = 30\")\ntoJson(d)") == "{\"title\":\"hi\",\"age\":30}"
+  test "getToml round trip":
+    check run("let d = parseToml(\"title = \\\"hi\\\"\")\ngetToml(d)") == "title = \"hi\"\n"
+  test "parse file":
+    check run("let d = parseTomlFile(\"tests/fixtures/sample.toml\")\ngetStr(d, \"title\")") == "hi"
+    check run("let d = parseTomlFile(\"tests/fixtures/sample.toml\")\ngetInt(d, \"age\")") == "30"

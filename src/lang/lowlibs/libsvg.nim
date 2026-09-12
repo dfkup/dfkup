@@ -42,6 +42,11 @@ proc initSvg*(script: Script, module: Module) =
       result = initValue(tyPointer, SvgBox(doc: parseSvg(args[0].stringVal[])))
       result.objectVal.foreign.tag = "SVGDocument")
 
+  script.addProc(module, "parseSvgFile", @[paramDef("path", ttyString)], ttyPointer,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(tyPointer, SvgBox(doc: parseSvg(readFile(args[0].stringVal[]))))
+      result.objectVal.foreign.tag = "SVGDocument")
+
   script.addProc(module, "toSvg", @[paramDef("doc", ttyPointer)], ttyString,
     proc (args: StackView, argc: int): Value =
       result = initValue(toSvg(getDoc(args[0]))))

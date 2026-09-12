@@ -4,3 +4,6 @@ let c = parseIcal("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//x//y//EN\r\nBEGIN
 echo eventCount(c)   # 1
 echo events(c)
 echo calendarInfo(c)
+
+let f = parseIcalFile("tests/fixtures/sample.ics")
+echo eventCount(f)   # 1

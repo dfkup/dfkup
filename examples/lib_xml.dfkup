@@ -6,4 +6,7 @@ echo getAttr(d, "lang", "?") # "en"
 echo childCount(d)           # 1
 let item = findChild(d, "item")
 echo getText(item)           # "hello"
-echo toXml(d)
+echo getXml(d)
+
+let f = parseXmlFile("tests/fixtures/sample.xml")
+echo tagName(f)          # "root"

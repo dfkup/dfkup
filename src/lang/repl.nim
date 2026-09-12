@@ -2,7 +2,8 @@ import std/[tables, strformat, options, strutils]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import ./parser
 import ./lowlibs/[libsystem, libjson, libyaml, libstrings, libsequtils, libhttp, libcli, libregex, libbrowser,
-  libtoml, libuuid, libdotenv, libcsv, libbson, libcolors, libqr, libxml, libfeed, libical, libcss, libsvg]
+  libtoml, libuuid, libdotenv, libcsv, libbson, libcolors, libqr, libxml, libfeed, libical, libcss, libsvg,
+  libmarkdown, libstrongpwd, libalgos, libtwofa, libfswatch]
 
 proc newStdlibs*(script: Script, systemModule: Module): StandardLibrary =
   result = newTable[string, ModuleLibrary]()
@@ -107,6 +108,31 @@ proc newStdlibs*(script: Script, systemModule: Module): StandardLibrary =
     let m = newModule("svg", some"svg.dfkup")
     m.load(sysMod)
     initSvg(scr, m)
+    return m
+  result["markdown"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("markdown", some"markdown.dfkup")
+    m.load(sysMod)
+    initMarkdown(scr, m)
+    return m
+  result["strongpwd"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("strongpwd", some"strongpwd.dfkup")
+    m.load(sysMod)
+    initStrongpwd(scr, m)
+    return m
+  result["algos"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("algos", some"algos.dfkup")
+    m.load(sysMod)
+    initAlgos(scr, m)
+    return m
+  result["twofa"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("twofa", some"twofa.dfkup")
+    m.load(sysMod)
+    initTwofa(scr, m)
+    return m
+  result["fswatch"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("fswatch", some"fswatch.dfkup")
+    m.load(sysMod)
+    initFswatch(scr, m)
     return m
 
 type ReplSession* = object

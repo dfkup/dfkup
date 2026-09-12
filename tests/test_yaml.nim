@@ -49,3 +49,6 @@ suite "YAML":
     check run("let d = parseYaml(\"tags:\\n  - a\\n  - b\")\nlet t = get(d, \"tags\")\nlen(t)") == "2"
   test "toYaml from json":
     check run("toYaml(parseJson(\"{\\\"a\\\": 1}\"))") == "a: 1"
+  test "parse file":
+    check run("let d = parseYamlFile(\"tests/fixtures/sample.yaml\")\ngetStr(d, \"name\")") == "Ada"
+    check run("let d = parseYamlFile(\"tests/fixtures/sample.yaml\")\ngetInt(d, \"age\")") == "36"

@@ -1,4 +1,4 @@
-import std/[unittest, options]
+import std/[unittest, options, strutils]
 import ../src/lang/transformers
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import ../src/lang/[parser, lowlibs/libsystem, lowlibs/libical]
@@ -37,3 +37,6 @@ suite "ICal":
   test "serialize round trip":
     let r = run("let c = parseIcal(\"" & calDoc & "\")\ntoIcal(c)")
     check r.len > 50
+  test "parse file":
+    check run("let c = parseIcalFile(\"tests/fixtures/sample.ics\")\neventCount(c)") == "1"
+    check run("let c = parseIcalFile(\"tests/fixtures/sample.ics\")\ncalendarInfo(c)").contains("-//x//y//EN")

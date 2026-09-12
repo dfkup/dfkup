@@ -63,6 +63,11 @@ proc initYaml*(script: Script, module: Module) =
       result = initValue(tyPointer, parseYAML(args[0].stringVal[]))
       result.objectVal.foreign.tag = "YAMLObject")
 
+  script.addProc(module, "parseYamlFile", @[paramDef("path", ttyString)], ttyPointer,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(tyPointer, parseYAML(readFile(args[0].stringVal[])))
+      result.objectVal.foreign.tag = "YAMLObject")
+
   script.addProc(module, "get", @[paramDef("data", ttyPointer), paramDef("key", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =
       result = wrapNode(resolveNode(args[0], args[1].stringVal[]), "YamlNode"))

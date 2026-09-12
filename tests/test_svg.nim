@@ -38,3 +38,6 @@ suite "SVG":
     let r = run("let d = parseSvg(\"" & svgDoc & "\")\ntoSvg(d)")
     check r.contains("<svg")
     check r.contains("<rect")
+  test "parse file":
+    check run("let d = parseSvgFile(\"tests/fixtures/sample.svg\")\nrootTag(d)") == "svg"
+    check run("let d = parseSvgFile(\"tests/fixtures/sample.svg\")\nnodeCount(d)") == "3"

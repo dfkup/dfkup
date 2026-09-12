@@ -48,6 +48,11 @@ proc initIcal*(script: Script, module: Module) =
       result = initValue(tyPointer, parseIcal(args[0].stringVal[]))
       result.objectVal.foreign.tag = "ICalCalendar")
 
+  script.addProc(module, "parseIcalFile", @[paramDef("path", ttyString)], ttyPointer,
+    proc (args: StackView, argc: int): Value =
+      result = initValue(tyPointer, parseIcal(readFile(args[0].stringVal[])))
+      result.objectVal.foreign.tag = "ICalCalendar")
+
   script.addProc(module, "calendarInfo", @[paramDef("cal", ttyPointer)], ttyJson,
     proc (args: StackView, argc: int): Value =
       let cal = getCal(args[0])

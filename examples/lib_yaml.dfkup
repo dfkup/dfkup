@@ -6,3 +6,6 @@ echo getInt(d, "age")    # 36
 echo getArray(d, "tags")
 echo hasKey(d, "name")   # true
 echo len(d)              # 3
+
+let f = parseYamlFile("tests/fixtures/sample.yaml")
+echo getStr(f, "name")   # "Ada"

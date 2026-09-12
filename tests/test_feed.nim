@@ -37,3 +37,5 @@ suite "Feed":
   test "serialize round trip":
     let r = run("let f = parseAtom(\"" & atomDoc & "\")\ntoAtomXml(f)")
     check r.len > 50
+  test "parse file":
+    check run("let f = parseAtomFile(\"tests/fixtures/sample.atom\")\nentryCount(f)") == "1"

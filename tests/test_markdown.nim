@@ -28,29 +28,40 @@ proc run(code: string): string =
   if resultVal != nil and resultVal.typeId notin {tyNil}:
     result = $resultVal
 
-const doc = "# Hello\\n\\nworld\\n\\n## Sub\\n"
+const docSrc = "\"# Hello\\n\\nworld\\n\\n## Sub\\n\""
+
+proc md(code: string): string =
+  run("let md = parseMarkdown(" & docSrc & ")\nmd." & code)
 
 suite "Markdown":
-  test "title and toc":
-    check run("markdownTitle(\"" & doc & "\")") == "Hello"
-    check run("markdownToc(\"" & doc & "\")") == "[{\"level\":1,\"anchor\":\"hello\",\"title\":\"Hello\"},{\"level\":2,\"anchor\":\"sub\",\"title\":\"Sub\"}]"
-    check run("markdownHasHeadings(\"" & doc & "\")") == "true"
-    check run("markdownHasHeadings(\"no headings\")") == "false"
-    check run("markdownTitle(\"no headings\")") == "Untitled document"
+  test "title and headings":
+    check md("getTitle()") == "Hello"
+    check md("getHeadings()") == "[{\"level\":1,\"anchor\":\"hello\",\"title\":\"Hello\"},{\"level\":2,\"anchor\":\"sub\",\"title\":\"Sub\"}]"
+    check md("hasHeadings()") == "true"
+    check run("let md = parseMarkdown(\"no headings\")\nmd.hasHeadings()") == "false"
+    check run("let md = parseMarkdown(\"no headings\")\nmd.getTitle()") == "Untitled document"
   test "html rendering":
-    let html = run("markdownToHtml(\"" & doc & "\")")
+    let html = md("getHtml()")
     check html.contains("<h1")
     check html.contains("Hello")
     check html.contains("<h2")
   test "options disable anchors":
-    let html = run("markdownToHtmlOpts(\"" & doc & "\", parseJson(\"{\\\"anchors\\\": false}\"))")
-    check not html.contains("anchor-link")
-    check html.contains("<h1>")
+    check md("getHtml()").contains("anchor-link")
+    let noAnchors = run("let md = parseMarkdown(\"# Hello\\n\\nworld\\n\\n## Sub\\n\", parseJson(\"{\\\"anchors\\\": false}\"))\nmd.getHtml()")
+    check not noAnchors.contains("anchor-link")
+    check noAnchors.contains("<h1>")
   test "ast json":
-    let j = run("markdownToJson(\"" & doc & "\")")
+    let j = md("getJson()")
     check j.len > 10
   test "front matter":
-    check run("markdownMeta(\"---\\ntitle: Hi\\n---\\n\\nbody\")") == "{\"title\":\"Hi\"}"
-    check run("markdownMeta(\"no front matter\")") == "null"
+    check run("let md = parseMarkdown(\"---\\ntitle: Hi\\n---\\n\\nbody\")\nmd.getMeta()") == "{\"title\":\"Hi\"}"
+    check run("let md = parseMarkdown(\"no front matter\")\nmd.getMeta()") == "null"
   test "footnotes flag":
-    check run("markdownHasFootnotes(\"" & doc & "\")") == "false"
+    check md("hasFootnotes()") == "false"
+  test "parse file":
+    check run("let md = parseMarkdownFile(\"tests/fixtures/sample.md\")\nmd.getTitle()") == "Sample Doc"
+    check run("let md = parseMarkdownFile(\"tests/fixtures/sample.md\")\nmd.hasFootnotes()") == "true"
+    check run("let md = parseMarkdownFile(\"tests/fixtures/sample.md\")\nmd.getMeta()").contains("\"title\":\"Sample Doc\"")
+    let headings = run("let md = parseMarkdownFile(\"tests/fixtures/sample.md\")\nmd.getHeadings()")
+    check headings.contains("\"level\":1")
+    check headings.contains("\"level\":3")

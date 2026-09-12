@@ -40,7 +40,10 @@ suite "XML":
   test "text content":
     check run("let d = parseXml(\"" & doc & "\")\ngetText(d)") == "helloworld"
   test "serialize":
-    let r = run("let d = parseXml(\"" & doc & "\")\ntoXml(d)")
+    let r = run("let d = parseXml(\"" & doc & "\")\ngetXml(d)")
     check r.contains("<root")
     check r.contains("<item")
     check r.contains("hello")
+  test "parse file":
+    check run("let d = parseXmlFile(\"tests/fixtures/sample.xml\")\ntagName(d)") == "root"
+    check run("let d = parseXmlFile(\"tests/fixtures/sample.xml\")\ngetText(d)") == "helloworld"

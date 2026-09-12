@@ -104,6 +104,10 @@ proc initFeed*(script: Script, module: Module) =
     proc (args: StackView, argc: int): Value =
       result = wrapFeed(parseAtom(args[0].stringVal[])))
 
+  script.addProc(module, "parseAtomFile", @[paramDef("path", ttyString)], ttyPointer,
+    proc (args: StackView, argc: int): Value =
+      result = wrapFeed(parseAtom(readFile(args[0].stringVal[]))))
+
   script.addProc(module, "fetchAtom", @[paramDef("url", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =
       result = wrapFeed(fetchAtom(args[0].stringVal[])))
