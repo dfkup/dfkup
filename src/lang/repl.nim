@@ -1,7 +1,8 @@
 import std/[tables, strformat, options, strutils]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import ./parser
-import ./lowlibs/[libsystem, libjson, libyaml, libstrings, libsequtils, libhttp, libcli, libregex, libbrowser]
+import ./lowlibs/[libsystem, libjson, libyaml, libstrings, libsequtils, libhttp, libcli, libregex, libbrowser,
+  libtoml, libuuid, libdotenv, libcsv, libbson, libcolors, libqr, libxml, libfeed, libical, libcss, libsvg]
 
 proc newStdlibs*(script: Script, systemModule: Module): StandardLibrary =
   result = newTable[string, ModuleLibrary]()
@@ -45,6 +46,67 @@ proc newStdlibs*(script: Script, systemModule: Module): StandardLibrary =
     let m = newModule("browser", some"browser.dfkup")
     m.load(sysMod)
     initBrowser(scr, m)
+    return m
+
+  result["toml"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("toml", some"toml.dfkup")
+    m.load(sysMod)
+    initToml(scr, m)
+    return m
+  result["uuid"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("uuid", some"uuid.dfkup")
+    m.load(sysMod)
+    initUuid(scr, m)
+    return m
+  result["dotenv"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("dotenv", some"dotenv.dfkup")
+    m.load(sysMod)
+    initDotenv(scr, m)
+    return m
+  result["csv"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("csv", some"csv.dfkup")
+    m.load(sysMod)
+    initCsv(scr, m)
+    return m
+  result["bson"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("bson", some"bson.dfkup")
+    m.load(sysMod)
+    initBson(scr, m)
+    return m
+  result["colors"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("colors", some"colors.dfkup")
+    m.load(sysMod)
+    initColors(scr, m)
+    return m
+  result["qr"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("qr", some"qr.dfkup")
+    m.load(sysMod)
+    initQr(scr, m)
+    return m
+  result["xml"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("xml", some"xml.dfkup")
+    m.load(sysMod)
+    initXml(scr, m)
+    return m
+  result["feed"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("feed", some"feed.dfkup")
+    m.load(sysMod)
+    initFeed(scr, m)
+    return m
+  result["ical"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("ical", some"ical.dfkup")
+    m.load(sysMod)
+    initIcal(scr, m)
+    return m
+  result["css"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("css", some"css.dfkup")
+    m.load(sysMod)
+    initCss(scr, m)
+    return m
+  result["svg"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("svg", some"svg.dfkup")
+    m.load(sysMod)
+    initSvg(scr, m)
     return m
 
 type ReplSession* = object

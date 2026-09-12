@@ -15,7 +15,9 @@ import pkg/vancode/interpreter/jit/jit
 import ./lang/[parser]
 import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
                   libhttp, libcli, libjson, libyaml, libregex,
-                  libbrowser]
+                  libbrowser, libtoml, libuuid, libdotenv,
+                  libcsv, libbson, libcolors, libqr,
+                  libxml, libfeed, libical, libcss, libsvg]
 
 import pkg/openparser/json
 
@@ -88,6 +90,78 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     initBrowser(scr, m)
     return m
 
+  stdlibs["toml"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("toml", some"toml.dfkup")
+    m.load(sysMod)
+    initToml(scr, m)
+    return m
+
+  stdlibs["uuid"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("uuid", some"uuid.dfkup")
+    m.load(sysMod)
+    initUuid(scr, m)
+    return m
+
+  stdlibs["dotenv"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("dotenv", some"dotenv.dfkup")
+    m.load(sysMod)
+    initDotenv(scr, m)
+    return m
+
+  stdlibs["csv"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("csv", some"csv.dfkup")
+    m.load(sysMod)
+    initCsv(scr, m)
+    return m
+
+  stdlibs["bson"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("bson", some"bson.dfkup")
+    m.load(sysMod)
+    initBson(scr, m)
+    return m
+
+  stdlibs["colors"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("colors", some"colors.dfkup")
+    m.load(sysMod)
+    initColors(scr, m)
+    return m
+
+  stdlibs["qr"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("qr", some"qr.dfkup")
+    m.load(sysMod)
+    initQr(scr, m)
+    return m
+
+  stdlibs["xml"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("xml", some"xml.dfkup")
+    m.load(sysMod)
+    initXml(scr, m)
+    return m
+
+  stdlibs["feed"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("feed", some"feed.dfkup")
+    m.load(sysMod)
+    initFeed(scr, m)
+    return m
+
+  stdlibs["ical"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("ical", some"ical.dfkup")
+    m.load(sysMod)
+    initIcal(scr, m)
+    return m
+
+  stdlibs["css"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("css", some"css.dfkup")
+    m.load(sysMod)
+    initCss(scr, m)
+    return m
+
+  stdlibs["svg"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("svg", some"svg.dfkup")
+    m.load(sysMod)
+    initSvg(scr, m)
+    return m
+
   script.stdpos = script.procs.high
 
   var gen = initCompiler(script, module, mainChunk, stdlibs = stdlibs)
@@ -127,9 +201,9 @@ when isMainModule:
   import pkg/kapsis
   import pkg/kapsis/runtime
   import pkg/kapsis/interactive/prompts
-  import ./lang/repl
 
   proc runCommand*(v: Values) =
+    ## Execute dfkup from a file
     let filePath = $(v.get("script").getPath)
     try:
       let result = runFile(filePath, not v.has("--nojit"))
@@ -140,7 +214,8 @@ when isMainModule:
     except IOError as e:
       display(span("error", fgRed), span(e.msg))
 
-  proc inlineCommand*(v: Values) =
+  proc execCommand*(v: Values) =
+    ## Execute inline dfkup script 
     var code: string
     if v.has("code"):
       code = v.get("code").getStr
@@ -158,10 +233,13 @@ when isMainModule:
     except DfkupError as e:
       display(span("error", fgRed), span(e.msg))
 
-  proc replCommand*(v: Values) =
-    runRepl()
+  # proc replCommand*(v: Values) =
+  #   ## Command for entering in a REPL Session
+  #   runRepl()
 
   proc astCommand*(v: Values) =
+    ## Command for parsing and generating the AST
+    ## representation of a dfkup source
     let filePath = $(v.get("script").getPath)
     if not fileExists(filePath):
       display(span("error", fgRed), span(&"file not found: {filePath}"))
@@ -185,11 +263,10 @@ when isMainModule:
     defaultCommand: "run"
     commands:
       -- "Scripting"
-      repl:
-        ## Start an interactive REPL session
       run path(script), ?bool("--nojit"):
         ## Run a DFkup script file
-      inline ?string(code):
+      exec ?string(code):
         ## Execute DFkup code inline
+      -- "Codegen & Debugging"
       ast path("script"), ?bool("--dumptree"):
         ## Generate AST from a DFkup script file
