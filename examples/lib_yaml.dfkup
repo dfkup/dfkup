@@ -1,0 +1,8 @@
+import "std/yaml"
+
+let d = parseYaml("name: Ada\nage: 36\ntags:\n  - a\n  - b")
+echo getStr(d, "name")   # "Ada"
+echo getInt(d, "age")    # 36
+echo getArray(d, "tags")
+echo hasKey(d, "name")   # true
+echo len(d)              # 3

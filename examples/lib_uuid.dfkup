@@ -1,0 +1,9 @@
+import "std/uuid"
+
+let u = uuidV4()
+echo u
+echo uuidV7()
+echo isValidUuid(u)   # true
+echo uuidVersion(u)   # 4
+echo isValidUuid("not-a-uuid")   # false
+echo uuidVersion(uuidV7())       # 7

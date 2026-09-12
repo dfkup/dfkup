@@ -1,0 +1,6 @@
+import "std/feed"
+
+let f = parseAtom("<?xml version=\"1.0\"?><feed xmlns=\"http://www.w3.org/2005/Atom\"><id>urn:x</id><title>t</title><updated>2026-01-01T00:00:00Z</updated><author><name>Ann</name></author><entry><id>urn:e1</id><title>First</title><updated>2026-01-02T00:00:00Z</updated></entry></feed>")
+echo entryCount(f)   # 1
+echo entries(f)
+echo toAtomXml(f)

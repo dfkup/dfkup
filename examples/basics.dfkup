@@ -242,7 +242,7 @@ fn fileStats(filePath: string) =
   echo filePath
   if fileExists(filePath) == false {
     echo "not found"
-  } else{ 
+  } else { 
     let content = readFile(filePath)
     let charCount = len(content)
     let lines = split(content, "\n")
@@ -256,4 +256,3 @@ fn fileStats(filePath: string) =
   }
 
 fileStats("examples/basics.dfkup")
-

@@ -1,0 +1,7 @@
+import "std/svg"
+
+let d = parseSvg("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\"><rect x=\"1\" y=\"1\" width=\"8\" height=\"8\"/></svg>")
+echo rootTag(d)          # "svg"
+echo nodeCount(d)        # 2
+echo countTag(d, "rect") # 1
+echo toSvg(d)

@@ -1,0 +1,5 @@
+import "std/csv"
+
+let rows = parseCsv("name,age\nAda,36\n\"Grace,H.\",85")
+echo rows
+echo parseCsv("a;b\n1;2", ";")

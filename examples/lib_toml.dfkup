@@ -1,0 +1,10 @@
+import "std/toml"
+
+let d = parseToml("title = \"demo\"\n[owner]\nname = \"Tom\"\nage = 30\nports = [8000, 8001]")
+echo getStr(d, "title")        # "demo"
+echo getStr(d, "owner.name")   # "Tom"
+echo getInt(d, "owner.age")    # 30
+echo getArray(d, "owner.ports")
+echo hasKey(d, "owner.name")   # true
+echo toJson(d)
+echo dumpToml(d)

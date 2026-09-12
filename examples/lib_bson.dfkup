@@ -1,0 +1,6 @@
+import "std/bson"
+import "std/json"
+
+let d = parseJson("{\"a\":1,\"b\":\"x\"}")
+let enc = encodeBson(d)
+echo decodeBson(enc)

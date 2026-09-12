@@ -1,0 +1,57 @@
+# Browser automation demo
+# Run: dfkup run examples/browser_demo.dfkup
+#
+# Uses chopchop (Chrome DevTools Protocol) under the hood.
+# Requires Chrome/Chromium installed.
+
+import "std/browser"
+
+echo "--- Browser Demo ---"
+
+# Launch browser (headless by default)
+let browser = launchBrowser({headless: true})
+let page = newPage(browser)
+
+# Navigation
+goto(page, "https://example.com")
+echo "title:"
+echo getTitle(page)
+echo "url:"
+echo getUrl(page)
+
+# JS evaluation
+echo "eval:"
+let js = evaluate(page, "document.title")
+echo js
+
+# Screenshot
+let ss = getScreenshot(page)
+echo "screenshot length:"
+echo len(ss)
+
+# Locator API (auto-waiting)
+let heading = locator(page, "h1")
+echo "heading:"
+echo getLocatorInnerText(heading)
+
+# Element count
+let links = locator(page, "a")
+echo "link count:"
+echo getLocatorCount(links)
+
+# Cookies
+setCookie(page, {name: "session", value: "abc123"})
+echo "cookies:"
+let cs = getCookies(page)
+echo cs
+
+# Storage
+setLocalStorage(page, "key1", "value1")
+echo "localStorage:"
+echo getLocalStorage(page, "key1")
+
+# Viewport
+setViewport(page, 1024, 768)
+
+close(browser)
+echo "done"

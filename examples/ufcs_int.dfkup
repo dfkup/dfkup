@@ -1,0 +1,6 @@
+func age(x: int): int =
+  return x + 1
+
+var xxx = 32
+let a = xxx.age()
+echo a

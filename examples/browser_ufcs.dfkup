@@ -1,0 +1,35 @@
+# Test UFCS-style method calls on browser API
+import "std/browser"
+
+let browser = launchBrowser({headless: true})
+let page = newPage(browser)
+
+# UFCS: page.goto(...) instead of goto(page, ...)
+page.goto("https://example.com")
+
+# UFCS: page.getTitle() instead of getTitle(page)
+let t = page.getTitle()
+echo t
+
+# UFCS: page.evaluate(...) instead of evaluate(page, ...)
+let js = page.evaluate("document.title")
+echo js
+
+# UFCS: page.locator(...) then chained locator calls
+let heading = page.locator("h1")
+let text = heading.getLocatorInnerText()
+echo text
+
+let links = page.locator("a")
+let cnt = links.getLocatorCount()
+echo cnt
+
+# UFCS: page.setCookie(...) with object syntax
+page.setCookie({name: "session", value: "abc123"})
+let cs = page.getCookies()
+echo cs
+
+# UFCS: browser.close() instead of close(browser)
+browser.close()
+
+echo "all ok"

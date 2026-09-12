@@ -1,0 +1,4 @@
+import "std/qr"
+
+echo qrSvg("hello dfkup", 4, 2)
+echo qrTerminal("hi", 1)

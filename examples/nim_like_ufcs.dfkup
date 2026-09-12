@@ -1,0 +1,11 @@
+# dfkup support for nim-style ufc syntax
+
+import "std/strings"
+
+echo parseInt("42")
+
+echo "123".parseInt
+
+echo(parseInt("123"))
+
+echo parseInt "123"

@@ -1,0 +1,7 @@
+import "std/regex"
+
+let m = find("hello42world", "([a-z]+)(\\d+)")
+echo m["matched"]    # true
+echo m["start"]      # 0
+echo m["groups"][0]  # "hello"
+echo m["groups"][1]  # "42"

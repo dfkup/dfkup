@@ -1,0 +1,260 @@
+#
+# DFkup Coroutines Example
+# Run: dfkup run examples/coroutines.dfkup
+#
+# Coroutines are stackful functions that can suspend
+# execution with `yield` and be resumed later with `resume`.
+#
+
+#
+# Section 1: Basic coroutine
+#
+coro func counter(start: int): int =
+    var i = start
+    while i < start + 3:
+        yield i
+        i = i + 1
+    return -1
+
+let c = createCoro(counter)
+echo "Counter:"
+echo resume(c, 10)   # 10
+echo resume(c)        # 11
+echo resume(c)        # 12
+echo resume(c)        # -1 (done)
+echo status(c)        # csCompleted
+echo ""
+
+#
+# Section 2: Multiple coroutines in interleaved execution
+#
+coro func letters(): string =
+    yield "a"
+    yield "b"
+    yield "c"
+    return "done"
+
+coro func numbers(): int =
+    yield 1
+    yield 2
+    yield 3
+    return 0
+
+let lc = createCoro(letters)
+let nc = createCoro(numbers)
+
+echo "Interleaved (single-threaded cooperative):"
+echo resume(lc)    # a
+echo resume(nc)    # 1
+echo resume(lc)    # b
+echo resume(nc)    # 2
+echo resume(lc)    # c
+echo resume(nc)    # 3
+echo ""
+
+#
+# Section 3: Using status to drive a loop
+#
+coro func countdown(max: int): int =
+    var n = max
+    while n > 0:
+        yield n
+        n = n - 1
+    return 0
+
+let cd = createCoro(countdown)
+echo "Countdown from 5:"
+while true:
+    let v = resume(cd, 5)
+    let s = status(cd)
+    echo v
+    if s == "csCompleted":
+        break
+echo ""
+
+#
+# Section 4: Coroutine with mutable state
+#
+coro func fibGen(): int =
+    var a = 0
+    var b = 1
+    var i = 0
+    while i < 6:
+        yield a
+        let next = a + b
+        a = b
+        b = next
+        i = i + 1
+    return -1
+
+let fg = createCoro(fibGen)
+echo "First 6 Fibonacci numbers:"
+echo resume(fg)    # 0
+echo resume(fg)    # 1
+echo resume(fg)    # 1
+echo resume(fg)    # 2
+echo resume(fg)    # 3
+echo resume(fg)    # 5
+echo resume(fg)    # -1 (done)
+echo ""
+
+#
+# Section 5: Single-use coroutine
+#
+coro func empty(): int =
+    return 42
+
+let ec = createCoro(empty)
+echo "Single-use coroutine:"
+echo resume(ec)    # 42
+echo status(ec)    # csCompleted
+echo ""
+
+#
+# Section 6: Round-robin scheduler
+#
+# Run multiple coroutines cooperatively in a fixed loop.
+# Each coroutine yields one value per cycle; the scheduler
+# advances them in round-robin order.
+#
+coro func counterA(): int =
+    var i = 0
+    while i < 3:
+        yield i
+        i = i + 1
+    return -1
+
+coro func counterB(): int =
+    var i = 10
+    while i < 13:
+        yield i
+        i = i + 1
+    return -1
+
+coro func counterC(): int =
+    var i = 20
+    while i < 23:
+        yield i
+        i = i + 1
+    return -1
+
+let ca = createCoro(counterA)
+let cb = createCoro(counterB)
+let cc = createCoro(counterC)
+
+echo "Round-robin scheduler (3 counters):"
+while true:
+    if status(ca) != "csCompleted":
+        echo resume(ca)
+    if status(cb) != "csCompleted":
+        echo resume(cb)
+    if status(cc) != "csCompleted":
+        echo resume(cc)
+    if status(ca) == "csCompleted" and
+       status(cb) == "csCompleted" and
+       status(cc) == "csCompleted":
+        break
+echo ""
+
+#
+# Section 7: Status-driven lifecycle
+#
+# A dynamic event loop that tracks multiple coroutines
+# with different lifecycles and removes them as they complete.
+#
+coro func fast(): int =
+    yield 1
+    yield 2
+    return 0
+
+coro func slow(): int =
+    yield 10
+    yield 20
+    yield 30
+    return -1
+
+coro func burst(): int =
+    yield 100
+    return 99
+
+let f = createCoro(fast)
+let s = createCoro(slow)
+let b = createCoro(burst)
+
+echo "Status-driven lifecycle:"
+echo status(f)   # csSuspended (or csCreated — not yet resumed)
+echo resume(f)    # 1
+echo resume(f)    # 2
+echo resume(f)    # 0 (return value from fast)
+echo status(f)    # csCompleted
+echo status(s)    # csCreated (never resumed)
+echo ""
+
+#
+# Section 8: Worker pool fan-out
+#
+# Multiple worker coroutines (same function, different args)
+# run independently. Each instance carries its own state.
+#
+coro func worker(id: int): int =
+    var i = 0
+    while i < 3:
+        yield id * 10 + i
+        i = i + 1
+    return id
+
+echo "Worker pool fan-out (3 workers):"
+var w0 = createCoro(worker)
+var w1 = createCoro(worker)
+var w2 = createCoro(worker)
+
+echo resume(w0, 1)  # 10 (yield id*10+0)
+echo resume(w1, 2)  # 20
+echo resume(w2, 3)  # 30
+echo resume(w0)     # 11 (yield id*10+1)
+echo resume(w1)     # 21
+echo resume(w2)     # 31
+echo resume(w0)     # 12 (yield id*10+2)
+echo resume(w1)     # 22
+echo resume(w2)     # 32
+echo resume(w0)     # 1 (return id)
+echo resume(w1)     # 2
+echo resume(w2)     # 3 (last resume completes all)
+echo ""
+
+#
+# Section 9: Generator pipeline
+#
+# A producer coroutine yields raw values from an initial
+# data array; the driver processes each yielded value,
+# simulating a pipeline stage.
+#
+coro func produce(data: array[int]): int =
+    var j = 0
+    while j < 4:
+        yield data[j]
+        j = j + 1
+    return -1
+
+echo "Generator pipeline (raw values):"
+let producer = createCoro(produce)
+let rawVals = [2, 3, 5, 7]
+echo resume(producer, rawVals)  # 2
+echo resume(producer)           # 3
+echo resume(producer)           # 5
+echo resume(producer)           # 7
+echo resume(producer)           # -1 (done)
+echo ""
+
+#
+# Section 10: Resume errors
+#
+# This will trigger a runtime error, so it must be at the end.
+#
+coro func errDemo(): int =
+    return 42
+
+let ec2 = createCoro(errDemo)
+echo "Resuming a completed coroutine:"
+echo resume(ec2)   # 42
+# echo resume(ec2)   # runtime error: coroutine is already completed

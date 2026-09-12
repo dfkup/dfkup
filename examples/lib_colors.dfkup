@@ -1,0 +1,8 @@
+import "std/colors"
+
+let c = parseColor("rebeccapurple")
+echo toHex(c)    # "#663399"
+echo toRgb(c)
+echo toHsl(c)
+echo toName(parseColor("#ff0000"))   # "red"
+echo isValidColor("nope")            # false

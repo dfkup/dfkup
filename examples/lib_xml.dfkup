@@ -1,0 +1,9 @@
+import "std/xml"
+
+let d = parseXml("<root lang=\"en\"><item id=\"1\">hello</item></root>")
+echo tagName(d)              # "root"
+echo getAttr(d, "lang", "?") # "en"
+echo childCount(d)           # 1
+let item = findChild(d, "item")
+echo getText(item)           # "hello"
+echo toXml(d)

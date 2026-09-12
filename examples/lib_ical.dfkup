@@ -1,0 +1,6 @@
+import "std/ical"
+
+let c = parseIcal("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//x//y//EN\r\nBEGIN:VEVENT\r\nUID:abc123\r\nDTSTAMP:20260101T000000Z\r\nDTSTART:20260301T100000Z\r\nSUMMARY:Party\r\nLOCATION:Home\r\nEND:VEVENT\r\nEND:VCALENDAR")
+echo eventCount(c)   # 1
+echo events(c)
+echo calendarInfo(c)

@@ -1,0 +1,9 @@
+import "std/dotenv"
+
+let e = parseEnv("HOST=localhost\nPORT=8080\n# comment\nexport DEBUG=true")
+echo e
+envSet("DFKUP_DEMO", "hi")
+echo envGet("DFKUP_DEMO", "")   # "hi"
+echo envHas("DFKUP_DEMO")       # true
+envDel("DFKUP_DEMO")
+echo envHas("DFKUP_DEMO")       # false
