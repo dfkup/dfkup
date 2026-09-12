@@ -1,0 +1,10 @@
+import "std/strongpwd"
+import "std/json"
+
+echo pwdStrength("password")
+echo pwdScore("Xk9#mQ2$vL7@nR4!")
+echo checkPassword("password")
+echo checkPasswordWithWords("miller99!", parseJson("[\"miller\"]"))
+let d = newPwdDict(parseJson("[\"password\", \"qwerty\"]"))
+pwdDictAdd(d, parseJson("[\"dragon\"]"))
+echo checkPasswordWithDict("dragon42!", d)

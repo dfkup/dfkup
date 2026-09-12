@@ -7,3 +7,6 @@ testresults/
 !/tests/bench
 !/tests/*.nim
 !/tests/*.nims
+nimble.develop
+nimble.paths
+nimbledeps

@@ -8,7 +8,7 @@ import "std/http"
 # 1. Define the request handler
 #    Receives (path, method) and returns a response string
 #
-fn handler(path, method): string =
+fn handler(path: string, method: string): string =
   if path == "/hello":
     return "Hello from dfkup!"
   elif path == "/test":

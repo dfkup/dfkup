@@ -1,0 +1,12 @@
+import "std/algos"
+
+echo sha512Hex("abc")
+echo blakeHex("abc", 32)
+echo hmacSha512Hex("6b6579", "The quick brown fox jumps over the lazy dog")
+let k = genKey32()
+let s = seal("hello dfkup", k)
+echo unseal(s, k)
+let g = gcmSealHex("hello dfkup", k)
+echo gcmOpenHex(g, k)
+let h = hashPassword("hunter2")
+echo verifyPassword("hunter2", h)

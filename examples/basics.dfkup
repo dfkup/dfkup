@@ -220,12 +220,13 @@ echo values(data)
 let cwd = getCurrentDir()
 echo cwd
 
-let testFile = joinPath(cwd, "examples/hello.txt")
-writeFile(testFile, "Hello from DFkup!")
+# let testFile = joinPath(cwd, "examples/hello.txt")
+# writeFile(testFile, "Hello from DFkup!")
 
-if fileExists(testFile):
+if fileExists(testFile) {
   echo readFile(testFile)
   echo getFileSize(testFile)
+}
 
 removeFile(testFile)
 echo fileExists(testFile)
@@ -242,7 +243,7 @@ fn fileStats(filePath: string) =
   echo filePath
   if fileExists(filePath) == false {
     echo "not found"
-  } else { 
+  } else {
     let content = readFile(filePath)
     let charCount = len(content)
     let lines = split(content, "\n")

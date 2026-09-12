@@ -17,7 +17,9 @@ import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
                   libhttp, libcli, libjson, libyaml, libregex,
                   libbrowser, libtoml, libuuid, libdotenv,
                   libcsv, libbson, libcolors, libqr,
-                  libxml, libfeed, libical, libcss, libsvg]
+                  libxml, libfeed, libical, libcss, libsvg,
+                  libmarkdown, libstrongpwd, libalgos, libtwofa,
+                  libfswatch]
 
 import pkg/openparser/json
 
@@ -160,6 +162,36 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     let m = newModule("svg", some"svg.dfkup")
     m.load(sysMod)
     initSvg(scr, m)
+    return m
+
+  stdlibs["markdown"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("markdown", some"markdown.dfkup")
+    m.load(sysMod)
+    initMarkdown(scr, m)
+    return m
+
+  stdlibs["strongpwd"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("strongpwd", some"strongpwd.dfkup")
+    m.load(sysMod)
+    initStrongpwd(scr, m)
+    return m
+
+  stdlibs["algos"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("algos", some"algos.dfkup")
+    m.load(sysMod)
+    initAlgos(scr, m)
+    return m
+
+  stdlibs["twofa"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("twofa", some"twofa.dfkup")
+    m.load(sysMod)
+    initTwofa(scr, m)
+    return m
+
+  stdlibs["fswatch"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("fswatch", some"fswatch.dfkup")
+    m.load(sysMod)
+    initFswatch(scr, m)
     return m
 
   script.stdpos = script.procs.high

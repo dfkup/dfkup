@@ -8,6 +8,7 @@
 import std/[net, httpcore]
 import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
+import pkg/vancode/interpreter/jit/jit_values
 import pkg/supranim/network/webserver
 
 type
@@ -57,16 +58,17 @@ proc initHttp*(script: Script, module: Module) =
           {.gcsafe.}:
             var body: string
             if cb.typeId != tyNil:
-              let path = req.path
-              let meth = $req.httpMethod
+              let path = if req.path.len == 0: "/" else: req.path
+              let methStr = $req.httpMethod
+              let meth = if methStr.len == 0: "GET" else: methStr
               var flatArgs: array[2, int64]
               var argTypes: array[2, int32]
               var bridgeBuf: array[2, Value]
               bridgeBuf[0] = initValue(path)
-              flatArgs[0] = cast[int64](bridgeBuf[0])
+              flatArgs[0] = jitRootValue(bridgeBuf[0])
               argTypes[0] = tyString.int32
               bridgeBuf[1] = initValue(meth)
-              flatArgs[1] = cast[int64](bridgeBuf[1])
+              flatArgs[1] = jitRootValue(bridgeBuf[1])
               argTypes[1] = tyString.int32
               let raw = execCallback(cstring(cb.procVal.procScript),
                 cb.procVal.procId.int32, addr flatArgs[0], 2, addr argTypes[0])

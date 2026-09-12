@@ -1,0 +1,10 @@
+import "std/markdown"
+import "std/json"
+
+let doc = "# Hello\n\nworld\n\n## Sub\n"
+echo markdownTitle(doc)
+echo markdownToc(doc)
+echo markdownHasHeadings(doc)
+echo markdownToHtml(doc)
+echo markdownToHtmlOpts(doc, parseJson("{\"anchors\": false}"))
+echo markdownMeta("---\ntitle: Hi\n---\n\nbody")

@@ -1,0 +1,8 @@
+import "std/fswatch"
+
+writeFile("/tmp/dfkup-watch-demo.txt", "v1")
+let id = watch("/tmp/dfkup-watch-demo.txt")
+echo watchPath(id)
+writeFile("/tmp/dfkup-watch-demo.txt", "v2")
+echo pollWatchers(500)
+echo unwatch(id)
