@@ -5,10 +5,11 @@
 #          https://dfkup.dev
 #          https://github.com/dfkup/dfkup
 
-import std/[json, os, options, osproc, strutils, envvars]
+import std/[json, os, options, osproc, strutils, envvars, tables]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, value, vm]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 import ../parser
+import ../sysinfo as sys
 
 import pkg/openparser/json
 
@@ -71,6 +72,11 @@ iterator items*(data: array[bool]): bool =
 proc initSystem*(script: Script, module: Module) =
   module.initSystemTypes()
   script.initSystemOps(module)
+
+  # `$expr` renders any value as a string.
+  script.addProc(module, "toStr", @[paramDef("v", ttyAny)], ttyString,
+    proc (args: StackView, argc: int): Value =
+      result = initValue($args[0]))
 
   script.addProc(module, "echo", @[paramDef("x", ttyString)], ttyVoid,
     proc (args: StackView, argc: int): Value =
@@ -309,6 +315,48 @@ proc initSystem*(script: Script, module: Module) =
       result = initValue(os.getCurrentProcessId().int64))
 
   #
+  # System information
+  #
+  # The return type is a real object symbol carrying `objectFields`, not the
+  # builtin `object`. dfkup is built without `vancodeGradualTypes`, so type
+  # checking is strict: a foreign proc returning the builtin `object` resolves
+  # to a type with no declared fields, and `info.cpuCores` would then be
+  # rejected as a non-existent field at compile time. Declaring the fields the
+  # way `genObject` does is what makes dot access resolve to an `opcGetF`
+  # index. The field order here is the runtime layout.
+  #
+  let sysInfoFields: array[6, string] = ["osName", "arch", "cpuCores",
+      "cpuEndian", "totalMemory", "executablePath"]
+  let
+    stringTy = module.sym("string")
+    intTy = module.sym("int")
+    sysInfoTy = newType(ttyObject, ast.newIdent("SystemInfo"))
+  sysInfoTy.objectId = globalTypeCounter
+  inc(globalTypeCounter)
+  for i, fieldName in sysInfoFields:
+    sysInfoTy.objectFields[fieldName] = (
+      id: i,
+      name: ast.newIdent(fieldName),
+      ty: if fieldName in ["cpuCores", "totalMemory"]: intTy else: stringTy,
+      implVal: nil
+    )
+  discard module.add(sysInfoTy, ast.newIdent("SystemInfo"))
+
+  script.addProc(module, "getSystemInfo", @[], ttyObject,
+    proc (args: StackView, argc: int): Value =
+      let info = sys.collectSystemInfo()
+      result = initObject(tyObjectStorage, sysInfoFields.len)
+      for i, fieldName in sysInfoFields:
+        result.objectVal.keys.add(fieldName)
+      result.objectVal.fields[0] = initValue(info.osName).toStorage
+      result.objectVal.fields[1] = initValue(info.arch).toStorage
+      result.objectVal.fields[2] = initValue(info.cpuCores.int64).toStorage
+      result.objectVal.fields[3] = initValue(info.cpuEndian).toStorage
+      result.objectVal.fields[4] = initValue(info.totalMemory).toStorage
+      result.objectVal.fields[5] = initValue(info.executablePath).toStorage
+    , returnTySym = sysInfoTy)
+
+  #
   # File info
   #
   script.addProc(module, "getFileSize", @[paramDef("path", ttyString)], ttyInt,
@@ -325,6 +373,33 @@ proc initSystem*(script: Script, module: Module) =
   script.addProc(module, "execOut", @[paramDef("cmd", ttyString)], ttyString,
     proc (args: StackView, argc: int): Value =
       result = initValue(osproc.execCmdEx(args[0].stringVal[]).output))
+
+  # `execShell` hands the command to the system shell, so `&&`, pipes and
+  # `$VAR` all work, unlike `exec` which execs directly. That means the command
+  # is shell-interpreted and must come from a trusted source, not user input.
+  #
+  # This deliberately runs through `startProcess` rather than `execCmdEx`:
+  # `execCmdEx` reads the child's output, which is incompatible with
+  # `poParentStreams`, and a build command's output belongs on the terminal
+  # anyway. `execShellOut` below is the capturing counterpart.
+  script.addProc(module, "execShell", @[paramDef("cmd", ttyString)], ttyBool,
+    proc (args: StackView, argc: int): Value =
+      var process = osproc.startProcess(args[0].stringVal[],
+        options = {poEvalCommand, poUsePath, poParentStreams})
+      defer: close(process)
+      result = initValue(process.waitForExit() == 0))
+
+  # The output-capturing counterpart, so a build script can both report what a
+  # command printed and branch on whether it succeeded. `execCmdEx` already
+  # merges stderr into stdout by default, which is what you want here.
+  script.addProc(module, "execShellOut", @[paramDef("cmd", ttyString)], ttyJson,
+    proc (args: StackView, argc: int): Value =
+      let p = osproc.execCmdEx(args[0].stringVal[],
+        options = {poEvalCommand, poUsePath})
+      var j = newJObject()
+      j["output"] = %p.output
+      j["exitCode"] = %p.exitCode
+      result = initValue(j))
 
   #
   # String formatting
@@ -412,6 +487,10 @@ proc initSystem*(script: Script, module: Module) =
   script.addProc(module, "createCoro", @[paramDef("proc", ttyProc)], ttyCoroutine,
     proc (args: StackView, argc: int): Value =
       raise newException(ValueError, "createCoro must be used as a compiler intrinsic"))
+  script.addProc(module, "dispatch", @[paramDef("proc", ttyProc),
+      paramDef("args", ttyAny)], ttyCoroutine,
+    proc (args: StackView, argc: int): Value =
+      raise newException(ValueError, "dispatch must be used as a compiler intrinsic"))
   script.addProc(module, "resume", @[paramDef("coro", ttyCoroutine), paramDef("args", ttyAny)], ttyAny,
     proc (args: StackView, argc: int): Value =
       raise newException(ValueError, "resume must be used as a compiler intrinsic"))

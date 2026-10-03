@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "OpenPeeps"
-description   = "A scripting language with VM + JIT compiler"
+description   = "A tiny scripting language. Enjoyable, easy to learn and work with so you don't f*ck up"
 license       = "LGPL-3.0-or-later"
 srcDir        = "src"
 bin           = @["dfkup"]
@@ -26,7 +26,7 @@ requires "blackpaper >= 0.1.0"
 requires "nimcypher >= 0.2.0"
 requires "twofa >= 0.1.0"
 requires "powpow >= 0.1.0"
-requires "e2ee >= 0.1.0"
 requires "money >= 0.1.0"
 requires "chopchop >= 0.1.0"
+requires "chachachat >= 0.1.0"
 requires "voodoo >= 0.1.9"

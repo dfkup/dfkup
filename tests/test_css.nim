@@ -12,8 +12,9 @@ proc run(code: string): string =
     module = newModule("test", some"test.dfkup")
   let systemModule = newModule("system", some"system.dfkup")
   initSystem(script, systemModule)
-  module.load(systemModule)
+  module.importModule(systemModule, "system")
   let cssModule = newModule("css", some"css.dfkup")
+  cssModule.importModule(systemModule, "system")
   initCss(script, cssModule)
   module.load(cssModule)
   script.stdpos = script.procs.high

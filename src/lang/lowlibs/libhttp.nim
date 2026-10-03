@@ -25,7 +25,6 @@ proc execCallback*(procScript: cstring, procId: int32,
                    argTypes: ptr int32): int64 {.cdecl, importc.}
 
 proc initHttp*(script: Script, module: Module) =
-  module.initSystemTypes()
   discard module.genPtr(tyPointer, "WebServer")
   discard module.genPtr(tyPointer, "Request")
   let ptrTy = module.sym"WebServer"

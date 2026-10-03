@@ -12,8 +12,9 @@ proc run(code: string): string =
     module = newModule("test", some"test.dfkup")
   let systemModule = newModule("system", some"system.dfkup")
   initSystem(script, systemModule)
-  module.load(systemModule)
+  module.importModule(systemModule, "system")
   let fsModule = newModule("fswatch", some"fswatch.dfkup")
+  fsModule.importModule(systemModule, "system")
   initFswatch(script, fsModule)
   module.load(fsModule)
   script.stdpos = script.procs.high

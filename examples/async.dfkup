@@ -1,0 +1,209 @@
+#
+# DFkup Async / Coroutines Example
+# Run: dfkup run examples/async.dfkup
+#
+# A coroutine is declared with `async func` and suspends itself with `yield`.
+# There are three ways to drive one:
+#
+#   await f(args)        drive it to completion; the expression evaluates to
+#                        its return value. Every intermediate `yield` is
+#                        forwarded outward, so they still reach your resumer.
+#   dispatch(f, args)    start it and hand back the coroutine, so you can keep
+#                        stepping it yourself with `resume` / `status`.
+#   createCoro(f)        build the coroutine without starting it.
+#
+# This example drives coroutines by hand (createCoro plus a resume loop) so
+# the forwarded yields are visible one at a time. Where only the result
+# matters, `await` is the shorter form -- see sections 1 and 7.
+#
+# `then` chains a continuation onto the result: `await f() then p(x)` calls
+# `p(awaitedResult, x...)`.
+#
+
+#
+# Section 1: await a coroutine that only returns
+#
+async func compute(): int =
+  return 42
+
+async func useIt(): int =
+  let v = await compute()
+  return v + 1
+
+# `useIt` never yields, so `await useIt()` is the whole story and the driver
+# loop below is only here to show it from the outside.
+echo "Simple await:"
+echo await useIt()
+let c1 = createCoro(useIt)
+while status(c1) != "csCompleted":
+  echo resume(c1)
+echo status(c1)
+echo ""
+
+#
+# Section 2: await a coroutine that yields
+#
+# Each `yield` inside `streamed` surfaces through `outer`, so the driver loop
+# below sees every intermediate value plus the final one.
+#
+async func streamed(): string =
+  yield "Hel"
+  yield "lo "
+  yield "world"
+  return "!"
+
+async func outer(): string =
+  return await streamed()
+
+echo "Forwarded yields:"
+let c2 = createCoro(outer)
+while status(c2) != "csCompleted":
+  echo resume(c2)
+echo status(c2)
+echo ""
+
+#
+# Section 3: await passes arguments
+#
+# Arguments bind on the coroutine's first resume.
+#
+async func greet(name: string, greeting: string): string {
+  yield "deferred"
+  return greeting & ", " & name & "!"
+}
+
+async func askSomeone(): string =
+  return await greet("Ada", "Hello")
+
+echo "With arguments:"
+let c3 = createCoro(askSomeone)
+while status(c3) != "csCompleted":
+  echo resume(c3)
+echo ""
+
+#
+# Section 4: awaiting an existing coroutine value
+#
+async func counter(): int =
+  var i = 0
+  while i < 3:
+    yield i
+    i = i + 1
+  return 3
+
+async func useCounter(): int =
+# `await` drives a coroutine value it did not create itself.
+# `dispatch(counter)` would also work here and saves the createCoro, at the
+# cost of spending counter's first yield.
+  let c = createCoro(counter)
+  return await c
+
+echo "Awaiting a coroutine value:"
+let c4 = createCoro(useCounter)
+while status(c4) != "csCompleted":
+  echo resume(c4)
+echo ""
+
+#
+# Section 5: then, a sequential continuation
+#
+# `await f() then p(x)` awaits `f`, then calls `p` with the result as its
+# first argument. The whole expression is itself a coroutine, so the yields
+# still stream through.
+#
+fn decorate(body: string): string =
+  return "[" & body & "]"
+
+async func plain(): string =
+  yield "partial"
+  return "value"
+
+async func decorated(): string =
+  return await plain() then decorate()
+
+echo "then continuation:"
+let c5 = createCoro(decorated)
+while status(c5) != "csCompleted":
+  echo resume(c5)
+echo ""
+
+#
+# Section 6: then with extra arguments
+#
+fn joinParts(head: string, tail: string, sep: string): string =
+  return head & sep & tail
+
+async func left(): string =
+  return "left"
+
+async func joined(): string =
+  return await left() then joinParts("right", "-")
+
+echo "then with extra arguments:"
+let c6 = createCoro(joined)
+while status(c6) != "csCompleted":
+  echo resume(c6)
+echo ""
+
+#
+# Section 7: await at toplevel
+#
+# Outside a coroutine there is no resumer to forward yields to, so only the
+# return value survives. `await` still blocks until the coroutine finishes.
+#
+echo "Await at toplevel:"
+echo await compute()
+echo ""
+
+#
+# Section 8: composing several coroutines
+#
+async func fetchA(): string =
+  yield "a-1"
+  return "A"
+
+async func fetchB(): string =
+  yield "b-1"
+  return "B"
+
+async func combined(): string =
+  let ca = createCoro(fetchA)
+  let cb = createCoro(fetchB)
+  let x = await ca
+  let y = await cb
+  return x & y
+
+echo "Composing coroutines:"
+let c8 = createCoro(combined)
+while status(c8) != "csCompleted":
+  echo resume(c8)
+echo ""
+
+#
+# Section 9: awaiting two coroutines in sequence
+#
+# Each `await` runs its coroutine to completion before the next one starts, so
+# the yields arrive grouped per coroutine rather than interleaved.
+#
+async func first(): string =
+  yield "1a"
+  yield "1b"
+  return "1z"
+
+async func second(): string =
+  yield "2a"
+  yield "2b"
+  return "2z"
+
+async func interleave(): string =
+  let c1 = createCoro(first)
+  let c2 = createCoro(second)
+  let x = await c1
+  let y = await c2
+  return x & "/" & y
+
+echo "Awaiting in sequence:"
+let c9 = createCoro(interleave)
+while status(c9) != "csCompleted":
+  echo resume(c9)
+echo "done"

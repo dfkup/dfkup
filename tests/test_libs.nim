@@ -1,4 +1,4 @@
-import std/[unittest, options, os]
+import std/[unittest, options, os, strutils]
 import ../src/lang/transformers
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
 import ../src/lang/[parser, lowlibs/libsystem, lowlibs/libjson]
@@ -12,8 +12,9 @@ proc run(code: string): string =
     module = newModule("test", some"test.dfkup")
   let systemModule = newModule("system", some"system.dfkup")
   initSystem(script, systemModule)
-  module.load(systemModule)
+  module.importModule(systemModule, "system")
   let jsonModule = newModule("json", some"json.dfkup")
+  jsonModule.importModule(systemModule, "system")
   initJson(script, jsonModule)
   module.load(jsonModule)
   script.stdpos = script.procs.high
@@ -59,3 +60,35 @@ suite "Libraries - OS":
   test "getFileSize":
     let r = run("getFileSize(\"tests/test_libs.nim\")")
     check r != "0"
+
+suite "Libraries - getSystemInfo":
+  test "osName field":
+    check run("let i = getSystemInfo()\ni.osName") == hostOS
+  test "arch field":
+    check run("let i = getSystemInfo()\ni.arch") == hostCPU
+  test "cpuCores is positive":
+    check parseInt(run("let i = getSystemInfo()\ni.cpuCores")) > 0
+  test "cpuEndian field":
+    check run("let i = getSystemInfo()\ni.cpuEndian") == $cpuEndian
+  test "totalMemory is positive":
+    check parseInt(run("let i = getSystemInfo()\ni.totalMemory")) > 0
+  test "executablePath is non-empty":
+    check run("let i = getSystemInfo()\ni.executablePath").len > 3
+  test "two calls agree":
+    check run("let i = getSystemInfo()\ni.cpuCores") ==
+      run("let j = getSystemInfo()\nj.cpuCores")
+  test "the whole object dumps as an object":
+    check run("getSystemInfo()").startsWith("{")
+
+suite "Libraries - execShell":
+  test "true on success":
+    check run("execShell(\"exit 0\")") == "true"
+  test "false on failure":
+    check run("execShell(\"exit 3\")") == "false"
+  test "out returns output and exit code":
+    check run("execShellOut(\"echo hi\")") ==
+      "{\"output\":\"hi\\n\",\"exitCode\":0}"
+  test "out reports a non-zero exit code":
+    check run("execShellOut(\"exit 7\")") == "{\"output\":\"\",\"exitCode\":7}"
+  test "shell metacharacters are interpreted":
+    check run("execShell(\"exit $((2 + 3))\")") == "false"

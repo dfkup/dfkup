@@ -33,8 +33,6 @@ proc textOf(n: XmlNode): string =
   else: discard
 
 proc initXml*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseXml", @[paramDef("s", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

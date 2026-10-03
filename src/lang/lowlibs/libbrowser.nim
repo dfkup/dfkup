@@ -23,9 +23,56 @@ proc objFieldStr(obj: Object, key: string, default: string): string =
   if v == nil or v.typeId != tyString: default
   else: v.stringVal[]
 
+# Every browser this process launched, so a script that never reaches its own
+# `close(browser)` still tears Chrome down.
+#
+# A handle is handed to dfkup as a foreign pointer whose destructor is
+# `GC_unref`, and a destructor's only job is to release the ref. Relying on it
+# to also close the browser means an aborted or crashed script leaks a headless
+# Chrome, which is what left a trail of orphans behind.
+var liveBrowsers {.threadvar.}: seq[Browser]
+
+proc closeBrowser(b: Browser) =
+  ## Close `b` and stop tracking it. Safe to call twice.
+  for i, tracked in liveBrowsers:
+    if tracked == b:
+      liveBrowsers.delete(i)
+      break
+  try:
+    waitFor b.close()
+  except CatchableError:
+    discard # already gone, or never came up
+
+proc closeAllBrowsers*() =
+  ## Close every browser launched by this process.
+  ##
+  ## Called after the VM finishes, including when the script errored, so a
+  ## failed run does not leave Chrome behind.
+  for b in liveBrowsers:
+    try:
+      waitFor b.close()
+    except CatchableError:
+      discard
+  liveBrowsers = @[]
+
+proc trackBrowser(b: Browser): Browser {.discardable.} =
+  liveBrowsers.add(b)
+  b
+
+proc foreignHandle[T](args: StackView, idx: int, default: T = nil): T =
+  ## Read a foreign `T` handle out of `args`, or `default` if there isn't one.
+  ##
+  ## A handle can legitimately be missing: `querySelector` yields `nil` when the
+  ## selector matches nothing, and dfkup hands that back as a nil value whose
+  ## `foreign.data` is nil. Casting that and calling through it dereferenced nil
+  ## inside chopchop and took the process down, so every accessor checks first.
+  let v = args[idx]
+  if v.typeId == tyPointer and v.objectVal.foreign.data != nil:
+    result = cast[T](v.objectVal.foreign.data)
+  else:
+    result = default
+
 proc initBrowser*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
   discard module.genPtr(tyPointer, "Browser")
   discard module.genPtr(tyPointer, "BrowserPage")
   discard module.genPtr(tyPointer, "BrowserCtx")
@@ -40,7 +87,7 @@ proc initBrowser*(script: Script, module: Module) =
     returnTySym = module.sym"Browser",
     impl = proc (args: StackView, argc: int): Value =
       let opts = defaultLaunchOptions()
-      let b = waitFor launchBrowser(opts)
+      let b = trackBrowser(waitFor launchBrowser(opts))
       GC_ref(b)
       result = Value(typeId: tyPointer)
       result.objectVal = Object(isForeign: true,
@@ -59,7 +106,7 @@ proc initBrowser*(script: Script, module: Module) =
         headless: o.objFieldBool("headless", true),
         portNo: o.objFieldInt("port", 0)
       )
-      let b = waitFor launchBrowser(opts)
+      let b = trackBrowser(waitFor launchBrowser(opts))
       GC_ref(b)
       result = Value(typeId: tyPointer)
       result.objectVal = Object(isForeign: true,
@@ -72,8 +119,9 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("browser", ttyPointer)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let b = cast[Browser](args[0].objectVal.foreign.data)
-      waitFor b.close())
+      let b = foreignHandle[Browser](args, 0)
+      if b == nil: return
+      closeBrowser(b))
 
   #
   # Page management
@@ -83,7 +131,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserPage",
     impl = proc (args: StackView, argc: int): Value =
-      let b = cast[Browser](args[0].objectVal.foreign.data)
+      let b = foreignHandle[Browser](args, 0)
+      if b == nil: return
       let p = waitFor b.newPage()
       GC_ref(p)
       result = Value(typeId: tyPointer)
@@ -97,56 +146,64 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("page", ttyPointer), paramDef("url", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       waitFor p.goto(args[1].stringVal[]))
 
   script.addProc(module, "getTitle",
     params = @[paramDef("page", ttyPointer)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return initValue("")
       result = initValue(waitFor p.title()))
 
   script.addProc(module, "getUrl",
     params = @[paramDef("page", ttyPointer)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return initValue("")
       result = initValue(waitFor p.url()))
 
   script.addProc(module, "getContent",
     params = @[paramDef("page", ttyPointer)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return initValue("")
       result = initValue(waitFor p.content()))
 
   script.addProc(module, "getScreenshot",
     params = @[paramDef("page", ttyPointer)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return initValue("")
       result = initValue(waitFor p.screenshot()))
 
   script.addProc(module, "evaluate",
     params = @[paramDef("page", ttyPointer), paramDef("js", ttyString)],
     returnTy = ttyJson,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return initValue("")
       result = initValue(waitFor p.evaluate(args[1].stringVal[])))
 
   script.addProc(module, "setViewport",
     params = @[paramDef("page", ttyPointer), paramDef("width", ttyInt), paramDef("height", ttyInt)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       waitFor p.setViewport(args[1].intVal.int, args[2].intVal.int))
 
   script.addProc(module, "addInitScript",
     params = @[paramDef("page", ttyPointer), paramDef("script", ttyString)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return initValue("")
       result = initValue(waitFor p.addInitScript(args[1].stringVal[])))
 
   #
@@ -157,7 +214,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserElement",
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       let el = waitFor p.querySelector(args[1].stringVal[])
       if el != nil:
         GC_ref(el)
@@ -174,7 +232,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserElement",
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       let el = waitFor p.waitForSelector(args[1].stringVal[])
       if el != nil:
         GC_ref(el)
@@ -193,7 +252,8 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("page", ttyPointer)],
     returnTy = ttyJson,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       let cs = waitFor p.cookies()
       var arr = newJArray()
       for c in cs:
@@ -206,7 +266,8 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("page", ttyPointer), paramDef("cookie", ttyObject)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       let o = args[1].objectVal
       var domain = o.objFieldStr("domain", "")
       if domain.len == 0:
@@ -227,14 +288,16 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("page", ttyPointer), paramDef("name", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       waitFor p.deleteCookie(args[1].stringVal[]))
 
   script.addProc(module, "clearCookies",
     params = @[paramDef("page", ttyPointer)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       waitFor p.clearCookies())
 
   #
@@ -244,14 +307,16 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("page", ttyPointer), paramDef("key", ttyString)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return initValue("")
       result = initValue(waitFor p.localStorage(args[1].stringVal[])))
 
   script.addProc(module, "setLocalStorage",
     params = @[paramDef("page", ttyPointer), paramDef("key", ttyString), paramDef("value", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       waitFor p.setLocalStorage(args[1].stringVal[], args[2].stringVal[]))
 
   #
@@ -261,84 +326,96 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("el", ttyPointer)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return
       waitFor el.click())
 
   script.addProc(module, "dblclick",
     params = @[paramDef("el", ttyPointer)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return
       waitFor el.dblclick())
 
   script.addProc(module, "hover",
     params = @[paramDef("el", ttyPointer)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return
       waitFor el.hover())
 
   script.addProc(module, "typeText",
     params = @[paramDef("el", ttyPointer), paramDef("text", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return
       waitFor el.typeText(args[1].stringVal[]))
 
   script.addProc(module, "press",
     params = @[paramDef("el", ttyPointer), paramDef("key", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return
       waitFor el.press(args[1].stringVal[]))
 
   script.addProc(module, "getInnerText",
     params = @[paramDef("el", ttyPointer)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return initValue("")
       result = initValue(waitFor el.innerText()))
 
   script.addProc(module, "getInnerHTML",
     params = @[paramDef("el", ttyPointer)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return initValue("")
       result = initValue(waitFor el.innerHTML()))
 
   script.addProc(module, "getAttribute",
     params = @[paramDef("el", ttyPointer), paramDef("name", ttyString)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return initValue("")
       result = initValue(waitFor el.getAttribute(args[1].stringVal[])))
 
   script.addProc(module, "isVisible",
     params = @[paramDef("el", ttyPointer)],
     returnTy = ttyBool,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return initValue(false)
       result = initValue(waitFor el.isVisible()))
 
   script.addProc(module, "selectByValue",
     params = @[paramDef("el", ttyPointer), paramDef("value", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return
       waitFor el.selectByValue(args[1].stringVal[]))
 
   script.addProc(module, "selectByLabel",
     params = @[paramDef("el", ttyPointer), paramDef("label", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return
       waitFor el.selectByLabel(args[1].stringVal[]))
 
   script.addProc(module, "selectByIndex",
     params = @[paramDef("el", ttyPointer), paramDef("index", ttyInt)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let el = cast[ElementHandle](args[0].objectVal.foreign.data)
+      let el = foreignHandle[ElementHandle](args, 0)
+      if el == nil: return
       waitFor el.selectByIndex(args[1].intVal.int))
 
   #
@@ -349,7 +426,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserLocator",
     impl = proc (args: StackView, argc: int): Value =
-      let p = cast[Page](args[0].objectVal.foreign.data)
+      let p = foreignHandle[Page](args, 0)
+      if p == nil: return
       let loc = p.locator(args[1].stringVal[])
       GC_ref(loc)
       result = Value(typeId: tyPointer)
@@ -364,7 +442,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserLocator",
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       let nloc = loc.filter(args[1].stringVal[])
       GC_ref(nloc)
       result = Value(typeId: tyPointer)
@@ -379,7 +458,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserLocator",
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       let nloc = loc.first()
       GC_ref(nloc)
       result = Value(typeId: tyPointer)
@@ -394,7 +474,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserLocator",
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       let nloc = loc.last()
       GC_ref(nloc)
       result = Value(typeId: tyPointer)
@@ -409,7 +490,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserLocator",
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       let nloc = loc.nth(args[1].intVal.int)
       GC_ref(nloc)
       result = Value(typeId: tyPointer)
@@ -426,63 +508,72 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("loc", ttyPointer)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       waitFor loc.click())
 
   script.addProc(module, "locatorHover",
     params = @[paramDef("loc", ttyPointer)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       waitFor loc.hover())
 
   script.addProc(module, "locatorTypeText",
     params = @[paramDef("loc", ttyPointer), paramDef("text", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       waitFor loc.typeText(args[1].stringVal[]))
 
   script.addProc(module, "locatorPress",
     params = @[paramDef("loc", ttyPointer), paramDef("key", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       waitFor loc.press(args[1].stringVal[]))
 
   script.addProc(module, "locatorFill",
     params = @[paramDef("loc", ttyPointer), paramDef("text", ttyString)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       waitFor loc.fill(args[1].stringVal[]))
 
   script.addProc(module, "getLocatorInnerText",
     params = @[paramDef("loc", ttyPointer)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return initValue("")
       result = initValue(waitFor loc.innerText()))
 
   script.addProc(module, "getLocatorInnerHTML",
     params = @[paramDef("loc", ttyPointer)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return initValue("")
       result = initValue(waitFor loc.innerHTML()))
 
   script.addProc(module, "locatorGetAttribute",
     params = @[paramDef("loc", ttyPointer), paramDef("name", ttyString)],
     returnTy = ttyString,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return initValue("")
       result = initValue(waitFor loc.getAttribute(args[1].stringVal[])))
 
   script.addProc(module, "getLocatorCount",
     params = @[paramDef("loc", ttyPointer)],
     returnTy = ttyInt,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return
       let cnt = waitFor loc.count()
       result = initValue(cnt.int64))
 
@@ -490,7 +581,8 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("loc", ttyPointer)],
     returnTy = ttyBool,
     impl = proc (args: StackView, argc: int): Value =
-      let loc = cast[Locator](args[0].objectVal.foreign.data)
+      let loc = foreignHandle[Locator](args, 0)
+      if loc == nil: return initValue(false)
       result = initValue(waitFor loc.isVisible()))
 
   #
@@ -501,7 +593,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserCtx",
     impl = proc (args: StackView, argc: int): Value =
-      let b = cast[Browser](args[0].objectVal.foreign.data)
+      let b = foreignHandle[Browser](args, 0)
+      if b == nil: return
       let ctx = waitFor b.newContext()
       GC_ref(ctx)
       result = Value(typeId: tyPointer)
@@ -516,7 +609,8 @@ proc initBrowser*(script: Script, module: Module) =
     returnTy = ttyPointer,
     returnTySym = module.sym"BrowserPage",
     impl = proc (args: StackView, argc: int): Value =
-      let ctx = cast[BrowserContext](args[0].objectVal.foreign.data)
+      let ctx = foreignHandle[BrowserContext](args, 0)
+      if ctx == nil: return
       let p = waitFor ctx.newPage()
       GC_ref(p)
       result = Value(typeId: tyPointer)
@@ -530,5 +624,6 @@ proc initBrowser*(script: Script, module: Module) =
     params = @[paramDef("ctx", ttyPointer)],
     returnTy = ttyVoid,
     impl = proc (args: StackView, argc: int): Value =
-      let ctx = cast[BrowserContext](args[0].objectVal.foreign.data)
+      let ctx = foreignHandle[BrowserContext](args, 0)
+      if ctx == nil: return
       waitFor ctx.close())

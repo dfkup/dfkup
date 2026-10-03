@@ -68,8 +68,6 @@ proc validateSheet(sheet: CssStyleSheet): JsonNode =
   result["errors"] = errors
 
 proc initCss*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseCss", @[paramDef("s", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

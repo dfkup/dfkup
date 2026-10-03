@@ -41,8 +41,6 @@ proc wrapNode(n: TomlNode): Value =
     result.objectVal.foreign.tag = "TOMLNode"
 
 proc initToml*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseToml", @[paramDef("s", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

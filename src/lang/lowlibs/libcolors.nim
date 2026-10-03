@@ -17,8 +17,6 @@ proc getColor(v: Value): Color =
   cast[ColorBox](v.objectVal.foreign.data).c
 
 proc initColors*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseColor", @[paramDef("s", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

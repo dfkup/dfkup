@@ -33,8 +33,6 @@ proc ensureLoop() =
     watchLoop = newLoop()
 
 proc initFswatch*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "watch", @[paramDef("path", ttyString)], ttyInt,
     proc (args: StackView, argc: int): Value =

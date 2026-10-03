@@ -97,3 +97,56 @@ suite "Static - errors":
   test "defined with wrong arg count":
     expect StaticEvalError:
       discard evalStatic(call("defined"))
+
+proc dot(obj, field: Node): Node = ast.newTree(nkDot, obj, field)
+
+suite "Static - objects":
+  test "object literal field access":
+    var obj = ast.newTree(nkObjectStorage)
+    var entry = ast.newNode(nkColon)
+    entry.add([ast.newIdent("name"), s("dfkup")])
+    obj.add(entry)
+    check evalStatic(dot(obj, ast.newIdent("name"))).strVal == "dfkup"
+  test "object with int field":
+    var obj = ast.newTree(nkObjectStorage)
+    var entry = ast.newNode(nkColon)
+    entry.add([ast.newIdent("cpuCores"), i(8)])
+    obj.add(entry)
+    check evalStatic(dot(obj, ast.newIdent("cpuCores"))).intVal == 8
+  test "missing field is an error":
+    var obj = ast.newTree(nkObjectStorage)
+    var entry = ast.newNode(nkColon)
+    entry.add([ast.newIdent("name"), s("dfkup")])
+    obj.add(entry)
+    expect StaticEvalError:
+      discard evalStatic(dot(obj, ast.newIdent("nope")))
+  test "field access on a non-object is an error":
+    expect StaticEvalError:
+      discard evalStatic(dot(s("a string"), ast.newIdent("name")))
+  test "duplicate object key is an error":
+    var obj = ast.newTree(nkObjectStorage)
+    for v in ["a", "b"]:
+      var entry = ast.newNode(nkColon)
+      entry.add([ast.newIdent("name"), s(v)])
+      obj.add(entry)
+    expect StaticEvalError:
+      discard evalStatic(obj)
+
+suite "Static - getSystemInfo":
+  test "returns a static object":
+    let v = evalStatic(call("getSystemInfo"))
+    check v.kind == skObject
+    check v.fields.len > 0
+  test "osName matches the host":
+    let v = evalStatic(dot(call("getSystemInfo"), ast.newIdent("osName")))
+    check v.strVal == hostOS
+  test "cpuCores is a positive int":
+    let v = evalStatic(dot(call("getSystemInfo"), ast.newIdent("cpuCores")))
+    check v.kind == skInt
+    check v.intVal > 0
+  test "field can be compared in a when condition":
+    check evalB(infix(">", dot(call("getSystemInfo"),
+      ast.newIdent("cpuCores")), i(0)))
+  test "cannot be ordered":
+    expect StaticEvalError:
+      discard evalB(infix("<", call("getSystemInfo"), call("getSystemInfo")))

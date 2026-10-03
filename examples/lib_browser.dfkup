@@ -42,8 +42,11 @@ echo len(ss)
 #
 # 6. Locator API (auto-waiting queries)
 #
+# example.com no longer serves an <h1> (its body is <p><span> runs plus a
+# single <a>), so a locator on "h1" finds nothing and auto-waits until it
+# times out. Use a selector the page actually has.
 echo "--- 6. Locator API ---"
-let heading = page.locator("h1")
+let heading = page.locator("a")
 echo getLocatorInnerText(heading)
 
 let links = page.locator("a")
@@ -82,7 +85,7 @@ echo page.getUrl()
 # 11. ElementHandle actions (click, type, etc.)
 #
 echo "--- 11. Element actions ---"
-let el = page.querySelector("h1")
+let el = page.querySelector("a")
 echo getInnerText(el)
 
 #

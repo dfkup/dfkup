@@ -11,8 +11,6 @@ import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 
 proc initDotenv*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseEnv", @[paramDef("s", ttyString)], ttyJson,
     proc (args: StackView, argc: int): Value =

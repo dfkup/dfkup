@@ -6,7 +6,7 @@
 #          https://github.com/dfkup/dfkup
 
 import std/[macros, strutils]
-import pkg/vancode/interpreter/[errors, ast]
+import pkg/vancode/interpreter/[errors, ast, sym]
 import ./lexer
 import ./staticeval
 
@@ -24,8 +24,32 @@ const
   LogicalOperators = {tkAnd, tkAndAnd, tkOr, tkOrOr}
   ComparisonOperators = {tkEq, tkNe, tkGt, tkGte, tkLt, tkLte}
   Operators = ComparisonOperators + MathOperators + {tkAmp, tkAssign, tkCaret, tkIs, tkIsNot}
-  Strings = {tkSqString, tkString}
-  Assignables = {tkBool, tkInteger, tkFloat, tkIdentifier, tkNil, tkIdentVar} + Strings
+  Strings = {tkSqString, tkString, tkBacktick}
+    # `tkBacktick` carries a raw string with no escape processing, which is what
+    # the lexer already produces for `like this`. It was tokenised but not
+    # parseable before, so every backtick string was a syntax error.
+  Assignables = {tkBool, tkInteger, tkFloat, tkIdentifier, tkNil, tkIdentVar,
+      tkDollar} + Strings
+    # `tkDollar` is in the set so `echo $x` parses as a call rather than a
+    # bare identifier followed by a separate statement.
+
+  ThenPrecedence = 1
+    ## Binding power of `then` in `await f() then g(x)`. Matches assignment,
+    ## so the continuation is the loosest thing `await`'s operand can bind.
+
+  DollarPrecedence = 26
+    ## Binding power of the `$` prefix. Above every arithmetic operator but
+    ## below `.` and `[`, so `$d["k"]` interpolates the element and `"x" & $f(1)`
+    ## interpolates only the call's result.
+
+  PostfixPrecedence = 40
+    ## Binding power of the postfix operators `.` and `[`, and the floor for
+    ## `await`'s operand. `await` binds a postfix chain (`f()`, `a.b`,
+    ## `d["k"]`) and stops before every binary operator, so `await f() & "x"`
+    ## is `(await f()) & "x"`. `then` is looser still, so `await f() then g()`
+    ## leaves the continuation to the enclosing expression. The operand has to
+    ## be a coroutine call or a coroutine value, so `await (a & b)` is not a
+    ## way to group a compound expression.
 
 proc error(tk: TokenTuple, msg: string) =
   raise (ref DfkupParserError)(
@@ -137,6 +161,7 @@ proc parseGenericType(p: var Parser, lhs: Node): Node
 proc parsePrefixPlus(p: var Parser, minPrec = 0): Node
 proc parsePrefixNegate(p: var Parser, minPrec = 0): Node
 proc parsePrefixNot(p: var Parser, minPrec = 0): Node
+proc parseWhenSelected(p: var Parser): (seq[Node], TokenTuple)
 
 prefixHandle parseBoolean:
   let v =
@@ -231,9 +256,10 @@ proc parseBlock(p: var Parser, indentPos = 0,
       when parseFnBlock == true: tkAssign
                             else: tkColon
       ): walk p
+  var closed = not closingBlock
   while p.curr isnot tkEof:
     if closingBlock and p.curr is tkRC:
-      walk p; break
+      walk p; closed = true; break
     elif not closingBlock and p.curr.col <= indentPos: break
     let subNode = p.parseStmt()
     if subNode != nil:
@@ -244,6 +270,15 @@ proc parseBlock(p: var Parser, indentPos = 0,
         stmts.add(subNode)
     else:
       break
+  # An indent-based block ends at the dedent (or at EOF, which is fine), but a
+  # brace-based one has an explicit terminator. Without this check an
+  # unterminated `{` swallowed every following statement, so a missing brace
+  # surfaced as a confusing error far downstream -- or silently compiled.
+  if not closed:
+    raise (ref DfkupParserError)(
+      ln: p.curr.line, col: p.curr.col,
+      msg: "`}` is expected here"
+    )
   result = ast.newTree(nkBlock, stmts)
 
 prefixHandle parseForLoop:
@@ -305,20 +340,23 @@ prefixHandle parseIf:
         children.add(elseBlock)
     result = ast.newTree(nkIf, children)
 
-prefixHandle parseWhen:
-  ## Compile-time conditional, mirroring Nim's `when`. The condition is
-  ## evaluated at parse time and only the selected branch is emitted,
-  ## inlined into the enclosing scope (via an nkStatic marker node).
+proc parseWhenSelected(p: var Parser): (seq[Node], TokenTuple) =
+  ## Parse a `when`/`elif`/`else` chain and return only the branch whose
+  ## condition held at parse time.
+  ##
+  ## Written with explicit `if ... != nil` guards rather than `caseNotNil`,
+  ## because that template yields `nil` on a miss, which does not typecheck as
+  ## this tuple return.
   let tokenWhen: TokenTuple = p.curr
   walk p
   var selected = newSeq[Node](0)
   var matched = false
   var braced: bool
   let condExpr: Node = p.parseExpression()
-  caseNotNil condExpr:
+  if condExpr != nil:
     braced = p.curr is tkLC
     let whenBlock: Node = p.parseBlock(tokenWhen.col)
-    caseNotNil whenBlock:
+    if whenBlock != nil:
       try:
         if evalStaticBool(condExpr):
           selected = whenBlock.children
@@ -326,34 +364,57 @@ prefixHandle parseWhen:
       except StaticEvalError as e:
         raise (ref DfkupParserError)(ln: e.ln, col: e.col, msg: e.msg)
     while p.curr is tkElif and (braced or p.curr.line == tokenWhen.line or p.curr.col == tokenWhen.col):
-      let tokenElif: TokenTuple = p.curr
       walk p
       let elifExpr: Node = p.parseExpression()
-      caseNotNil elifExpr:
+      if elifExpr != nil:
         braced = p.curr is tkLC
-        let elifBlock: Node = p.parseBlock(tokenWhen.col)
-        caseNotNil elifBlock:
-          if not matched:
-            try:
-              if evalStaticBool(elifExpr):
-                selected = elifBlock.children
-                matched = true
-            except StaticEvalError as e:
-              raise (ref DfkupParserError)(ln: e.ln, col: e.col, msg: e.msg)
+        let elifBlock: Node = p.parseBlock(tokenWhen.line)
+        if elifBlock != nil and not matched:
+          try:
+            if evalStaticBool(elifExpr):
+              selected = elifBlock.children
+              matched = true
+          except StaticEvalError as e:
+            raise (ref DfkupParserError)(ln: e.ln, col: e.col, msg: e.msg)
     if p.curr is tkElse and (braced or p.curr.line == tokenWhen.line or p.curr.col == tokenWhen.col):
       walk p
-      let elseBlock: Node = p.parseBlock(tokenWhen.col)
-      caseNotNil elseBlock:
-        if not matched:
-          selected = elseBlock.children
-          matched = true
+      let elseBlock: Node = p.parseBlock(tokenWhen.line)
+      if elseBlock != nil and not matched:
+        selected = elseBlock.children
+        matched = true
+  result = (selected, tokenWhen)
+
+prefixHandle parseWhen:
+  ## Compile-time conditional, mirroring Nim's `when`. The condition is
+  ## evaluated at parse time and only the selected branch is emitted,
+  ## inlined into the enclosing scope (via an nkStatic marker node).
   # always return a node (never nil) so block/script loops don't stop;
   # parseBlock/parseScript splice nkStatic children into the statement list
+  let (selected, _) = p.parseWhenSelected()
   result = ast.newTree(nkStatic, selected)
+
+prefixHandle parseWhenExpr:
+  ## `when` in expression position, where a single expression is required
+  ## rather than a statement list. This is what makes an object field able to
+  ## pick a value at parse time:
+  ##   {name: when defined osx: "test" else: "x"}
+  let (selected, tokenWhen) = p.parseWhenSelected()
+  if selected.len != 1:
+    p.curr.error("a `when` used as a value must have exactly one " &
+      "expression in the branch it selects, got " & $selected.len)
+  result = selected[0]
 
 prefixHandle parseIdent:
   result = ast.newIdent(p.curr.value)
   walk p
+
+proc parseTypeName(p: var Parser): Node =
+  ## Parse a type name: a bare `Veg` or a qualified `veggie.Veg` naming a type
+  ## from an `import ... as veggie`.
+  result = p.parseIdent()
+  if p.curr is tkDot and p.next is tkIdentifier:
+    walk p
+    result = ast.newTree(nkDot, result, p.parseIdent())
 
 prefixHandle parseIdentVar:
   result = ast.newIdent(p.curr.value)
@@ -365,6 +426,19 @@ prefixHandle parseIdentVar:
     let valNode: Node = p.parseExpression()
     caseNotNil valNode:
       result = ast.newInfix(ast.newIdent("="), result, valNode)
+
+prefixHandle parseDollar:
+  ## `$expr` renders `expr` as a string. It accepts any expression, so
+  ## `$len(x)`, `$a.b` and `$f(1) + "!"` all work, not just `$name`.
+  ## Lowers to a plain `toStr` call so ordinary call codegen handles it.
+  let dollarPos = p.curr.line
+  walk p
+  # bind tighter than any infix operator but looser than `.` and `[`, so
+  # `$d["k"]` interpolates the element and `"x" & $f(1)` interpolates only
+  # the call's result
+  let exprNode: Node = p.parseExpression(minPrec = DollarPrecedence)
+  if exprNode == nil: return
+  result = ast.newCall(ast.newIdent("toStr", dollarPos, p.curr.col), exprNode)
 
 proc createIdentNode(p: var Parser): Node {.rule.} =
   result = ast.newIdent(p.curr.value)
@@ -391,7 +465,9 @@ proc parseIdentDefs(p: var Parser): Node {.rule.} =
       of tkColon:
         walk p
         if p.curr is tkIdentifier:
-          ty = p.parseIdent()
+          # `parseTypeName` also accepts `veggie.Veg`, the qualified form for a
+          # type reached through `import ... as veggie`.
+          ty = p.parseTypeName()
           if p.curr is tkLB:
             ty = p.parseGenericType(ty)
         elif p.curr is tkVar:
@@ -481,9 +557,12 @@ proc parseFunctionHead(p: var Parser, isAnon: bool;
     var params: seq[Node]
     if p.parseCommaIdentList(tkLP, tkRP, params):
       formalParams.add(params)
+  # A return type may be a bare name or a qualified name from an aliased import,
+  # as in `f(v: veggie.Veg): veggie.Veg`. `tkDot` is absent from the guard
+  # because a qualified name is the one case the bare `parseIdent` cannot read.
   if p.curr is tkColon and p.next in {tkIdentifier, tkLitObject}:
     walk p
-    formalParams[0] = p.parseIdent()
+    formalParams[0] = p.parseTypeName()
 
 prefixHandle parseFunction:
   let fnpos = p.curr.col
@@ -512,9 +591,9 @@ prefixHandle parseIterator:
 
 prefixHandle parseCoroutine:
   let coroPos = p.curr.col
-  walk p  # skip 'coro'
+  walk p  # skip 'async'
   if p.curr.kind notin {tkFunc, tkFn}:
-    p.curr.error("expected 'func' or 'fn' after 'coro'")
+    p.curr.error("expected 'func' or 'fn' after 'async'")
   walk p  # skip 'func'/'fn'
   var name, genericParams, formalParams: Node
   parseFunctionHead(p, isAnon = false, name, genericParams, formalParams)
@@ -606,6 +685,18 @@ prefixHandle parseYield:
     result.add(exprNode)
     p.walkOpt(tkScolon)
 
+prefixHandle parseAwait:
+  result = ast.newTree(nkAwait)
+  walk p
+  # `await` binds as tightly as a postfix operator, so its operand is just a
+  # primary plus any `.` / `[` chain. Every binary operator, including the
+  # `then` continuation, is left to the enclosing expression -- that is what
+  # makes `await f() & "x"` mean `(await f()) & "x"` and lets `then` attach to
+  # the whole `await` rather than to its operand.
+  let exprNode: Node = p.parseExpression(minPrec = PostfixPrecedence)
+  caseNotNil exprNode:
+    result.add(exprNode)
+
 prefixHandle parseEcho:
   result = ast.newTree(nkCall)
   result.add(ast.newIdent("echo"))
@@ -631,6 +722,16 @@ prefixHandle parseImport:
       result = ast.newNode(nkImport)
       result.add(ast.newStringLit(p.curr.value))
       walk p  # consume string literal
+      # `import "x" as alias` binds the module under a name, which is how a
+      # type that exists in two imported files is referred to unambiguously:
+      # `alias.Veg`.
+      if p.curr.value == "as":
+        walk p  # consume 'as'
+        if p.curr.kind == tkIdentifier:
+          result.add(ast.newIdent(p.curr.value))
+          walk p  # consume the alias
+        else:
+          p.curr.error("expected an identifier after 'as'")
   elif p.curr.value == "include":
     walk p  # consume include
     if p.curr.kind in Strings:
@@ -643,36 +744,107 @@ prefixHandle parseDocComment:
   result.comment = p.curr.value
   walk p
 
+proc parseEnumBody(p: var Parser, typeIdent: Node, typeDefCol: int): Node =
+  ## Parse the indented field list of `type Name = enum`.
+  ##
+  ## A field is either a bare `name`, which stands for itself, or
+  ## `name = "value"`, which carries an explicit value:
+  ##
+  ##   type Fruits = enum
+  ##     apple = "Apple"
+  ##     strawberry
+  ##
+  ## Fields are collected as `nkEnumField` nodes and hang off the enum's
+  ## `enumFields`; the enum's own identifier stays on `enumName` so
+  ## `Fruits.apple` can be resolved to just this enum's fields later.
+  result = ast.newNode(nkEnumDef)
+  result.ln = typeIdent.ln
+  result.col = typeIdent.col
+  result.enumName = typeIdent
+  var seen: seq[string]
+  while p.curr.kind != tkEof:
+    if p.curr.kind == tkIdentifier and p.curr.col > typeDefCol:
+      let
+        fieldName = p.curr.value
+        fieldLn = p.curr.line
+        fieldCol = p.curr.col
+      # Duplicate detection uses the canonical form, so `apple` and `APPLE`
+      # collide the same way they will once codegen normalizes field names.
+      if lowerName(fieldName) in seen:
+        p.curr.error(ErrDuplicateEnumField % [fieldName, typeIdent.ident])
+      seen.add(lowerName(fieldName))
+      walk p
+      # `field = "value"` gives an explicit value; a bare `field` is its own
+      # value, which is what Nim does too.
+      var value = fieldName
+      if p.curr.kind == tkAssign:
+        walk p
+        if p.curr.kind notin Strings:
+          p.curr.error(ErrEnumFieldValue % fieldName)
+        value = p.curr.value
+        walk p
+      var field = ast.newNode(nkEnumField)
+      # line/column are kept on the node itself so errors and `ast --dumptree`
+      # point at the field as written.
+      field.ln = fieldLn
+      field.col = fieldCol
+      field.fieldName = fieldName
+      field.fieldValue = value
+      result.enumFields.add(field)
+    else: break
+
 prefixHandle parseTypeDef:
   result = ast.newTree(nkTypeDef)
   result.ln = p.curr.line
   result.col = p.curr.col
   walk p
-  var typeIdent = ast.newIdent(p.curr.value)
-  typeIdent.ln = p.curr.line
-  typeIdent.col = p.curr.col
-  walk p
-  let typeDefCol =
-    if result.ln == typeIdent.ln: result.col
-    else: typeIdent.col
-  if p.curr is tkLB:
-    typeIdent = p.parseGenericType(typeIdent)
-  expectWalk(tkAssign)
-  case p.curr.kind
-  of tkLitObject:
+  # A `type` block may declare more than one type, one per indented line:
+  #
+  #   type
+  #     Fruits = enum
+  #       apple
+  #     BadFruits = enum
+  #       apple
+  #
+  # so declarations are collected in a loop instead of one ident per keyword.
+  # `declCol` is the column of the first declaration; anything further right
+  # than that is a body, anything equal is the next declaration.
+  let declCol = p.curr.col
+  while p.curr.kind == tkIdentifier and p.curr.col == declCol:
+    var typeIdent = ast.newIdent(p.curr.value)
+    typeIdent.ln = p.curr.line
+    typeIdent.col = p.curr.col
     walk p
-    var objectDef = newNode(nkObject)
-    var fieldDefs = newNode(nkRecFields)
-    while p.curr.kind != tkEof:
-      if p.curr.kind == tkIdentifier and p.curr.col > typeDefCol:
-        let fieldDef: Node = p.parseIdentDefs()
-        caseNotNil fieldDef:
-          fieldDefs.add(fieldDef)
-      else: break
-    objectDef.add(typeIdent)
-    objectDef.add(fieldDefs)
-    result.add(objectDef)
-  else: discard
+    # `type Veg* = enum` marks the type as exported, matching `func f*()`.
+    # Without this a type declared in an imported file is invisible there.
+    if p.curr is tkAsterisk:
+      # wrap as a postfix marker, the same shape `newProc` reads for `f*()`
+      typeIdent = ast.newNode(nkPostfix).add([ast.newIdent("*"), typeIdent])
+      walk p
+    let typeDefCol =
+      if result.ln == typeIdent.ln: result.col
+      else: typeIdent.col
+    if p.curr is tkLB:
+      typeIdent = p.parseGenericType(typeIdent)
+    expectWalk(tkAssign)
+    case p.curr.kind
+    of tkLitObject:
+      walk p
+      var objectDef = newNode(nkObject)
+      var fieldDefs = newNode(nkRecFields)
+      while p.curr.kind != tkEof:
+        if p.curr.kind == tkIdentifier and p.curr.col > typeDefCol:
+          let fieldDef: Node = p.parseIdentDefs()
+          caseNotNil fieldDef:
+            fieldDefs.add(fieldDef)
+        else: break
+      objectDef.add(typeIdent)
+      objectDef.add(fieldDefs)
+      result.add(objectDef)
+    of tkEnum:
+      walk p
+      result.add(p.parseEnumBody(typeIdent, typeDefCol))
+    else: break
 
 proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
   result =
@@ -683,6 +855,7 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkNil: parseNil
     of Strings: parseString
     of tkIdentVar: parseIdentVar
+    of tkDollar: parseDollar
     of tkIf: parseIf
     of tkIdentifier:
       if p.next is tkLP and p.next.line == p.curr.line:
@@ -699,10 +872,12 @@ proc getPrefixFn(p: var Parser, minPrec: int): PrefixFunction =
     of tkFunc, tkFn: parseFunction
     of tkIterator: parseIterator
     of tkCoroutine: parseCoroutine
+    of tkWhen: parseWhenExpr
     of tkLP: parseParExpr
     of tkLB: parseArray
     of tkLC: parseObjectStorage
     of tkYield: parseYield
+    of tkAwait: parseAwait
     of tkEcho: parseEcho
     of tkAssert: parseAssert
     of tkVar, tkLet, tkConst: parseVar
@@ -739,11 +914,12 @@ proc getPrecedence(op: string): int {.inline.} =
   of "*", "/", "%": 20
   of ".": 45
   of "[": 40
-  of "==", "!=", ">", "<", ">=", "<=", "is", "isnot": 5
+  of "==", "!=", ">", "<", ">=", "<=": 5
   of "and", "&&": 3
   of "or", "||": 2
   of "&": 6
   of "^": 25
+  of "then": ThenPrecedence
   of "=": 1
   else: 0
 
@@ -772,9 +948,36 @@ proc isInfix(kind: TokenKind, minPrec = 0): (bool, int, string) {.inline.} =
   of tkOrOr: opStr = "||"
   of tkIs: opStr = "is"
   of tkIsNot: opStr = "isnot"
+  of tkThen: opStr = "then"
   else: return (false, 0, "")
   let prec = getPrecedence(opStr)
   result = (prec > minPrec, prec, opStr)
+
+proc parseThen(p: var Parser, awaited: Node): Node =
+  ## Parses the continuation after `then` in `await coroExpr then proc(args)`.
+  ## The continuation is a direct call to a named proc; the awaited result is
+  ## passed as its first argument.
+  if p.curr.kind != tkIdentifier:
+    p.curr.error("expected a proc name after 'then'")
+  let callee = ast.newIdent(p.curr.value, p.curr.line, p.curr.col)
+  var call = ast.newCall(callee)
+  if p.next.kind == tkLP and p.next.line == p.curr.line:
+    walk p  # consume the proc name
+    walk p  # consume '('
+    # the awaited value becomes the first argument
+    call.add(awaited)
+    if p.curr.kind != tkRP:
+      while true:
+        let arg = p.parseExpression()
+        caseNotNil arg:
+          call.add(arg)
+        if p.curr.kind != tkComma:
+          break
+        walk p
+    expectWalk(tkRP)
+  else:
+    call.add(awaited)
+  ast.newTree(nkThen, awaited, call)
 
 proc parseExpression(p: var Parser, minPrec = 0): Node =
   var lhs = p.parsePrefix(minPrec)
@@ -798,9 +1001,16 @@ proc parseExpression(p: var Parser, minPrec = 0): Node =
         opStr = "["
         prec = getPrecedence("[")
         isBracket = true
+      of tkThen:
+        opStr = "then"
+        prec = getPrecedence("then")
       else: break
       if prec < minPrec: break
       walk p
+      if opStr == "then":
+        # `await coroExpr then proc(args)`: a sequential continuation.
+        lhs = p.parseThen(lhs)
+        continue
       if isBracket:
         let indexNode = p.parseExpression()
         expectWalk tkRB

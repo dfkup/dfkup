@@ -1,0 +1,46 @@
+import "std/nanoid"
+
+#
+# The default is 21 url-safe characters, drawn from a 64 character alphabet.
+# Since the alphabet is a power of two, every random byte maps to exactly one
+# character, so nothing is ever rejected.
+#
+echo "default:   " & nanoid()
+echo "short:     " & nanoid(8)
+echo "long:      " & nanoid(32)
+echo ""
+
+#
+# The alphabet itself is exposed if you need to validate one.
+#
+let alphabet = nanoidAlphabet()
+echo "alphabet:  " & alphabet
+echo $len(alphabet)
+echo ""
+
+#
+# Ids are random, so two calls never agree.
+#
+let first = nanoid()
+let second = nanoid()
+echo "first:     " & first
+echo "second:    " & second
+echo "same?      " & $first == $second
+echo ""
+
+#
+# A custom alphabet. Anything from 2 to 255 characters works; sizes that are
+# not a power of two use rejection sampling so every character stays equally
+# likely.
+#
+echo "abc:       " & nanoidCustom("abc", 16)
+echo "hex:       " & nanoidCustom("0123456789abcdef", 8)
+echo "custom sz: " & nanoidCustom("xy", 6)
+echo ""
+
+#
+# The non-secure variant uses a cheaper PRNG. Fine for DOM keys and log
+# correlation ids, wrong for anything that must be unguessable.
+#
+echo "insecure:  " & nanoidNonSecure()
+echo "insecure:  " & nanoidNonSecure(12)

@@ -12,7 +12,7 @@ proc run(code: string): string =
     module = newModule("test", some"test.dfkup")
   let systemModule = newModule("system", some"system.dfkup")
   initSystem(script, systemModule)
-  module.load(systemModule)
+  module.importModule(systemModule, "system")
   script.stdpos = script.procs.high
   var gen = initCodeGen(script, module, mainChunk)
   gen.allowExprResult = true

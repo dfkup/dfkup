@@ -1,4 +1,114 @@
 import "std/qr"
+import "std/json"
 
+#
+# Rendering. `qrSvg` takes an optional scale and border, and an options object
+# as json for colours.
+#
 echo qrSvg("hello dfkup", 4, 2)
 echo qrTerminal("hi", 1)
+echo qrSvg("coloured", parseJson("{\"scale\":4,\"border\":2,\"dark\":\"#ff0000\",\"light\":\"#ffffff\"}"))
+echo ""
+
+#
+# Encoding options are json, not object literals. Every family reads them.
+#
+let opts = parseJson("{\"ec\":\"H\",\"minVersion\":3,\"maxVersion\":6}")
+let rows = qrRows("https://example.org/dfkup", opts)
+echo qrDecodeText(rows)
+echo ""
+
+#
+# Every encoding family decodes through the same procs.
+#
+echo qrDecodeText(qrRows("model 2"))
+echo qrDecodeText(qrMicroRows("micro"))
+echo qrDecodeText(qrRmqrRows("rmqr"))
+echo qrDecodeText(qrModel1Rows("model 1"))
+echo qrDecodeText(qrRowsBytes(parseJson("[104,105]")))
+echo ""
+
+#
+# Payload builders produce plain text, so they feed straight back in.
+#
+echo qrDecodeText(qrRows(qrWifiPayload("home", "hunter2")))
+echo qrDecodeText(qrRows(qrUrlPayload("example.org/path")))
+echo qrDecodeText(qrRows(qrSmsPayload("+1555000111", "hello")))
+echo qrDecodeText(qrRows(qrEmailPayload("a@example.org", "Subject", "Body")))
+echo qrDecodeText(qrRows(qrMecardPayload("Doe;John", "+1555000111")))
+echo qrVcardPayload(parseJson("{\"fullName\":\"Ada Lovelace\",\"org\":\"OpenPeeps\"}"))
+echo qrWifiPayload("open")
+echo ""
+
+#
+# Decode results carry the full symbol metadata.
+#
+let d = qrDecodeRows(qrRows("01234567"))
+echo "ok:       " & $d["ok"]
+echo "family:   " & $d["family"]
+echo "version:  " & $d["version"]
+echo "ec:       " & $d["ec"]
+echo "mask:     " & $d["mask"]
+echo "segments: " & $len(d["segments"])
+echo ""
+
+#
+# SQRC keeps a public area readable without the key, and the private area sealed.
+#
+let sqrc = qrDecodeText(qrSqrcRows("serial 4711", "code 99-FOO", "000102030405060708090a0b0c0d0e0f"))
+let opened = qrSqrcOpenText(sqrc, "000102030405060708090a0b0c0d0e0f")
+echo "sqrc ok:       " & $opened["ok"]
+echo "sqrc public:   " & $opened["publicText"]
+echo "sqrc private:  " & $opened["privateText"]
+
+# with the wrong key the private area stays empty rather than erroring
+let wrong = qrSqrcOpenText(sqrc, "0f0e0d0c0b0a09080706050403020100")
+echo "wrong key:     " & $wrong["privateText"]
+
+# the public half is readable on its own
+let split = qrSqrcSplit(sqrc)
+echo "split public:  " & $split["publicData"]
+echo ""
+
+#
+# AQR carries a readable core plus a ring that ordinary scanners ignore.
+#
+let aqr = qrAqrRows("https://example.org/main", "X1")
+echo qrAqrRing(aqr)
+echo qrAqrDecodeCore(qrAqrCoreRows(aqr))["text"]
+echo qrAqrSvg("main", "ring")
+echo ""
+
+#
+# Image decoding needs a pixel buffer: `qrDecodePgm(path)` reads a portable
+# graymap (P2 or P5) with std only, and `qrDecodeImage(width, height, pixels)`
+# takes a flat array of 0-255 values. Give it roughly four pixels per module so
+# the grid can be found.
+#
+# Building that buffer in dfkup needs integer division, which the language does
+# not have yet (`/` is float only), so this is left to the host language. See
+# tests/test_qr.nim for a working P2/P5 writer and round trip.
+#
+#
+# Reed-Solomon, galois fields and polynomials
+#
+let parity = qrRsEncodeHex("205b0b78d172dc4d43", 10)
+let repaired = qrRsDecodeHex("305b0b78d172dc4d43" & parity, 10)
+echo "parity:    " & parity
+echo "valid:     " & $qrRsIsValid("205b0b78d172dc4d43" & parity, 10)
+echo "repaired:  " & $repaired["ok"]
+echo "gf mul:    " & $qrGalois("mul", 3, 4)
+echo "gf inv:    " & $qrGalois("inv", 3)
+echo "poly mul:  " & $qrPolyMul(parseJson("[1,2]"), parseJson("[1,1]"))
+echo ""
+
+#
+# Geometry and capacity
+#
+echo "data cw v10 M:   " & $qrDataCodewords(10, "M")
+echo "align v7:        " & $qrAlignmentPositions(7)
+echo "model1 size v3:  " & $qrModel1Size(3)
+echo "micro cap v4 L:  " & $qrMicroCapacity(4, "L")
+echo "rmqr size 0:     " & $qrRmqrSizeName(0)
+echo "penalty:         " & $qrPenaltyScore(qrRows("x"))
+echo "reserved v1:     " & $len(qrReservedMap(1))

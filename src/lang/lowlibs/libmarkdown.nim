@@ -90,8 +90,6 @@ proc ensureRendered(doc: MarkdownDoc) =
     doc.rendered = true
 
 proc initMarkdown*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseMarkdown", @[paramDef("source", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

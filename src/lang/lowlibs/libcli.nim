@@ -10,8 +10,6 @@ import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 
 proc initCliLib*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "paramCount", @[], ttyInt,
     proc (args: StackView, argc: int): Value =

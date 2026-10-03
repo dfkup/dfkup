@@ -80,13 +80,19 @@ suite "Lexer - identifiers and keywords":
   test "control flow keywords":
     check tokens("break continue discard yield echo type object iterator nil") ==
       @["tkBreakCmd", "tkContinueCmd", "tkDiscardCmd", "tkYield", "tkEcho", "tkType", "tkLitObject", "tkIterator", "tkNil"]
+  test "declaration keywords":
+    check tokens("type enum object") == @["tkType", "tkEnum", "tkLitObject"]
   test "case and of":
     check tokens("case of") == @["tkCase", "tkOf"]
 
 suite "Lexer - special tokens":
   test "variable interpolation":
-    check tokens("$foo $bar_baz") == @["tkIdentVar", "tkIdentVar"]
-    check tokenValues("$foo") == @["foo"]
+    # `$` is a prefix operator over any expression, so the operand is lexed
+    # separately rather than folded into the token.
+    check tokens("$foo $bar_baz") == @["tkDollar", "tkIdentifier", "tkDollar", "tkIdentifier"]
+    check tokenValues("$foo") == @["", "foo"]
+  test "dollar takes a call expression":
+    check tokens("$f(1)") == @["tkDollar", "tkIdentifier", "tkLP", "tkInteger", "tkRP"]
   test "hash":
     check tokens("#") == @["tkComment"]
   test "at":

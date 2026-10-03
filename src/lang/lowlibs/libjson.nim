@@ -12,8 +12,6 @@ import pkg/vancode/interpreter/stdlib/[syslib, utils]
 
 proc initJson*(script: Script, module: Module) =
   ## This is a low-level procedure for initializing JSON module
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseJson", @[paramDef("s", ttyString)], ttyJson,
     proc (args: StackView, argc: int): Value =

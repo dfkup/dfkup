@@ -34,8 +34,6 @@ template makeArrayIntTy(module: Module): Sym =
   t
 
 proc initSequtils*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "isEmpty", @[paramDef("data", ttyArray)], ttyBool,
     proc (args: StackView, argc: int): Value =

@@ -16,10 +16,11 @@
 # plus the `defined("symbol")` function over machine-derived flags.
 
 import pkg/vancode/interpreter/ast
+import ./sysinfo
 
 type
   StaticKind* = enum
-    skBool, skInt, skFloat, skString, skNil
+    skBool, skInt, skFloat, skString, skNil, skObject
 
   StaticValue* = object
     case kind*: StaticKind
@@ -28,6 +29,11 @@ type
     of skFloat:  floatVal*: float64
     of skString: strVal*: string
     of skNil:    discard
+    of skObject:
+      fields*: seq[(string, StaticValue)]
+        ## Field name and value, in declaration order. An ordered seq rather
+        ## than a table so that repeated evaluation of the same expression is
+        ## deterministic.
 
   StaticEvalError* = object of ValueError
     ln*, col*: int
@@ -60,6 +66,33 @@ proc defined*(symbol: string): bool =
   of "bigEndian":                   HostEndian == "bigEndian"
   else: false
 
+proc staticError(node: Node, msg: string) =
+  raise (ref StaticEvalError)(ln: node.ln, col: node.col, msg: msg)
+
+proc staticSystemInfo(): StaticValue =
+  ## Snapshot the host machine as a static object, mirroring the runtime
+  ## `getSystemInfo()` field order in `libsystem`.
+  let info = collectSystemInfo()
+  result = StaticValue(kind: skObject)
+  result.fields = @[
+    ("osName", StaticValue(kind: skString, strVal: info.osName)),
+    ("arch", StaticValue(kind: skString, strVal: info.arch)),
+    ("cpuCores", StaticValue(kind: skInt, intVal: info.cpuCores.int64)),
+    ("cpuEndian", StaticValue(kind: skString, strVal: info.cpuEndian)),
+    ("totalMemory", StaticValue(kind: skInt, intVal: info.totalMemory)),
+    ("executablePath", StaticValue(kind: skString, strVal: info.executablePath))
+  ]
+
+proc staticField(v: StaticValue, name: string, node: Node): StaticValue =
+  ## Read a named field off a static object, as `getSystemInfo().cpuCores` does.
+  if v.kind != skObject:
+    staticError(node, "cannot read field `" & name &
+      "` from a static " & $v.kind)
+  for (fname, fval) in v.fields:
+    if fname == name:
+      return fval
+  staticError(node, "static object has no field `" & name & "`")
+
 proc isTrue*(v: StaticValue): bool =
   ## Interpret a static value as a boolean (for `when` conditions).
   case v.kind
@@ -68,9 +101,7 @@ proc isTrue*(v: StaticValue): bool =
   of skFloat:  v.floatVal != 0
   of skNil:    false
   of skString: v.strVal.len > 0
-
-proc staticError(node: Node, msg: string) =
-  raise (ref StaticEvalError)(ln: node.ln, col: node.col, msg: msg)
+  of skObject: v.fields.len > 0
 
 proc resolveIdent(name: string, node: Node): StaticValue =
   ## Resolve an identifier that is either a compile-time machine constant
@@ -104,9 +135,17 @@ proc staticEqual(l, r: StaticValue): bool =
   of skFloat:  l.floatVal == r.floatVal
   of skString: l.strVal == r.strVal
   of skNil:    true
+  of skObject:
+    if l.fields.len != r.fields.len: return false
+    for i in 0 ..< l.fields.len:
+      if l.fields[i][0] != r.fields[i][0]: return false
+      if not staticEqual(l.fields[i][1], r.fields[i][1]): return false
+    true
 
 proc cmpStatic(l, r: StaticValue, node: Node): int =
   ## Ordering comparison for static values (int/float/string).
+  # An object is excluded on purpose: ordering two objects by field is not a
+  # meaningful operation and silently picking a field would be worse.
   case l.kind
   of skInt:
     if r.kind != skInt:
@@ -136,8 +175,35 @@ proc evalStatic*(node: Node): StaticValue {.gcsafe.} =
     result = StaticValue(kind: skString, strVal: node.stringVal)
   of nkNil:
     result = StaticValue(kind: skNil)
+  of nkObjectStorage:
+    # An object literal, built the same way `genObjectStorage` reads one: each
+    # entry is an `nkColon` pairing a key with its value.
+    result = StaticValue(kind: skObject)
+    for entry in node:
+      case entry.kind
+      of nkColon:
+        if entry.len != 2:
+          staticError(entry, "expected a `key: value` pair")
+        let key =
+          if entry[0].kind == nkIdent: entry[0].ident
+          elif entry[0].kind == nkString: entry[0].stringVal
+          else:
+            staticError(entry, "expected a string or identifier object key")
+            ""
+        for existing in result.fields:
+          if existing[0] == key:
+            staticError(entry, "duplicate object key `" & key & "`")
+        result.fields.add((key, evalStatic(entry[1])))
+      else:
+        staticError(entry, "expected a `key: value` pair in an object literal")
   of nkIdent:
     result = resolveIdent(node.ident, node)
+  of nkDot:
+    # field access, e.g. `getSystemInfo().cpuCores`
+    if node.len != 2 or node[1].kind != nkIdent:
+      staticError(node, "expected a field name after `.`")
+    let obj = evalStatic(node[0])
+    result = staticField(obj, node[1].ident, node)
   of nkPrefix:
     let rhs = evalStatic(node[1])
     case node[0].ident
@@ -219,6 +285,10 @@ proc evalStatic*(node: Node): StaticValue {.gcsafe.} =
         result = StaticValue(kind: skBool, boolVal: defined(arg.ident))
       else:
         staticError(node, "`defined` expects a string literal or symbol name")
+    elif node[0].kind == nkIdent and node[0].ident == "getSystemInfo":
+      if node.len != 1:
+        staticError(node, "`getSystemInfo` expects no arguments")
+      result = staticSystemInfo()
     else:
       staticError(node, "cannot call `" & $node[0].ident &
         "` at compile time")

@@ -15,8 +15,6 @@ proc matchToJson(m: MatchResult, input: string): JsonNode =
   result["groupCount"] = %(m.groupCount())
 
 proc initRegex*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "match", @[paramDef("input", ttyString), paramDef("pattern", ttyString)], ttyJson,
     proc (args: StackView, argc: int): Value =

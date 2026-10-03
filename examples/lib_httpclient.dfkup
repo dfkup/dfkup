@@ -1,0 +1,82 @@
+# HTTP client example
+# Run: dfkup run examples/lib_httpclient.dfkup
+#
+# powpow's blocking HTTP/1.1 client, bound to dfkup as `std/httpclient`.
+
+import "std/httpclient"
+import "std/json"
+import "std/strings"
+
+#
+# 1. Create a client
+#    Options are a json object; everything is optional.
+#      keepAlive       reuse pooled connections per origin (default true)
+#      timeoutMs       request timeout in ms, 0 for none (default 0)
+#      maxBodySize     reject responses larger than this
+#      maxIdlePerHost  cap on idle pooled connections per origin
+#      maxIdleTotal    cap on idle pooled connections overall
+#      idleTimeoutMs   how long an idle connection is trusted for reuse
+#
+#    `tls: true` builds a TLS context for https. It is off here because
+#    powpow's handshake against public servers is not reliable yet.
+#
+echo "--- Creating client ---"
+let client = newClient(parseJson("""{"timeoutMs":15000}"""))
+
+#
+# 2. Make a request
+#    httpGet/httpPost/httpPut/httpDelete/httpHead/httpPatch/httpOptions all
+#    take (client, url) plus an optional third argument that is either the
+#    request body (a string) or an options object (json). httpRequest takes
+#    the method as a string instead.
+#
+echo "--- GET example.com ---"
+let res = httpGet(client, "http://example.com")
+
+echo "status:  " & $statusCode(res)
+echo "ok:      " & $isOk(res)
+echo "reason:  " & statusText(res)
+echo "type:    " & header(res, "Content-Type")
+echo "idle:    " & $idleConnections(client) & " pooled connection(s)"
+
+#
+# 3. Read the body
+#    headers(res) returns the whole header set as json; header(res, name) is
+#    the single-lookup accessor and returns a plain string.
+#
+echo "--- All response headers ---"
+echo $headers(res)
+
+let text = body(res)
+echo "body: " & $text.len() & " characters"
+echo "has <html>: " & $text.contains("<html")
+
+#
+# 4. Send a body and custom headers
+#    The third argument is json here, so it is read as request options. A
+#    `body` key in it becomes the request body, and `headers` a json object
+#    of outgoing header names to values.
+#
+echo "--- POST with a body ---"
+let postOpts = parseJson("{\"headers\":{\"Content-Type\":\"text/plain\"},\"body\":\"hello from dfkup\"}")
+let posted = httpPost(client, "http://httpbin.org/post", postOpts)
+echo "post status: " & $statusCode(posted)
+echo "echoed:      " & $body(posted).contains("dfkup")
+
+#
+# 5. Reusing the client keeps the connection warm
+#
+echo "--- Second request, same client ---"
+let again = httpGet(client, "http://example.com")
+echo "status: " & $statusCode(again)
+echo "idle:   " & $idleConnections(client)
+
+#
+# 6. Failures stop the script
+#    powpow raises on a transport failure, a malformed URL, an unsupported
+#    scheme or an unknown method, and dfkup reports it as a runtime error.
+#    Check the URL yourself if you need to carry on.
+#
+echo "--- Finishing ---"
+closeClient(client)
+echo "done"

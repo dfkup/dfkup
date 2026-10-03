@@ -15,8 +15,6 @@ proc bytesToString(b: seq[byte]): string =
     copyMem(addr result[0], unsafeAddr b[0], b.len)
 
 proc initBson*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "encodeBson", @[paramDef("data", ttyJson)], ttyString,
     proc (args: StackView, argc: int): Value =

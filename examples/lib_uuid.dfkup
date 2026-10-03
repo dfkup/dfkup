@@ -1,9 +1,79 @@
 import "std/uuid"
 
+#
+# Every UUID version
+#
+echo "v1 (time):        " & uuidV1()
+echo "v2 (DCE):         " & uuidV2(0, 1000)
+echo "v3 (name/MD5):    " & uuidV3("www.example.com")
+echo "v4 (random):      " & uuidV4()
+echo "v5 (name/SHA-1):  " & uuidV5("www.example.com")
+echo "v6 (reordered):   " & uuidV6()
+echo "v7 (epoch):       " & uuidV7()
+echo "v8 (custom):      " & uuidV8("0123456789abcdef0123456789abcdef")
+echo "nil:              " & nilUuid()
+echo ""
+
+#
+# v1 and v6 take an optional node id (a MAC address as 12 hex chars).
+# Leaving it out picks a random one.
+#
+echo "v1 with node:     " & uuidV1("001122334455")
+echo "v6 with node:     " & uuidV6("aabbccddeeff")
+echo ""
+
+#
+# v3 and v5 are name-based over a namespace. The namespace defaults to "dns"
+# and also accepts "url", "oid", "x500", or any namespace UUID literal.
+#
+echo "v3 dns (default): " & uuidV3("www.example.com")
+echo "v3 url:           " & uuidV3("https://example.org", "url")
+echo "v5 oid:           " & uuidV5("1.2.3", "oid")
+echo "v5 custom ns:     " & uuidV5("name", uuidNamespace("x500"))
+echo ""
+
+#
+# The RFC 4122 namespaces, exposed directly
+#
+echo "ns dns:           " & uuidNsDns()
+echo "ns url:           " & uuidNsUrl()
+echo "ns oid:           " & uuidNsOid()
+echo "ns x500:          " & uuidNsX500()
+echo "by name:          " & uuidNamespace("url")
+echo ""
+
+#
+# Inspection. `$` lowers to `toStr`, so it wraps any expression, including a
+# call or an index. It keeps Nim's precedence and binds tighter than every
+# infix, so `$n + 1` means `toStr(n) + 1`; use `$(n + 1)` to convert the result.
+#
 let u = uuidV4()
-echo u
-echo uuidV7()
-echo isValidUuid(u)   # true
-echo uuidVersion(u)   # 4
-echo isValidUuid("not-a-uuid")   # false
-echo uuidVersion(uuidV7())       # 7
+let version = uuidVersion(u)
+let valid = isValidUuid(u)
+let isNil = isNilUuid(u)
+let bad = isValidUuid("not-a-uuid")
+
+echo "uuid:             " & u
+echo $version
+echo "variant:          " & uuidVariant(u)
+echo $valid
+echo $isNil
+echo $bad
+echo "normalized:       " & parseUuid("550E8400-E29B-41D4-A716-446655440000")
+echo ""
+
+#
+# Bytes and hex
+#
+echo "bytes:            " & uuidBytes(u)
+echo "from hex:         " & uuidFromHex(uuidBytes(u))
+echo "nil bytes:        " & uuidBytes(nilUuid())
+echo ""
+
+#
+# Comparison
+#
+let same = uuidEquals(u, u)
+let other = uuidEquals(u, uuidV4())
+echo $same
+echo $other

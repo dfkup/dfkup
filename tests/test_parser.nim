@@ -2,11 +2,20 @@ import std/unittest
 import ../src/lang/transformers
 import pkg/vancode/interpreter/ast
 import ../src/lang/parser
+import ../src/lang/staticeval
 
 proc parse(input: string): seq[Node] =
   var program: Ast
   parseScript(program, input)
   program.nodes
+
+proc parseErrorMsg(input: string): string =
+  ## The parser error message for `input`, or "" if it parsed cleanly.
+  try:
+    discard parse(input)
+    ""
+  except DfkupParserError as e:
+    e.msg
 
 suite "Parser - literals":
   test "integer":
@@ -28,6 +37,48 @@ suite "Parser - literals":
   test "nil":
     let nodes = parse("nil")
     check nodes[0].kind == nkNil
+  test "backtick string":
+    let nodes = parse("`echo hello`")
+    check nodes[0].kind == nkString
+    check nodes[0].stringVal == "echo hello"
+  test "backtick string as a call argument":
+    let nodes = parse("execShell(`exit 0`)")
+    check nodes[0].kind == nkCall
+    check nodes[0][1].kind == nkString
+    check nodes[0][1].stringVal == "exit 0"
+  test "backtick string in an object literal":
+    let nodes = parse("{cmd: `make all`}")
+    check nodes[0].kind == nkObjectStorage
+    check nodes[0][0][1].stringVal == "make all"
+
+suite "Parser - when in expression position":
+  test "selects the true branch":
+    let nodes = parse("{name: when defined(\"posix\"): \"test\" else: \"x\"}")
+    check nodes[0].kind == nkObjectStorage
+    check nodes[0][0][1].kind == nkString
+    check nodes[0][0][1].stringVal == (if PosixOS: "test" else: "x")
+  test "selects the else branch on this host":
+    let nodes = parse(
+      "{name: when defined(\"nonexistent_flag\"): \"a\" else: \"fallback\"}")
+    check nodes[0][0][1].stringVal == "fallback"
+  test "works for getSystemInfo":
+    let nodes = parse(
+      "{cores: when getSystemInfo().cpuCores > 0: \"many\" else: \"none\"}")
+    check nodes[0][0][1].kind == nkString
+    check nodes[0][0][1].stringVal == "many"
+  test "a multi-statement branch is rejected":
+    # An indent block ends at the dedent, so the second line parses as its own
+    # statement. Braces are what actually put two statements in one branch.
+    check parseErrorMsg(
+      "let x = when defined(\"posix\"): {1\n  2}") != ""
+  test "an unknown static symbol is rejected":
+    check parseErrorMsg(
+      "{x: when notAThing: 1 else: 2}") != ""
+  test "statement position still splices":
+    let nodes = parse(
+      "when defined(\"posix\"):\n  let x = 1\nelse:\n  let x = 2")
+    check nodes.len == 1
+    check nodes[0].kind == nkLet
 
 suite "Parser - identifiers":
   test "identifier":
@@ -125,6 +176,102 @@ suite "Parser - statements":
 suite "Parser - functions":
   test "function definition":
     let nodes = parse("fn add(a, b) = a + b")
+    check nodes[0].kind == nkProc
+
+suite "Parser - brace blocks":
+  # A brace-based block has an explicit terminator. An unterminated `{` used to
+  # swallow every following statement, so a missing brace surfaced as a
+  # confusing error far downstream -- or silently compiled when nothing
+  # followed the block.
+  test "unterminated function body is rejected":
+    check parseErrorMsg("""
+fn f(): int {
+  var i = 0
+  return i
+""") == "`}` is expected here"
+
+  test "unterminated body does not swallow following statements":
+    # The `echo` on the last line belongs to the script, not to `f`.
+    check parseErrorMsg("""
+fn f(): int {
+  return 1
+
+echo f()
+""") == "`}` is expected here"
+
+  test "unterminated if body is rejected":
+    check parseErrorMsg("""
+fn f(): int {
+  if true {
+    return 1
+  return 2
+}
+""") == "`}` is expected here"
+
+  test "unterminated while body is rejected":
+    check parseErrorMsg("""
+fn f(): int {
+  var i = 0
+  while i < 3 {
+    i = i + 1
+  return i
+}
+""") == "`}` is expected here"
+
+  test "unterminated nested block is rejected":
+    check parseErrorMsg("""
+async func counterB(): int {
+  var i = 10
+  while i < 13 {
+    yield i
+    i = i + 1
+  return -1
+""") == "`}` is expected here"
+
+  test "closed brace bodies still parse":
+    let nodes = parse("""
+fn f(n: int): string {
+  if n > 1 {
+    return "big"
+  }
+  return "small"
+}
+""")
+    check nodes[0].kind == nkProc
+
+  test "brace bodies agree with indent bodies":
+    let braced = parse("""
+fn f(n: int): int {
+  var t = 0
+  for i in 0..n {
+    while t < i {
+      t = t + 1
+    }
+  }
+  return t
+}
+""")
+    let indented = parse("""
+fn f(n: int): int =
+  var t = 0
+  for i in 0..n:
+    while t < i:
+      t = t + 1
+  return t
+""")
+    check braced.len == indented.len
+    check braced[0].kind == nkProc
+    check indented[0].kind == nkProc
+
+  test "indent-based blocks need no closing brace":
+    # The dedent is the terminator, so reaching EOF is not an error.
+    let nodes = parse("""
+fn f(n: int): int =
+  var t = 0
+  for i in 0..n:
+    t = t + i
+  return t
+""")
     check nodes[0].kind == nkProc
 
 suite "Parser - data structures":

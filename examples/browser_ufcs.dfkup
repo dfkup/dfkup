@@ -16,7 +16,7 @@ let js = page.evaluate("document.title")
 echo js
 
 # UFCS: page.locator(...) then chained locator calls
-let heading = page.locator("h1")
+let heading = page.locator("a")
 let text = heading.getLocatorInnerText()
 echo text
 

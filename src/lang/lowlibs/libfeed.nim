@@ -97,8 +97,6 @@ proc wrapFeed(f: AtomFeed): Value =
   result.objectVal.foreign.tag = "AtomFeed"
 
 proc initFeed*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseAtom", @[paramDef("s", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

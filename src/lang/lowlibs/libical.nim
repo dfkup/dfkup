@@ -40,8 +40,6 @@ proc eventsOf(cal: IcalCalendar): seq[IcalEvent] =
       result.add(comp.event)
 
 proc initIcal*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseIcal", @[paramDef("s", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

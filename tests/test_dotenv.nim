@@ -12,8 +12,9 @@ proc run(code: string): string =
     module = newModule("test", some"test.dfkup")
   let systemModule = newModule("system", some"system.dfkup")
   initSystem(script, systemModule)
-  module.load(systemModule)
+  module.importModule(systemModule, "system")
   let dotenvModule = newModule("dotenv", some"dotenv.dfkup")
+  dotenvModule.importModule(systemModule, "system")
   initDotenv(script, dotenvModule)
   module.load(dotenvModule)
   script.stdpos = script.procs.high

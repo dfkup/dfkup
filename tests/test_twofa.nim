@@ -12,8 +12,9 @@ proc run(code: string): string =
     module = newModule("test", some"test.dfkup")
   let systemModule = newModule("system", some"system.dfkup")
   initSystem(script, systemModule)
-  module.load(systemModule)
+  module.importModule(systemModule, "system")
   let twofaModule = newModule("twofa", some"twofa.dfkup")
+  twofaModule.importModule(systemModule, "system")
   initTwofa(script, twofaModule)
   module.load(twofaModule)
   script.stdpos = script.procs.high

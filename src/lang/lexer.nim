@@ -21,10 +21,10 @@ type
     tkSqString, tkStringLiteral,
     tkNe, tkExc, tkId, tkBacktick, tkIdentVar, tkIdentVarSafe,
     tkBool, tkAt, tkCase, tkOf, tkElif, tkAnd, tkOr,
-    tkType, tkLitObject, tkFn, tkIterator, tkMacro,
+    tkType, tkLitObject, tkEnum, tkFn, tkIterator, tkMacro,
     tkBreakCmd, tkLet, tkConst, tkDiscardCmd, tkContinueCmd,
     tkEcho, tkAssert, tkYield, tkIs, tkIsNot, tkCoroutine, tkUnknown,
-    tkWhen, tkNot
+    tkWhen, tkNot, tkAwait, tkThen, tkDollar
 
   TokenTuple* = tuple
     kind: TokenKind
@@ -273,16 +273,7 @@ proc nextToken*(lex: var Lexer): TokenTuple =
     result = initToken(lex, tkScolon, line, col, pos, wsno)
   of '$':
     lex.advance()
-    case lex.current
-    of IdentStartChars:
-      lex.strbuf.setLen(0)
-      lex.strbuf.add(lex.current)
-      lex.advance()
-      while lex.current in IdentChars + {'-'}:
-        lex.strbuf.add(lex.current)
-        lex.advance()
-      result = initToken(lex, tkIdentVar, move lex.strbuf, line, col, pos, wsno)
-    else: discard
+    result = initToken(lex, tkDollar, move lex.strbuf, line, col, pos, wsno)
   of '!':
     if lex.peek() == '=':
       lex.advance()
@@ -500,6 +491,8 @@ proc nextToken*(lex: var Lexer): TokenTuple =
         result = initToken(lex, tkType, move lex.strbuf, line, col, pos, wsno)
       of "object":
         result = initToken(lex, tkLitObject, move lex.strbuf, line, col, pos, wsno)
+      of "enum":
+        result = initToken(lex, tkEnum, move lex.strbuf, line, col, pos, wsno)
       of "fn":
         result = initToken(lex, tkFn, move lex.strbuf, line, col, pos, wsno)
       of "func":
@@ -528,8 +521,12 @@ proc nextToken*(lex: var Lexer): TokenTuple =
         result = initToken(lex, tkAssert, move lex.strbuf, line, col, pos, wsno)
       of "yield":
         result = initToken(lex, tkYield, move lex.strbuf, line, col, pos, wsno)
-      of "coro":
+      of "async":
         result = initToken(lex, tkCoroutine, move lex.strbuf, line, col, pos, wsno)
+      of "await":
+        result = initToken(lex, tkAwait, move lex.strbuf, line, col, pos, wsno)
+      of "then":
+        result = initToken(lex, tkThen, move lex.strbuf, line, col, pos, wsno)
       of "mod":
         result = initToken(lex, tkMod, move lex.strbuf, line, col, pos, wsno)
       of "nil":

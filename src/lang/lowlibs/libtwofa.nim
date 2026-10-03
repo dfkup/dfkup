@@ -45,8 +45,6 @@ proc padCode(code: int, digits: int): string =
     result = "0" & result
 
 proc initTwofa*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "genSecret", @[
       paramDef("nbytes", ttyInt, initValue(20'i64))], ttyString,

@@ -34,8 +34,6 @@ proc seqFromJson(n: JsonNode): seq[string] =
       result.add(item.getStr())
 
 proc initStrongpwd*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "checkPassword", @[paramDef("pw", ttyString)], ttyJson,
     proc (args: StackView, argc: int): Value =

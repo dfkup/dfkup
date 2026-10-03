@@ -1,0 +1,5 @@
+config({
+  commands: {
+    hello: "echo hello"
+  }
+})

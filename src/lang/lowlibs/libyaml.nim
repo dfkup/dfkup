@@ -55,8 +55,6 @@ proc wrapNode(n: YamlNode, tag: string): Value =
     result.objectVal.foreign.tag = tag
 
 proc initYaml*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseYaml", @[paramDef("s", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

@@ -16,3 +16,15 @@ echo fmd.getMeta()
 echo fmd.hasHeadings()
 echo fmd.hasFootnotes()
 echo fmd.getJson()
+
+
+# A brace body can hold an indent-based `if` inside it; the two nest
+# independently and both stay on 2-space steps.
+fn fib(n: int): int {
+  if n < 2:
+    result = n
+  else:
+    result = fib(n - 1) + fib(n - 2)
+}
+echo "fib(30) = "
+echo fib(30)

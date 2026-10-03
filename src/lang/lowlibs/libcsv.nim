@@ -36,8 +36,6 @@ proc parseCsvString(s: string, delimiter: char): JsonNode =
     removeFile(tmpPath)
 
 proc initCsv*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseCsv", @[paramDef("s", ttyString),
       paramDef("delimiter", ttyString, initValue(","))], ttyJson,

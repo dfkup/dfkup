@@ -34,8 +34,6 @@ proc countTag(n: SvgNode, tag: SvgTag): int =
       result += countTag(c, tag)
 
 proc initSvg*(script: Script, module: Module) =
-  module.initSystemTypes()
-  script.initSystemOps(module)
 
   script.addProc(module, "parseSvg", @[paramDef("s", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =

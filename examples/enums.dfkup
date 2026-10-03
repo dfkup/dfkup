@@ -1,0 +1,65 @@
+# DFkup - enums
+#
+# An enum gives a fixed set of named values a name, and every field is reached
+# through its enum: `Fruits.apple`, never a bare `apple`.
+
+# A field with an explicit value, and a bare field that stands for itself.
+type Fruits = enum
+  apple = "Apple"
+  strawberry
+
+echo Fruits.apple
+echo Fruits.strawberry
+
+# Two enums may share a field name; each keeps its own value.
+type BadFruits = enum
+  apple
+
+echo BadFruits.apple
+echo Fruits.apple
+
+# Fields compare with `==` and `!=`.
+echo Fruits.apple == Fruits.apple
+echo Fruits.apple == Fruits.strawberry
+echo Fruits.apple != Fruits.strawberry
+
+# Two enums are distinct types, so comparing across them is a compile error,
+# not a runtime false:
+#
+#   echo Fruits.apple == BadFruits.apple   # type mismatch
+#
+
+# Enums work as parameter and variable types.
+func label(f: Fruits): string =
+  if f == Fruits.apple: return "apple-ish"
+  return "something else"
+
+echo label(Fruits.apple)
+echo label(Fruits.strawberry)
+
+var picked: Fruits = Fruits.strawberry
+echo picked != Fruits.apple
+
+# `$` renders an enum as its value, which is how you hand one to a
+# string-taking function.
+echo $Fruits.apple
+echo "picked: " & $picked
+
+# Several enums can share one `type` keyword.
+type
+  Veg = enum
+    carrot = "Carrot"
+    leek
+  Color = enum
+    red
+    green = "Green"
+
+echo Veg.carrot
+echo Veg.leek
+echo Color.red
+echo Color.green
+
+# A bare field name is not in scope: fields are always qualified, so this is an
+# undefined reference rather than `Fruits.apple`:
+#
+#   echo apple                           # undeclared identifier 'apple'
