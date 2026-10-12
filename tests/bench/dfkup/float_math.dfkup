@@ -1,0 +1,9 @@
+fn accumulate(n: int): float =
+  var x = 1.0
+  var i = 0
+  while i < n:
+    x = x * 1.000001 + 0.5
+    i = i + 1
+  result = x
+
+echo accumulate(2000000)

@@ -1,0 +1,15 @@
+import "std/sequtils"
+
+var a: array[int]
+var i = 0
+while i < 200000:
+  a.add(i)
+  i = i + 1
+
+var total = 0
+var j = 0
+while j < len(a):
+  total = total + a[j]
+  j = j + 1
+
+echo total

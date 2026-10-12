@@ -1,0 +1,21 @@
+import "std/sequtils"
+
+var a: array[int]
+var i = 1000
+while i > 0:
+  a.add(i)
+  i = i - 1
+
+var p = 0
+while p < len(a):
+  var q = 0
+  while q < len(a) - 1:
+    if a[q] < a[q + 1]:
+      var tmp = a[q]
+      a[q] = a[q + 1]
+      a[q + 1] = tmp
+    q = q + 1
+  p = p + 1
+
+echo a[0]
+echo a[len(a) - 1]

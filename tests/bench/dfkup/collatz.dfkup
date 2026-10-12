@@ -1,5 +1,5 @@
 fn is_even(x: int): bool =
-  result = x - (x / 2) * 2 == 0
+  result = x % 2 == 0
 
 fn collatz_len(n: int): int =
   var x = n
@@ -14,7 +14,7 @@ fn collatz_len(n: int): int =
 
 var total = 0
 var i = 1
-while i <= 10000:
+while i <= 100000:
   total = total + collatz_len(i)
   i = i + 1
 echo total

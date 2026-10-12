@@ -2,7 +2,7 @@ fn isPrime(n: int): bool =
   var i = 2
   result = true
   while i * i <= n:
-    if n == i * (n / i):
+    if n % i == 0:
       result = false
       i = n
     i = i + 1
