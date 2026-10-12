@@ -1,0 +1,24 @@
+fn isPrime3(n: int): bool =
+  var i = 2
+  result = true
+  while i * i <= n:
+    if n == i * (n / i):
+      result = false
+      i = n
+    i = i + 1
+
+fn callInWhile(n: int): int =
+  var i = 2
+  var count = 0
+  while i <= n:
+    if isPrime3(i):
+      count = count + 1
+    i = i + 1
+  result = count
+
+echo "callInWhile(5) = "
+echo callInWhile(5)
+echo "expected 3"
+echo "callInWhile(10) = "
+echo callInWhile(10)
+echo "expected 4"

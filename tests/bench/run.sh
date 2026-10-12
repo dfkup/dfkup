@@ -16,7 +16,15 @@ echo "|-----------|-------|"
 for B in $BENCHMARKS; do
   FILE="$BENCH_DIR/dfkup/$B.dfkup"
   echo "  $B..." >&2
-  T=$(hyperfine --warmup 2 --min-runs 3 "$DFKUP_BIN run $FILE" 2>&1 | \
-    grep "Time.*mean" | head -1 | sed 's/.*Time(mean.s.): *//;s/ *\[User.*//')
-  echo "| $B | $T |"
+  RAW=$(hyperfine --warmup 2 --min-runs 3 --ignore-failure "$DFKUP_BIN run $FILE" 2>&1) || true
+  if echo "$RAW" | grep -q "Ignoring non-zero exit code"; then
+    echo "| $B | CRASHED |"
+  else
+    T=$(echo "$RAW" | grep "Time.*mean" | head -1 | sed 's/.*Time(mean.s.): *//;s/ *\[User.*//')
+    if [ -z "$T" ]; then
+      echo "| $B | FAILED |"
+    else
+      echo "| $B | $T |"
+    fi
+  fi
 done

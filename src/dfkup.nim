@@ -13,14 +13,14 @@ import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value, resolver]
 import pkg/vancode/interpreter/jit/jit
 
 import ./lang/[parser]
+import ./lang/stdlib_loader
 import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
-                  libhttp, libcli, libconfig, libjson, libyaml, libregex,
-                  libbrowser, libtoml, libuuid, libdotenv,
+                  libcli, libconfig, libjson, libyaml, libregex,
+                  libtoml, libuuid, libdotenv,
                   libcsv, libbson, libcolors, libqr, libnanoid, libllm,
                   libhttpclient,
                   libxml, libfeed, libical, libcss, libsvg,
-                  libmarkdown, libstrongpwd, libalgos, libtwofa,
-                  libfswatch]
+                  libmarkdown, libstrongpwd, libalgos, libtwofa]
 
 import pkg/openparser/json
 
@@ -66,11 +66,9 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
 
   var stdlibs: StandardLibrary = newTable[string, ModuleLibrary]()
 
-  stdlibs["json"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("json", some"json.dfkup")
-    m.importModule(sysMod, "system")
-    initJson(scr, m)
-    return m
+  # pilot: `json` and `httpclient` load from dylibs via `stdlibLoader`
+  # below (see `src/lang/stdlib_loader.nim`). The rest stay static
+  # until the rollout reaches them.
 
   stdlibs["yaml"] = proc(scr: Script, sysMod: Module): Module =
     let m = newModule("yaml", some"yaml.dfkup")
@@ -90,11 +88,8 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     initSequtils(scr, m)
     return m
 
-  stdlibs["http"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("http", some"http.dfkup")
-    m.importModule(sysMod, "system")
-    initHttp(scr, m)
-    return m
+  # `http` loads from a dylib (its supranim/powpow chain needs
+  # threads, incompatible with the dylib boundary heap contract).
 
   stdlibs["cli"] = proc(scr: Script, sysMod: Module): Module =
     let m = newModule("cli", some"cli.dfkup")
@@ -114,11 +109,7 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     initRegex(scr, m)
     return m
 
-  stdlibs["browser"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("browser", some"browser.dfkup")
-    m.importModule(sysMod, "system")
-    initBrowser(scr, m)
-    return m
+  # `browser` loads from a dylib (its chopchop chain needs threads).
 
   stdlibs["toml"] = proc(scr: Script, sysMod: Module): Module =
     let m = newModule("toml", some"toml.dfkup")
@@ -174,11 +165,7 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     initLlm(scr, m)
     return m
 
-  stdlibs["httpclient"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("httpclient", some"httpclient.dfkup")
-    m.importModule(sysMod, "system")
-    initHttpClient(scr, m)
-    return m
+  # pilot: `httpclient` loads from a dylib, see above.
 
   stdlibs["xml"] = proc(scr: Script, sysMod: Module): Module =
     let m = newModule("xml", some"xml.dfkup")
@@ -234,11 +221,7 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     initTwofa(scr, m)
     return m
 
-  stdlibs["fswatch"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("fswatch", some"fswatch.dfkup")
-    m.importModule(sysMod, "system")
-    initFswatch(scr, m)
-    return m
+  # `fswatch` loads from a dylib (its powpow/loop chain needs threads).
 
   if autoloadConfig:
     # `conf` mode makes `config({...})` available without an explicit
@@ -249,12 +232,20 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
   script.stdpos = script.procs.high
 
   var gen = initCompiler(script, module, mainChunk, stdlibs = stdlibs,
-                         parserCallback = parseDfkupFile)
+                         parserCallback = parseDfkupFile,
+                         stdlibLoader = loadStdlibFactory)
   gen.allowExprResult = allowExprResult
   try:
     gen.genScript(program, none(string))
   except CatchableError as e:
     raise newException(DfkupError, e.msg)
+  # Retain compiler state when a stdlib dylib was loaded: tearing down
+  # objects adopted across the dylib boundary faults (host dispose of a
+  # dylib-owned graph member with a nil runtime-type pointer). Retaining
+  # is safe for a run-once CLI (the OS reclaims everything at exit) and
+  # a no-op for runs without dylib imports. See plans/stdlib-dylibs.md.
+  if stdlibDynlibLoaded():
+    GC_ref(gen)
 
   var prefs = VMPreferences(enableHotCodeDetection : enableHotCodeDetection)
   var vmInstance = newVirtualMachine(prefs)
@@ -274,7 +265,8 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     # a script that aborts, errors, or is interrupted never reaches its own
     # `close(browser)`, and a browser handle's destructor only unrefs. Without
     # this a failed run leaves headless Chrome processes behind.
-    closeAllBrowsers()
+    # `browser` is a dylib now; its cleanup hook runs via cleanupStdlibs.
+    cleanupStdlibs()
 
 proc runScript*(code: string, sourcePath = "script.dfkup", enableHotCodeDetection: bool = true): string =
   ## Parse, compile, and execute a DFkup script from a string.
@@ -319,94 +311,199 @@ when isMainModule:
   #
   # The CLI application
   #
-  import pkg/kapsis
-  import pkg/kapsis/runtime
-  import pkg/kapsis/interactive/prompts
+  import std/[parseopt, strutils]
 
-  proc runCommand*(v: Values) =
+  const versionStr = "0.1.0"
+
+  const
+    ansiReset = "\e[0m"
+    ansiBoldWhite = "\e[1;37m"
+    ansiGrey = "\e[90m"
+    ansiRed = "\e[31m"
+
+  proc useColor(): bool =
+    getEnv("NO_COLOR") == "" and getEnv("TERM") != "dumb"
+
+  proc paint(s, code: string): string =
+    if useColor():
+      code & s & ansiReset
+    else:
+      s
+
+  proc label(s: string): string =
+    paint(s, ansiBoldWhite)
+
+  proc grey(s: string): string =
+    paint(s, ansiGrey)
+
+  proc errPrefix(): string =
+    paint("error:", ansiRed)
+
+  proc printHelp() =
+    echo grey("A tiny scripting language. Enjoyable, easy to learn and work with so you don't f*ck up")
+    echo grey("  (c) OpenPeeps | LGPL-3.0-or-later License")
+    echo grey("  Build Version: " & versionStr)
+    echo ""
+    echo "usage: dfkup <command> [args] [options]"
+    echo ""
+    echo label("Scripting")
+    echo "  run <script>            " & grey("run a .dfkup/.kup script")
+    echo "          --nojit         " & grey("disable the JIT compiler")
+    echo "  exec <code>             " & grey("execute dfkup code inline")
+    echo "  conf [command]          " & grey("run a config.kup, optionally executing one configured command")
+    echo ""
+    echo label("Codegen & Debugging")
+    echo "  ast <script>            " & grey("generate AST from a DFkup script file")
+    echo "          --dumptree      " & grey("print the AST as a tree instead of JSON")
+    echo ""
+    echo "  -h, --help              " & grey("show this help")
+    echo "  --version               " & grey("show version")
+
+  proc runScriptFile(filePath: string, nojit: bool): int =
     ## Execute dfkup from a file
-    let filePath = $(v.get("script").getPath)
     try:
-      let result = runFile(filePath, not v.has("--nojit"))
+      let result = runFile(filePath, not nojit)
       if result.len > 0:
         echo result
     except DfkupError as e:
-      display(span("error", fgRed), span(e.msg))
+      echo errPrefix() & " " & e.msg
+      return 1
     except IOError as e:
-      display(span("error", fgRed), span(e.msg))
+      echo errPrefix() & " " & e.msg
+      return 1
+    return 0
 
-  proc execCommand*(v: Values) =
-    ## Execute inline dfkup script 
-    var code: string
-    if v.has("code"):
-      code = v.get("code").getStr
-    elif paramCount() >= 1:
-      for i in 1..paramCount():
-        if code.len > 0: code.add(" ")
-        code.add(paramStr(i))
-    else:
-      display(span("error", fgRed), span("Usage: dfkup inline <code>"))
-      return
+  proc execCode(code: string): int =
+    ## Execute inline dfkup script
     try:
       let result = exec(code, "inline", allowExprResult = true, enableHotCodeDetection = false)
       if result.len > 0:
         echo result
     except DfkupError as e:
-      display(span("error", fgRed), span(e.msg))
+      echo errPrefix() & " " & e.msg
+      return 1
+    return 0
 
-  # proc replCommand*(v: Values) =
-  #   ## Command for entering in a REPL Session
-  #   runRepl()
-
-  proc astCommand*(v: Values) =
-    ## Command for parsing and generating the AST
-    ## representation of a dfkup source
-    let filePath = $(v.get("script").getPath)
+  proc printAst(filePath: string, dumpTree: bool): int =
+    ## Parse and print the AST representation of a dfkup source
     if not fileExists(filePath):
-      display(span("error", fgRed), span(&"file not found: {filePath}"))
-      return
+      echo errPrefix() & " file not found: " & filePath
+      return 1
     let code = readFile(filePath)
     var program: Ast
     try:
       parseScript(program, code)
     except DfkupParserError as e:
-      display(span("error", fgRed), span(&"{filePath}({e.ln},{e.col}): {e.msg}"))
-      return
-  
+      echo errPrefix() & " " & &"{filePath}({e.ln},{e.col}): {e.msg}"
+      return 1
+
     # todo, write to a file when `-o:some/path.ast` is provided
-    if v.has("--dumptree") and v.get("--dumptree").getBool:
+    if dumpTree:
       for node in program.nodes:
         echo node.treeRepr
     else:
       echo toJson(program.nodes)
+    return 0
 
-  proc confCommand*(v: Values) =
+  proc runConf(command: string): int =
     ## Run a config file, optionally executing one configured command.
     let filePath = getCurrentDir() / "config.kup"
     if not filePath.fileExists():
-      displayError("No config.kup file at the current path", quitProcess = true)
-    let command =
-      if v.has("command"): v.get("command").getStr
-      else: ""
+      echo errPrefix() & " No config.kup file at the current path"
+      return 1
     try:
       let result = runConfigFile(filePath, command)
       if result.len > 0:
         echo result
     except DfkupError as e:
-      displayError(e.msg)
+      echo errPrefix() & " " & e.msg
+      return 1
     except IOError as e:
-      displayError(e.msg)
+      echo errPrefix() & " " & e.msg
+      return 1
+    return 0
 
-  initKapsis do:
-    defaultCommand: "run"
-    commands:
-      -- "Scripting"
-      run path(script), ?bool("--nojit"):
-        ## run a .dfkup/.kup script
-      exec ?string(code):
-        ## execute dfkup code inline
-      conf ?string(command):
-        ## run a config.kup, optionally executing one configured command
-      -- "Codegen & Debugging"
-      ast path("script"), ?bool("--dumptree"):
-        ## generate AST from a DFkup script file
+  proc main(): int =
+    var command = ""
+    var positionals: seq[string] = @[]
+    var nojit = false
+    var dumptree = false
+    var showHelp = false
+    var showVersion = false
+    var p = initOptParser(commandLineParams())
+    for kind, key, val in p.getopt():
+      case kind
+      of cmdArgument:
+        if command == "":
+          command = key
+        else:
+          positionals.add(key)
+      of cmdLongOption, cmdShortOption:
+        case key
+        of "help", "h":
+          showHelp = true
+        of "version":
+          showVersion = true
+        of "nojit":
+          nojit = val notin ["false", "0"]
+        of "dumptree":
+          dumptree = val notin ["false", "0"]
+        else:
+          echo errPrefix() & " unknown option --" & key
+          printHelp()
+          return 1
+      of cmdEnd:
+        discard
+    if showVersion:
+      echo versionStr
+      return 0
+    if showHelp:
+      printHelp()
+      return 0
+    if command == "":
+      printHelp()
+      return 0
+    case command
+    of "run":
+      # run a .dfkup/.kup script file
+      if positionals.len == 0:
+        echo errPrefix() & " script is required"
+        printHelp()
+        return 1
+      if positionals.len > 1:
+        echo errPrefix() & " only one script allowed"
+        printHelp()
+        return 1
+      return runScriptFile(positionals[0], nojit)
+    of "exec":
+      # execute dfkup code inline
+      let code = positionals.join(" ")
+      if code.len == 0:
+        echo errPrefix() & " code is required (usage: dfkup exec <code>)"
+        printHelp()
+        return 1
+      return execCode(code)
+    of "ast":
+      # generate AST from a DFkup script file
+      if positionals.len == 0:
+        echo errPrefix() & " script is required"
+        printHelp()
+        return 1
+      if positionals.len > 1:
+        echo errPrefix() & " only one script allowed"
+        printHelp()
+        return 1
+      return printAst(positionals[0], dumptree)
+    of "conf":
+      # run a config.kup, optionally executing one configured command
+      let confCommand = positionals.join(" ")
+      return runConf(confCommand)
+    else:
+      # default command: a bare script path runs like `run <script>`
+      if positionals.len == 0 and fileExists(command):
+        return runScriptFile(command, nojit)
+      echo errPrefix() & " unknown command `" & command & "`"
+      printHelp()
+      return 1
+
+  quit(main())

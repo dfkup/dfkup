@@ -10,3 +10,5 @@ testresults/
 nimble.develop
 nimble.paths
 nimbledeps
+/plans
+clue.lock

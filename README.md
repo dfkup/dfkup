@@ -42,15 +42,24 @@ You need Nim.
 
 ### Examples
 ```
-A scripting language with VM + JIT compiler
-  (c) OpenPeeps | LGPL-3.0-or-later License  
+A tiny scripting language. Enjoyable, easy to learn and work with so you don't f*ck up
+  (c) OpenPeeps | LGPL-3.0-or-later License
   Build Version: 0.1.0
 
+usage: dfkup <command> [args] [options]
+
 Scripting
-  run <script:path>           Run a DFkup script file
-          --nojit:bool
-  ast <script:path>           Generate AST from a DFkup script file
-          --dumptree:bool
+  run <script>            run a .dfkup/.kup script
+          --nojit         disable the JIT compiler
+  exec <code>             execute dfkup code inline
+  conf [command]          run a config.kup, optionally executing one configured command
+
+Codegen & Debugging
+  ast <script>            generate AST from a DFkup script file
+          --dumptree      print the AST as a tree instead of JSON
+
+  -h, --help              show this help
+  --version               show version
 ```
 
 ### Benchmarks

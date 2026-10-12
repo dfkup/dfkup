@@ -1,0 +1,24 @@
+fn isPrime2(n: int): bool =
+  var i = 2
+  result = true
+  while i * i <= n:
+    if n == i * (n / i):
+      result = false
+      i = n
+    i = i + 1
+
+echo "isPrime2(5) = "
+echo isPrime2(5)
+
+fn testCall(n: int): bool =
+  result = isPrime2(n)
+
+echo "testCall(5) = "
+echo testCall(5)
+
+fn testCall2(n: int): bool =
+  var x = n
+  result = isPrime2(x)
+
+echo "testCall2(5) = "
+echo testCall2(5)
