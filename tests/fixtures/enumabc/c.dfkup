@@ -1,0 +1,5 @@
+# Imports b, so the `Veg` parameter below is b's type.
+import "b.dfkup"
+
+func wantsB*(v: Veg): bool =
+  return v == Veg.carrot

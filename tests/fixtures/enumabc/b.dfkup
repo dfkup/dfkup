@@ -1,0 +1,7 @@
+# Declares a `Veg` and a function taking it.
+type Veg* = enum
+  carrot = "Carrot"
+  leek
+
+func useVeg*(v: Veg): bool =
+  return v == Veg.carrot

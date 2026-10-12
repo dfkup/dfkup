@@ -9,11 +9,13 @@ import std/[options, os, osproc, strformat, tables]
 
 import ./lang/transformers
 export transformers
-import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value, resolver]
+import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value,
+  resolver, manager]
 import pkg/vancode/interpreter/jit/jit
 
 import ./lang/[parser]
 import ./lang/stdlib_loader
+import ./pkg/pkgman
 import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
                   libcli, libconfig, libjson, libyaml, libregex,
                   libtoml, libuuid, libdotenv,
@@ -231,7 +233,17 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
 
   script.stdpos = script.procs.high
 
-  var gen = initCompiler(script, module, mainChunk, stdlibs = stdlibs,
+  # `pkg/<name>` imports resolve from the ~/.dfkup home through vancode's
+  # manager hook (no vancode changes needed): develop checkouts win,
+  # otherwise the latest installed version. Unresolvable specs get
+  # ErrImportError from vancode.
+  var manager = newModuleManager()
+  let pkgCfg = newDfkupPkgConfig()
+  manager.pkgResolver = some(
+    proc(spec: string): Option[string] {.closure.} =
+      pkgCfg.resolvePkgImport(spec))
+  var gen = initCompiler(script, module, mainChunk, manager = manager,
+                         stdlibs = stdlibs,
                          parserCallback = parseDfkupFile,
                          stdlibLoader = loadStdlibFactory)
   gen.allowExprResult = allowExprResult
@@ -352,6 +364,15 @@ when isMainModule:
     echo "  exec <code>             " & grey("execute dfkup code inline")
     echo "  conf [command]          " & grey("run a config.kup, optionally executing one configured command")
     echo ""
+    echo label("Packages")
+    echo "  pkg install <spec>      " & grey("install a package by name, git URL (--url=... pins a source URL)")
+    echo "  pkg remove <name> [ver] " & grey("uninstall a package (one version, or all)")
+    echo "  pkg update [name]       " & grey("update one package, or all when omitted")
+    echo "  pkg list                " & grey("list installed packages")
+    echo "  pkg develop <path>      " & grey("editable install from a local directory")
+    echo "  pkg prune               " & grey("remove orphaned packages")
+    echo "  pkg refresh             " & grey("re-download registry data")
+    echo ""
     echo label("Codegen & Debugging")
     echo "  ast <script>            " & grey("generate AST from a DFkup script file")
     echo "          --dumptree      " & grey("print the AST as a tree instead of JSON")
@@ -423,6 +444,100 @@ when isMainModule:
       return 1
     return 0
 
+  proc printPkgHelp() =
+    echo "usage: dfkup pkg <install|remove|update|list|develop|prune|refresh> [args]"
+    echo ""
+    echo "  install <spec> [--url=...]  " & grey("install by registry name, git URL, or name + source URL")
+    echo "  remove <name> [version]     " & grey("uninstall one version, or all versions")
+    echo "  update [name]               " & grey("update one package, or all")
+    echo "  list                        " & grey("list installed packages")
+    echo "  develop <path>              " & grey("editable install from a local directory")
+    echo "  prune                       " & grey("remove orphaned packages")
+    echo "  refresh                     " & grey("re-download registry data")
+
+  proc runPkg(args: seq[string], pkgUrl: string): int =
+    ## Package management on the ~/.dfkup home (DFKUP_HOME overrides).
+    if args.len == 0:
+      printPkgHelp()
+      return 1
+    let cfg = newDfkupPkgConfig()
+    case args[0]
+    of "install":
+      if args.len < 2:
+        echo errPrefix() & " package name or URL is required"
+        printPkgHelp()
+        return 1
+      if args.len > 2:
+        echo errPrefix() & " only one package allowed"
+        return 1
+      try:
+        if cfg.pkgInstall(args[1], url = pkgUrl):
+          return 0
+      except CatchableError as e:
+        echo errPrefix() & " " & e.msg
+      return 1
+    of "remove", "uninstall":
+      if args.len < 2:
+        echo errPrefix() & " package name is required"
+        printPkgHelp()
+        return 1
+      if args.len > 3:
+        echo errPrefix() & " usage: dfkup pkg remove <name> [version]"
+        return 1
+      let version = if args.len > 2: args[2] else: ""
+      try:
+        if cfg.pkgRemove(args[1], version):
+          return 0
+      except CatchableError as e:
+        echo errPrefix() & " " & e.msg
+      return 1
+    of "update":
+      if args.len > 2:
+        echo errPrefix() & " usage: dfkup pkg update [name]"
+        return 1
+      let name = if args.len > 1: args[1] else: ""
+      try:
+        if cfg.pkgUpdate(name):
+          return 0
+      except CatchableError as e:
+        echo errPrefix() & " " & e.msg
+      return 1
+    of "list":
+      try:
+        cfg.pkgList()
+        return 0
+      except CatchableError as e:
+        echo errPrefix() & " " & e.msg
+      return 1
+    of "develop":
+      if args.len != 2:
+        echo errPrefix() & " directory is required (usage: dfkup pkg develop <path>)"
+        return 1
+      try:
+        if cfg.pkgDevelop(args[1]):
+          return 0
+      except CatchableError as e:
+        echo errPrefix() & " " & e.msg
+      return 1
+    of "prune":
+      try:
+        cfg.pkgPrune()
+        return 0
+      except CatchableError as e:
+        echo errPrefix() & " " & e.msg
+      return 1
+    of "refresh":
+      try:
+        if cfg.refreshAllSources():
+          return 0
+      except CatchableError as e:
+        echo errPrefix() & " " & e.msg
+      return 1
+    else:
+      echo errPrefix() & " unknown pkg command `" & args[0] & "`"
+      printPkgHelp()
+      return 1
+
   proc main(): int =
     var command = ""
     var positionals: seq[string] = @[]
@@ -430,6 +545,7 @@ when isMainModule:
     var dumptree = false
     var showHelp = false
     var showVersion = false
+    var pkgUrl = ""
     var p = initOptParser(commandLineParams())
     for kind, key, val in p.getopt():
       case kind
@@ -448,6 +564,8 @@ when isMainModule:
           nojit = val notin ["false", "0"]
         of "dumptree":
           dumptree = val notin ["false", "0"]
+        of "url":
+          pkgUrl = val
         else:
           echo errPrefix() & " unknown option --" & key
           printHelp()
@@ -498,6 +616,9 @@ when isMainModule:
       # run a config.kup, optionally executing one configured command
       let confCommand = positionals.join(" ")
       return runConf(confCommand)
+    of "pkg":
+      # package management on the ~/.dfkup home
+      return runPkg(positionals, pkgUrl)
     else:
       # default command: a bare script path runs like `run <script>`
       if positionals.len == 0 and fileExists(command):

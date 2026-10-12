@@ -1,0 +1,7 @@
+package({
+  name: "hello",
+  version: "0.1.0",
+  description: "fixture kup package for pkg tests",
+  license: "MIT",
+  main: "src/hello.kup"
+})

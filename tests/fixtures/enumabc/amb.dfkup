@@ -1,0 +1,4 @@
+# A second module declaring its own `Veg`, so `Veg` is ambiguous for anyone
+# importing both this and b.
+type Veg* = enum
+  turnip = "Turnip"

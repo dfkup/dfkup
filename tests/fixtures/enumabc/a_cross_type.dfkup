@@ -1,0 +1,9 @@
+# A's `Veg` is not b's `Veg`, so passing A's value to c's parameter (typed with
+# b's `Veg`) has to be rejected rather than silently accepted.
+import "b.dfkup"
+import "c.dfkup"
+
+type Veg* = enum
+  pea = "Pea"
+
+echo wantsB(Veg.pea)

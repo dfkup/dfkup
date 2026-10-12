@@ -1,10 +1,13 @@
 --define:vancodeJitDynasm
-# Single-threaded runtime: tables use the thread-local heap, which is
-# safe to share across the stdlib dylib boundary. The shared heap's
-# per-image region makes cross-image table frees corrupt the heap
-# (dylib-built JObject teardown segfault). Every image in the process
-# (host + all dylibs, see `clue task stdlibs`) must use this setting.
-switch("threads", "off")
+# Threaded runtime: datpkgr (package manager) links into the host binary
+# and its install path spawns worker threads, so the host builds with
+# threads on. Every image in the process (host + all stdlib dylibs, see
+# `clue task stdlibs`) must share these flags: the cross-image heap
+# contract is uniform `--threads:on --mm:arc` everywhere (mixed settings
+# fault — region-heap mismatch segfaults, useMalloc breaks dylib init).
+# Re-verify the dylib boundary matrix (plans/stdlib-dylibs.md) whenever
+# either side's flags change.
+switch("threads", "on")
 # --define:vancodeJitLog
 # switch("passL", "-Wl,-rpath,/opt/local/libexec/llvm-20/lib")
 

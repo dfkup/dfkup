@@ -1,0 +1,10 @@
+# Declares its own `Veg` while importing b's. A's own declaration must win
+# regardless of the order the import appears in: `pea` and `sprout` exist here,
+# and b.dfkup's `carrot`/`leek` must not leak in.
+import "b.dfkup"
+
+type Veg* = enum
+  pea = "Pea"
+  sprout
+
+$Veg.pea & "/" & $Veg.sprout

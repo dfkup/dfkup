@@ -1,0 +1,6 @@
+# b and amb both export `Veg`, so the bare name cannot be resolved.
+import "b.dfkup"
+import "amb.dfkup"
+
+func f*(v: Veg): bool =
+  return true

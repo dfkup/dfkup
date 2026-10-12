@@ -15,6 +15,7 @@ binDir        = "bin"
 
 requires "nim >= 2.2.0"
 requires "vancode >= 0.2.6"
+requires "datpkgr >= 0.1.9"
 
 # mostly required for exporting as libraries
 requires "openparser >= 0.1.9"
@@ -106,13 +107,13 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
     exec("rm -f " & outLib)
     # NB: `-d:release`, not `--release` (this toolchain rejects it).
     # `--path:src` resolves the `lang/lowlibs/<module>` import above.
-    # `--threads:off` must match src/dfkup.nims (host): table heap
-    # must agree across the dylib boundary (see plans/stdlib-dylibs.md).
-    # `--mm:arc` must match too: ORC's cycle collector traces only its
-    # own image's roots, so host-referenced dylib objects look like
-    # unreachable cycles and get collected live (heap corruption).
-    # ARC is pure refcounting with no tracing, so it is boundary-safe.
-    let cmd = nimExe & " c --app:lib --threads:off --mm:arc -d:release --opt:speed" &
+    # `--threads:on --mm:arc` must match src/dfkup.nims (host): the heap
+    # contract across the dylib boundary is uniform flags on every image
+    # (mixed thread settings fault in every variant: region-heap mismatch
+    # segfaults, useMalloc breaks dylib init and cross-heap frees abort).
+    # ARC (no tracing, pure refcounting) is the boundary-safe collector.
+    # See plans/stdlib-dylibs.md.
+    let cmd = nimExe & " c --app:lib --threads:on --mm:arc -d:release --opt:speed" &
       " --hints:off --verbosity:0" &
       " -d:vancodeJitDynasm -d:nimPreviewHashRef" &
       " -d:supranimUseGlobalOnRequest" &
@@ -120,4 +121,10 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
       " --out:" & outLib & " " & genFile
     echo "building libdfkup_" & name & ".dylib ..."
     exec(cmd)
-  echo "stdlib dylibs in bin/stdlib/ (dev fallback; install to ~/.dfkup/stdlib for normal runs)"
+    # Install into the package-manager-owned libraries dir
+    # (DFKUP_HOME-aware); bin/stdlib stays the dev fallback.
+    let libHome = getEnv("DFKUP_HOME", getHomeDir() / ".dfkup") / "libraries"
+    mkDir(libHome)
+    cpFile(outLib, libHome / "libdfkup_" & name & ".dylib")
+  echo "stdlib dylibs in bin/stdlib/ and " & getEnv("DFKUP_HOME",
+    getHomeDir() / ".dfkup") / "libraries/"

@@ -1,0 +1,2 @@
+func hello*(): string =
+  return "hi from hello pkg"

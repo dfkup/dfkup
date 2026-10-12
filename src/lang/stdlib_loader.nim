@@ -47,11 +47,12 @@ var loadedStdlibLibs: seq[tuple[name: string, handle: LibHandle,
 
 proc stdlibLibPath*(name: string): string =
   ## Filesystem path of `libdfkup_<name>.dylib`, "" when absent.
-  ## `~/.dfkup` is owned by the future pkg manager; `DFKUP_HOME`
-  ## overrides it; next to the binary is the dev fallback.
+  ## `~/.dfkup/libraries` is the package-manager-owned shared-library dir
+  ## (`DFKUP_HOME` overrides the home); next to the binary is the dev
+  ## fallback (`clue task stdlibs` builds there).
   let file = "libdfkup_" & name & ".dylib"
   let home = getEnv("DFKUP_HOME", getHomeDir() / ".dfkup")
-  result = home / "stdlib" / file
+  result = home / "libraries" / file
   if fileExists(result):
     return result
   result = getAppDir() / "stdlib" / file

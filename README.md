@@ -54,6 +54,15 @@ Scripting
   exec <code>             execute dfkup code inline
   conf [command]          run a config.kup, optionally executing one configured command
 
+Packages
+  pkg install <spec>      install a package by name, git URL (--url=... pins a source URL)
+  pkg remove <name> [ver] uninstall a package (one version, or all)
+  pkg update [name]       update one package, or all when omitted
+  pkg list                list installed packages
+  pkg develop <path>      editable install from a local directory
+  pkg prune               remove orphaned packages
+  pkg refresh             re-download registry data
+
 Codegen & Debugging
   ast <script>            generate AST from a DFkup script file
           --dumptree      print the AST as a tree instead of JSON
@@ -61,6 +70,45 @@ Codegen & Debugging
   -h, --help              show this help
   --version               show version
 ```
+
+### Packages
+Powered by [datpkgr](https://github.com/openpeeps/datpkgr). The first `pkg`
+command creates the `~/.dfkup` home (`DFKUP_HOME` overrides it):
+
+```
+~/.dfkup/
+  dfkup.db, versions.db   package-manager databases
+  packages/<name>/<ver>/  installed kup packages
+  develop/<name>          editable installs (symlinks)
+  libraries/              shared libraries (stdlib dylibs live here)
+```
+
+A kup package is a source tree declared by `package.kup`:
+```
+package({
+  name: "myutils",
+  version: "0.1.0",
+  description: "handy string helpers",
+  license: "MIT",
+  main: "src/myutils.kup",
+  dependencies: {
+    otherlib: ">= 0.2.0"
+  }
+})
+```
+Only `name` is required; `main` defaults to `src/<name>.kup`. Install by
+registry name, git URL or editable directory (`dfkup pkg install <name>`,
+`dfkup pkg install <url>`, `dfkup pkg develop <path>`). The registry lives
+at [github.com/dfkup/pkgs](https://github.com/dfkup/pkgs) and seeds into
+`~/.dfkup` on first use; `dfkup pkg refresh` re-downloads it when version
+discovery goes stale. Scripts consume packages with the `pkg/` prefix, which
+resolves to the installed entry point (develop checkouts win):
+```
+import "pkg/myutils"
+
+echo shout("hello")
+```
+Exported functions carry the `*` marker (`func shout*(s: string): string`).
 
 ### Benchmarks
 
@@ -124,7 +172,7 @@ DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https
 - [ ] A stable JIT compiler
 - [ ] Add more benchmarks (including languages)
 - [ ] Publish a [Booyaka](https://github.com/openpeeps/booyaka) Documentation
-- [ ] Implement VanCode package manager API
+- [x] Implement VanCode package manager API (`pkg/` imports via `pkgResolver`, `dfkup pkg` on datpkgr)
 
 ### ❤ Contributions & Support
 - 🐛 Found a bug? [Create a new Issue](https://github.com/dfkup/dfkup/issues)

@@ -1,0 +1,8 @@
+# `as` is how a name that genuinely exists in two imported files is spelled.
+import "b.dfkup" as veggie
+import "amb.dfkup" as other
+
+func isCarrot*(v: veggie.Veg): bool =
+  return v == veggie.Veg.carrot
+
+(if isCarrot(veggie.Veg.carrot): "yes" else: "no") & "/" & $other.Veg.turnip
