@@ -42,7 +42,12 @@ suite "Strongpwd":
     let strong = run("pwdScore(\"Xk9#mQ2$vL7@nR4!\")").parseFloat()
     check strong > weak
   test "custom word list":
-    check run("checkPasswordWithWords(\"miller99!\", parseJson(\"[\\\"miller\\\"]\"))") == "{\"strength\":\"Medium\",\"score\":2.952777862548828,\"reason\":\"NotEnoughVariety\"}"
+    # blackpaper >= 0.2.0 fuzzy-matches the password against the custom
+    # words: "miller99!" contains "miller", so it is Weak/SimilarToCommon
+    # (upstream contract: leet+suffix variants of a listed word never
+    # reach Strong). The Medium/NotEnoughVariety verdict below was the
+    # pre-0.2.0 scoring, which ignored the similarity.
+    check run("checkPasswordWithWords(\"miller99!\", parseJson(\"[\\\"miller\\\"]\"))") == "{\"strength\":\"Weak\",\"score\":0.0,\"reason\":\"SimilarToCommon\"}"
   test "prepared dictionary":
-    check run("let d = newPwdDict(parseJson(\"[\\\"miller\\\"]\"))\ncheckPasswordWithDict(\"miller99!\", d)") == "{\"strength\":\"Medium\",\"score\":2.952777862548828,\"reason\":\"NotEnoughVariety\"}"
+    check run("let d = newPwdDict(parseJson(\"[\\\"miller\\\"]\"))\ncheckPasswordWithDict(\"miller99!\", d)") == "{\"strength\":\"Weak\",\"score\":0.0,\"reason\":\"SimilarToCommon\"}"
     check run("let d = newPwdDict(parseJson(\"[]\"))\ncheckPasswordWithDict(\"Xk9#mQ2$vL7@nR4!\", d)") == "{\"strength\":\"Strong\",\"score\":6.0,\"reason\":\"GoodComplexity\"}"
