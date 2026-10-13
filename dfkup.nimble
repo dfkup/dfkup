@@ -40,15 +40,45 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
   ## it). Develop/registry search paths come from clue.lock, so no
   ## ~/.nimble registry is involved.
   ## Run with: clue task stdlibs
-  # (name, lowlib module, init proc). Pilot first; rollout extends this.
+  # (name, lowlib module, init proc). Full rollout: every entry of
+  # `dfkupStdlibNames` (stdlib_loader.nim) except `system`/`config`,
+  # which stay statically linked in the core binary.
   const stdlibMap = [("json", "libjson", "initJson"),
     ("httpclient", "libhttpclient", "initHttpClient"),
     ("http", "libhttp", "initHttp"),
     ("fswatch", "libfswatch", "initFswatch"),
-    ("browser", "libbrowser", "initBrowser")]
-  # `http` excluded for now: its supranim/powpow chain needs threads:on,
-  # which disagrees with the dylib heap contract (see plans/stdlib-dylibs.md).
-  const pilotLibs = ["json", "httpclient", "fswatch", "browser"]
+    ("browser", "libbrowser", "initBrowser"),
+    ("yaml", "libyaml", "initYaml"),
+    ("strings", "libstrings", "initStrings"),
+    ("sequtils", "libsequtils", "initSequtils"),
+    ("cli", "libcli", "initCliLib"),
+    ("regex", "libregex", "initRegex"),
+    ("toml", "libtoml", "initToml"),
+    ("uuid", "libuuid", "initUuid"),
+    ("dotenv", "libdotenv", "initDotenv"),
+    ("csv", "libcsv", "initCsv"),
+    ("bson", "libbson", "initBson"),
+    ("colors", "libcolors", "initColors"),
+    ("qr", "libqr", "initQr"),
+    ("nanoid", "libnanoid", "initNanoId"),
+    ("llm", "libllm", "initLlm"),
+    ("xml", "libxml", "initXml"),
+    ("feed", "libfeed", "initFeed"),
+    ("ical", "libical", "initIcal"),
+    ("css", "libcss", "initCss"),
+    ("svg", "libsvg", "initSvg"),
+    ("markdown", "libmarkdown", "initMarkdown"),
+    ("strongpwd", "libstrongpwd", "initStrongpwd"),
+    ("twofa", "libtwofa", "initTwofa"),
+    ("algos", "libalgos", "initAlgos")]
+  # Uniform `--threads:on --mm:arc` on host and dylibs (see flags below)
+  # keeps the heap contract sound, so `http`/`browser` build as dylibs
+  # too (their threads-bound deps used to rule that out).
+  const stdlibLibs = ["json", "httpclient", "fswatch", "browser",
+    "yaml", "strings", "sequtils", "cli", "regex", "toml", "uuid",
+    "dotenv", "csv", "bson", "colors", "qr", "nanoid", "llm", "xml",
+    "feed", "ical", "css", "svg", "markdown", "strongpwd", "twofa",
+    "algos", "http"]
   let lock = readFile("clue.lock")
   var paths: seq[string] = @[]
   for piece in lock.split("\"path\":\""):
@@ -86,8 +116,8 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
   var pathArgs = ""
   for p in paths:
     pathArgs.add(" --path:\"" & p & "\"")
-  for name in pilotLibs:
-    var module, initProc, cleanup = ""
+  for name in stdlibLibs:
+    var module, initProc, cleanup, setvm = ""
     for entry in stdlibMap:
       if entry[0] == name:
         module = entry[1]
@@ -97,10 +127,15 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
       quit(1)
     if name == "browser":
       cleanup = "proc dfkupStdlibCleanup*() =\n    closeAllBrowsers()\n"
+    if name == "http":
+      # Server callbacks re-enter the host VM through this image's
+      # JIT-bridge globals; the host pushes its VM after creating it
+      # (see setStdlibVms in src/lang/stdlib_loader.nim).
+      setvm = "proc dfkupStdlibSetVm*(vm: pointer) =\n    setHttpHostVm(vm)\n"
     let genFile = "bin/stdlib_gen/stdlib_" & name & ".nim"
     writeFile(genFile, tmpl.replace("%%NAME%%", name)
       .replace("%%MODULE%%", module).replace("%%INIT%%", initProc)
-      .replace("%%CLEANUP%%", cleanup))
+      .replace("%%CLEANUP%%", cleanup).replace("%%SETVM%%", setvm))
     # Drop any stale dylib first: same-second rewrites can otherwise
     # look up-to-date to nim's incremental check and silently skip.
     let outLib = "bin/stdlib/libdfkup_" & name & ".dylib"

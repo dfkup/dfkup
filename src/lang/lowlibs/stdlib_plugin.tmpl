@@ -6,8 +6,18 @@
 # - `dfkupStdlibNim` guards the toolchain (same Nim version required)
 # - `dfkupStdlibInit` populates and returns the stdlib Module
 # - `dfkupStdlibCleanup` only exists for libs that provide it
+# - `dfkupStdlibSetVm` only exists for libs that need the host VM
+#   (libhttp: server callbacks re-enter the VM through the JIT bridge,
+#   whose globals live per-image and must point at the host VM)
 #
 # `system` and `config` stay statically linked in the core binary.
+
+# transformers FIRST (before std/ and vancode imports): it extends vancode's
+# NodeKind (nkEnumDef...) via voodoo, and the extension only lands in vancode
+# modules compiled after this import. Any lowlib pulling `lang/parser`
+# transitively (e.g. via ./libsystem) needs the extension registered.
+# Same import-order rule as the host binary and the tests.
+import lang/transformers
 
 import std/options
 import pkg/vancode/interpreter/[chunk, sym]
@@ -40,4 +50,5 @@ proc dfkupStdlibInit*(script: pointer, sysmod: pointer,
     return 1
 
 %%CLEANUP%%
+%%SETVM%%
 {.pop.}

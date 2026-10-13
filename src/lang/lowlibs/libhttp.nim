@@ -9,12 +9,23 @@ import std/[net, httpcore]
 import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
 import pkg/vancode/interpreter/jit/jit_values
+import pkg/vancode/interpreter/jit/compiler_bridge
+import pkg/vancode/interpreter/vm
 import pkg/supranim/network/webserver
 
 type
   DfkupWebServer = ref object
     inner: WebServer
     callback: Value
+
+proc setHttpHostVm*(vm: pointer) =
+  ## Point this image's JIT-bridge globals at the host VM. The host calls
+  ## it through the `dfkupStdlibSetVm` dylib export after creating its VM;
+  ## without it `execCallback` below sees a nil VM and every request falls
+  ## through to the empty-body default. Native callback procs run through
+  ## nested `interpret` on the VM thread (the server loop runs inside the
+  ## `listen` foreign proc); JIT compilation stays host-side.
+  setJitVm(cast[Vm](vm))
 
 proc callCallback*(procScript: cstring, procId: int32,
                    flatArgs: ptr int64, argc: int32,

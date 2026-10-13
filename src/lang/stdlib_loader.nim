@@ -17,6 +17,10 @@
 ## - `dfkupStdlibNim(): cstring` must equal the host `NimVersion`
 ## - `dfkupStdlibInit(script, sysmod, outModule, outErr): cint`
 ## - optional `dfkupStdlibCleanup()` run from `cleanupStdlibs`
+## - optional `dfkupStdlibSetVm(vm)` giving the dylib the host VM (libhttp:
+##   server callbacks re-enter the VM through the JIT bridge, whose
+##   `jitGlobalVm` lives per-image; the ABI version is unchanged since
+##   every addition is nil-tolerant)
 ##
 ## Handles are never unloaded; the CLI runs once per process.
 
@@ -39,11 +43,12 @@ type
   DfkupStdlibInitFn* = proc(script, sysmod: pointer,
     outModule: ptr pointer, outErr: ptr cstring): cint {.cdecl.}
   DfkupStdlibCleanupFn* = proc() {.cdecl.}
+  DfkupStdlibSetVmFn* = proc(vm: pointer) {.cdecl.}
   DfkupStdlibAbiFn* = proc(): uint32 {.cdecl.}
   DfkupStdlibNimFn* = proc(): cstring {.cdecl.}
 
 var loadedStdlibLibs: seq[tuple[name: string, handle: LibHandle,
-    cleanup: DfkupStdlibCleanupFn]] = @[]
+    cleanup: DfkupStdlibCleanupFn, setVm: DfkupStdlibSetVmFn]] = @[]
 
 proc stdlibLibPath*(name: string): string =
   ## Filesystem path of `libdfkup_<name>.dylib`, "" when absent.
@@ -105,7 +110,9 @@ proc loadStdlibModule*(name: string, script: Script,
       "stdlib init failed (" & name & "): " & msg)
   let cleanup = cast[DfkupStdlibCleanupFn](
     lib.symAddr("dfkupStdlibCleanup"))
-  loadedStdlibLibs.add((name, lib, cleanup))
+  let setVm = cast[DfkupStdlibSetVmFn](
+    lib.symAddr("dfkupStdlibSetVm"))
+  loadedStdlibLibs.add((name, lib, cleanup, setVm))
   return cast[Module](outMod)
 
 proc loadStdlibFactory*(name: string): ModuleLibrary =
@@ -130,6 +137,18 @@ proc cleanupStdlibs*() =
     if entry.cleanup != nil:
       try:
         entry.cleanup()
+      except CatchableError:
+        discard
+
+proc setStdlibVms*(vm: pointer) =
+  ## Push the host VM into every loaded dylib that asked for it
+  ## (`dfkupStdlibSetVm` export). Runs once the VM exists, before
+  ## interpret: stdlib factories load at compile time, when no VM
+  ## exists yet, so the handoff cannot happen in `loadStdlibModule`.
+  for entry in loadedStdlibLibs:
+    if entry.setVm != nil:
+      try:
+        entry.setVm(vm)
       except CatchableError:
         discard
 

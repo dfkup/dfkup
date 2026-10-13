@@ -139,7 +139,7 @@ proc responseJson(r: LLMResponse): JsonNode =
 # dfkup coroutine drivers, so `await` drives them like any other coroutine.
 const
   ChatCoroSrc* = """
-async func llmChat*(client, prompt, opts = nil): string =
+async func llmChat*(client: pointer, prompt: string, opts: json): string =
   let job = llmStart(client, prompt, opts)
   while not llmDone(job):
     llmStep(job)
@@ -150,16 +150,22 @@ async func llmChat*(client, prompt, opts = nil): string =
 """
 
   ChatChunksCoroSrc* = """
-async func llmChatChunks*(client, prompt, opts = nil): array =
+async func llmChatChunks*(client: pointer, prompt: string, opts: json): array =
   let job = llmStart(client, prompt, opts)
   var out: array = []
   while not llmDone(job):
-    for c in llmTakeChunks(job):
-      out.add(c)
+    let cs = llmTakeChunks(job)
+    var i = 0
+    while i < len(cs):
+      out.add(cs[i])
+      i = i + 1
     llmStep(job)
     yield "llm: waiting"
-  for c in llmTakeChunks(job):
-    out.add(c)
+  let tail = llmTakeChunks(job)
+  var k = 0
+  while k < len(tail):
+    out.add(tail[k])
+    k = k + 1
   return out
 """
 
