@@ -29,7 +29,7 @@ requires "powpow >= 0.2.2"
 requires "money >= 0.1.0"
 requires "chopchop >= 0.1.0"
 requires "chachachat >= 0.1.0"
-requires "voodoo >= 0.1.9"
+requires "voodoo >= 0.2.3"
 # Pinned: flysystem 0.2.1 rewired the local driver onto POSIX-only
 # securejoin with no Windows fallback (undeclared `sandboxPassthrough`
 # on windows); 0.2.0 is the last version that compiles there. Unpin
