@@ -72,7 +72,7 @@ proc windowsTotalMemory(): int64 =
       ullAvailVirtual: uint64
       ullAvailExtendedVirtual: uint64
     proc GlobalMemoryStatusEx(lpBuffer: ptr MEMORYSTATUSEX): int32
-      {.importc, winapi, header: "<windows.h>".}
+      {.importc, stdcall, header: "<windows.h>".}
     var status: MEMORYSTATUSEX
     status.dwLength = uint32(sizeof(status)).uint32
     if GlobalMemoryStatusEx(addr status) != 0:
