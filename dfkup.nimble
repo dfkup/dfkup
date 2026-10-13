@@ -14,7 +14,7 @@ binDir        = "bin"
 # Dependencies
 
 requires "nim >= 2.2.0"
-requires "vancode >= 0.2.6"
+requires "vancode >= 0.2.14"
 requires "datpkgr >= 0.1.9"
 
 # mostly required for exporting as libraries
