@@ -378,13 +378,22 @@ proc initSystem*(script: Script, module: Module) =
   # `$VAR` all work, unlike `exec` which execs directly. That means the command
   # is shell-interpreted and must come from a trusted source, not user input.
   #
+  # On Windows `startProcess` hands the command to CreateProcess verbatim
+  # (POSIX wraps it in `/bin/sh -c`), so route through COMSPEC explicitly;
+  # otherwise shell builtins like `exit` fail with "command not found".
+  proc shellWrap(cmd: string): string =
+    when defined(windows):
+      getEnv("COMSPEC", "cmd.exe") & " /c " & cmd
+    else:
+      cmd
+
   # This deliberately runs through `startProcess` rather than `execCmdEx`:
   # `execCmdEx` reads the child's output, which is incompatible with
   # `poParentStreams`, and a build command's output belongs on the terminal
   # anyway. `execShellOut` below is the capturing counterpart.
   script.addProc(module, "execShell", @[paramDef("cmd", ttyString)], ttyBool,
     proc (args: StackView, argc: int): Value =
-      var process = osproc.startProcess(args[0].stringVal[],
+      var process = osproc.startProcess(shellWrap(args[0].stringVal[]),
         options = {poEvalCommand, poUsePath, poParentStreams})
       defer: close(process)
       result = initValue(process.waitForExit() == 0))
@@ -394,7 +403,7 @@ proc initSystem*(script: Script, module: Module) =
   # merges stderr into stdout by default, which is what you want here.
   script.addProc(module, "execShellOut", @[paramDef("cmd", ttyString)], ttyJson,
     proc (args: StackView, argc: int): Value =
-      let p = osproc.execCmdEx(args[0].stringVal[],
+      let p = osproc.execCmdEx(shellWrap(args[0].stringVal[]),
         options = {poEvalCommand, poUsePath})
       var j = newJObject()
       j["output"] = %p.output

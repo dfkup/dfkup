@@ -1,0 +1,4 @@
+# Test fixtures must check out byte-identical everywhere: several suites
+# assert on exact parsed values, and CRLF conversion (Windows autocrlf)
+# would otherwise change what the parsers see.
+tests/fixtures/** text eol=lf

@@ -58,6 +58,9 @@ suite "Markdown":
   test "front matter":
     check run("let md = parseMarkdown(\"---\\ntitle: Hi\\n---\\n\\nbody\")\nmd.getMeta()") == "{\"title\":\"Hi\"}"
     check run("let md = parseMarkdown(\"no front matter\")\nmd.getMeta()") == "null"
+    # CRLF input (e.g. a fixture checked out on Windows) must parse
+    # identically: the `---` fence and values carry no `\r`.
+    check run("let md = parseMarkdown(\"---\\r\\ntitle: Hi\\r\\n---\\r\\n\\r\\nbody\")\nmd.getMeta()") == "{\"title\":\"Hi\"}"
   test "footnotes flag":
     check md("hasFootnotes()") == "false"
   test "parse file":

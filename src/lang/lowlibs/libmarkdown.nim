@@ -5,7 +5,7 @@
 #          https://dfkup.dev
 #          https://github.com/dfkup/dfkup
 
-import std/[json, options, tables]
+import std/[json, options, strutils, tables]
 import pkg/marvdown
 import pkg/marvdown/parser
 import pkg/openparser/[html, yaml]
@@ -89,27 +89,34 @@ proc ensureRendered(doc: MarkdownDoc) =
     doc.html = m.toHtml()
     doc.rendered = true
 
+proc normMarkdownSource(s: string): string =
+  ## CommonMark normalizes line endings to `\n` before parsing. Do the
+  ## same here so CRLF input (e.g. a fixture checked out on Windows)
+  ## parses identically: without this the `---` front-matter fence
+  ## carries a `\r` and the header is silently missed.
+  result = s.replace("\r\n", "\n").replace("\r", "\n")
+
 proc initMarkdown*(script: Script, module: Module) =
 
   script.addProc(module, "parseMarkdown", @[paramDef("source", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =
-      result = wrapDoc(MarkdownDoc(md: newMarkdown(args[0].stringVal[]))))
+      result = wrapDoc(MarkdownDoc(md: newMarkdown(normMarkdownSource(args[0].stringVal[])))))
 
   script.addProc(module, "parseMarkdown", @[paramDef("source", ttyString),
       paramDef("opts", ttyJson)], ttyPointer,
     proc (args: StackView, argc: int): Value =
       let opts = buildOptions(args[1].jsonVal)
-      result = wrapDoc(MarkdownDoc(md: newMarkdown(args[0].stringVal[], opts))))
+      result = wrapDoc(MarkdownDoc(md: newMarkdown(normMarkdownSource(args[0].stringVal[]), opts))))
 
   script.addProc(module, "parseMarkdownFile", @[paramDef("path", ttyString)], ttyPointer,
     proc (args: StackView, argc: int): Value =
-      result = wrapDoc(MarkdownDoc(md: newMarkdown(readFile(args[0].stringVal[])))))
+      result = wrapDoc(MarkdownDoc(md: newMarkdown(normMarkdownSource(readFile(args[0].stringVal[]))))))
 
   script.addProc(module, "parseMarkdownFile", @[paramDef("path", ttyString),
       paramDef("opts", ttyJson)], ttyPointer,
     proc (args: StackView, argc: int): Value =
       let opts = buildOptions(args[1].jsonVal)
-      result = wrapDoc(MarkdownDoc(md: newMarkdown(readFile(args[0].stringVal[]), opts))))
+      result = wrapDoc(MarkdownDoc(md: newMarkdown(normMarkdownSource(readFile(args[0].stringVal[])), opts))))
 
   script.addProc(module, "getHtml", @[paramDef("doc", ttyPointer)], ttyString,
     proc (args: StackView, argc: int): Value =

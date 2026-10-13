@@ -91,4 +91,10 @@ suite "Libraries - execShell":
   test "out reports a non-zero exit code":
     check run("execShellOut(\"exit 7\")") == "{\"output\":\"\",\"exitCode\":7}"
   test "shell metacharacters are interpreted":
-    check run("execShell(\"exit $((2 + 3))\")") == "false"
+    # Shell syntax differs per platform (`$((..))` is POSIX, `%VAR%`
+    # is cmd); either way this only passes if a real shell ran it.
+    when defined(windows):
+      check run("execShellOut(\"echo %OS%\")") ==
+        "{\"output\":\"Windows_NT\\n\",\"exitCode\":0}"
+    else:
+      check run("execShell(\"exit $((2 + 3))\")") == "false"

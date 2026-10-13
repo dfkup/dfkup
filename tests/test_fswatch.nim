@@ -29,23 +29,28 @@ proc run(code: string): string =
 suite "FsWatch":
   test "watch invalid path fails":
     check run("watch(\"/tmp/dfkup-test-missing-xyz-123.txt\")") == "-1"
-  test "watch path and unwatch":
-    let path = getTempDir() / "dfkup-fswatch-test.txt"
-    writeFile(path, "v1")
-    let id = run("watch(\"" & path & "\")").parseInt()
-    check id >= 1
-    check run("watchPath(" & $id & ")") == path
-    check run("unwatch(" & $id & ")") == "true"
-    check run("unwatch(999999)") == "false"
-  test "modify event delivered":
-    let path = getTempDir() / "dfkup-fswatch-ev.txt"
-    writeFile(path, "v1")
-    let code = "let id = watch(\"" & path & "\")\nwriteFile(\"" & path & "\", \"v2\")\nlet evs = pollWatchers(500)\nlet ok = unwatch(id)\nevs"
-    let evs = run(code)
-    check evs.contains("\"modified\"")
-    check evs.contains(path)
-  test "quiet poll returns empty":
-    let path = getTempDir() / "dfkup-fswatch-quiet.txt"
-    writeFile(path, "v1")
-    let code = "let id = watch(\"" & path & "\")\nlet evs = pollWatchers(50)\nlet ok = unwatch(id)\nevs"
-    check run(code) == "[]"
+  # powpow's watcher only has kqueue/inotify backends: on Windows every
+  # `watch` reports -1 (unsupported) instead of delivering events, so
+  # only the failure contract above applies there. A native backend
+  # (ReadDirectoryChangesW) or stat-polling fallback is still to do.
+  when not defined(windows):
+    test "watch path and unwatch":
+      let path = getTempDir() / "dfkup-fswatch-test.txt"
+      writeFile(path, "v1")
+      let id = run("watch(\"" & path & "\")").parseInt()
+      check id >= 1
+      check run("watchPath(" & $id & ")") == path
+      check run("unwatch(" & $id & ")") == "true"
+      check run("unwatch(999999)") == "false"
+    test "modify event delivered":
+      let path = getTempDir() / "dfkup-fswatch-ev.txt"
+      writeFile(path, "v1")
+      let code = "let id = watch(\"" & path & "\")\nwriteFile(\"" & path & "\", \"v2\")\nlet evs = pollWatchers(500)\nlet ok = unwatch(id)\nevs"
+      let evs = run(code)
+      check evs.contains("\"modified\"")
+      check evs.contains(path)
+    test "quiet poll returns empty":
+      let path = getTempDir() / "dfkup-fswatch-quiet.txt"
+      writeFile(path, "v1")
+      let code = "let id = watch(\"" & path & "\")\nlet evs = pollWatchers(50)\nlet ok = unwatch(id)\nevs"
+      check run(code) == "[]"
