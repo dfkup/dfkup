@@ -279,14 +279,14 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
 
   var prefs = VMPreferences(enableHotCodeDetection : enableHotCodeDetection)
   var vmInstance = newVirtualMachine(prefs)
-  when defined(vancodeJitDynasm):
+  when defined(vancodeJitNim):
     installJit(vmInstance)
   # Hand the VM to dylibs that re-enter it (libhttp server callbacks).
   # Factories load at compile time above, before any VM exists.
   setStdlibVms(cast[pointer](vmInstance))
   
   vmInstance.prewarmScriptOps(script)
-  when defined(vancodeJitDynasm):
+  when defined(vancodeJitNim):
     detectRecursiveAndCompile(vmInstance, enableHotCodeDetection)
   try:
     let resultVal = vmInstance.interpret(script, mainChunk)

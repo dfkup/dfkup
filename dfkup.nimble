@@ -157,7 +157,7 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
     # See plans/stdlib-dylibs.md.
     let cmd = nimExe & " c --app:lib --threads:on --mm:arc -d:release --opt:speed" &
       " --hints:off --verbosity:0" &
-      " -d:vancodeJitDynasm -d:vancodeJitNim -d:nimPreviewHashRef" &
+      " -d:vancodeJitNim -d:nimPreviewHashRef" &
       " -d:supranimUseGlobalOnRequest" &
       pathArgs & " --path:\"src\"" &
       " --out:" & outLib & " " & genFile
