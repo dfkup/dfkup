@@ -75,7 +75,8 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
     ("markdown", "libmarkdown", "initMarkdown"),
     ("strongpwd", "libstrongpwd", "initStrongpwd"),
     ("twofa", "libtwofa", "initTwofa"),
-    ("algos", "libalgos", "initAlgos")]
+    ("algos", "libalgos", "initAlgos"),
+    ("bench", "libbench", "initBench")]
   # Uniform `--threads:on --mm:arc` on host and dylibs (see flags below)
   # keeps the heap contract sound, so `http`/`browser` build as dylibs
   # too (their threads-bound deps used to rule that out).
@@ -83,7 +84,7 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
     "yaml", "strings", "sequtils", "cli", "regex", "toml", "uuid",
     "dotenv", "csv", "bson", "colors", "qr", "nanoid", "llm", "xml",
     "feed", "ical", "css", "svg", "markdown", "strongpwd", "twofa",
-    "algos", "http"]
+    "algos", "http", "bench"]
   let lock = readFile("clue.lock")
   var paths: seq[string] = @[]
   for piece in lock.split("\"path\":\""):

@@ -17,6 +17,7 @@ import ./lang/[parser]
 import ./lang/stdlib_loader
 import ./pkg/pkgman
 import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
+                  libbench,
                   libcli, libconfig, libyaml, libregex,
                   libtoml, libuuid, libdotenv,
                   libcsv, libbson, libcolors, libqr, libnanoid, libllm,
@@ -93,6 +94,12 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
     let m = newModule("sequtils", some"sequtils.dfkup")
     m.importModule(sysMod, "system")
     initSequtils(scr, m)
+    return m
+
+  stdlibs["bench"] = proc(scr: Script, sysMod: Module): Module =
+    let m = newModule("bench", some"bench.dfkup")
+    m.importModule(sysMod, "system")
+    initBench(scr, m)
     return m
 
   # `http` loads from a dylib (its supranim/powpow chain needs

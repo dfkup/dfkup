@@ -34,7 +34,7 @@ const dfkupStdlibNames* = ["json", "yaml", "strings", "sequtils",
   "http", "cli", "regex", "browser", "toml", "uuid", "dotenv", "csv",
   "bson", "colors", "qr", "nanoid", "llm", "httpclient", "xml", "feed",
   "ical", "css", "svg", "markdown", "strongpwd", "twofa", "fswatch",
-  "algos"]
+  "algos", "bench"]
   ## Every stdlib available as a dylib. `system` and `config` stay
   ## statically linked in the core binary.
 
