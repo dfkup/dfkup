@@ -17,12 +17,17 @@ import ./lang/[parser]
 import ./lang/stdlib_loader
 import ./pkg/pkgman
 import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
-                  libcli, libconfig, libjson, libyaml, libregex,
+                  libcli, libconfig, libyaml, libregex,
                   libtoml, libuuid, libdotenv,
                   libcsv, libbson, libcolors, libqr, libnanoid, libllm,
-                  libhttpclient,
                   libxml, libfeed, libical, libcss, libsvg,
                   libmarkdown, libstrongpwd, libalgos, libtwofa]
+## NB: `libjson` and `libhttpclient` are deliberately NOT imported
+## here. Both stdlibs resolve at runtime through `stdlibLoader`
+## (dylib pilot); importing them would statically link their
+## dependency chains into every `dfkup` process — notably
+## `powpow/net/tls` (`-lssl -lcrypto`), which dyld then loads and
+## initializes on every startup, even for `echo 1`.
 
 import pkg/openparser/json
 
@@ -238,9 +243,15 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
   # otherwise the latest installed version. Unresolvable specs get
   # ErrImportError from vancode.
   var manager = newModuleManager()
-  let pkgCfg = newDfkupPkgConfig()
+  let pkgCfg = newDfkupPkgConfig(ensureSource = false)
+  # `ensurePkgSource` (home-dir IO) runs only when a `pkg/` import
+  # actually needs resolving — plain `run` scripts never pay it.
+  var pkgSourceEnsured = false
   manager.pkgResolver = some(
     proc(spec: string): Option[string] {.closure.} =
+      if not pkgSourceEnsured:
+        pkgCfg.ensurePkgSource()
+        pkgSourceEnsured = true
       pkgCfg.resolvePkgImport(spec))
   var gen = initCompiler(script, module, mainChunk, manager = manager,
                          stdlibs = stdlibs,

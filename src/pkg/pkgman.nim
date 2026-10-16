@@ -105,11 +105,15 @@ proc ensurePkgSource*(cfg: DatpkgrConfig) =
     url: cfg.defaultRegistryUrl))
   cfg.saveSources(sources)
 
-proc newDfkupPkgConfig*(rootPath = "", debug = false): DatpkgrConfig =
+proc newDfkupPkgConfig*(rootPath = "", debug = false,
+    ensureSource = true): DatpkgrConfig =
   ## datpkgr config rooted at the dfkup home, wired to `package.kup`
   ## manifests, the dfkup packages registry and plain CLI logging.
   ## `rootPath` overrides the home (tests point it at a temp dir for
-  ## hermetic runs).
+  ## hermetic runs). `ensureSource = false` skips the home-dir IO;
+  ## the caller must then run `ensurePkgSource` before resolving —
+  ## `exec` defers it to the first `pkg/` import so plain `run`
+  ## scripts never touch the home dir.
   let root = if rootPath.len > 0: rootPath else: dfkupHome()
   var cbs: Callbacks
   cbs.log = dfkupLogCb
@@ -120,7 +124,8 @@ proc newDfkupPkgConfig*(rootPath = "", debug = false): DatpkgrConfig =
   result.manifestFileName = proc(pkg: string): string = pkgManifestFileName
   result.defaultRegistryUrl = pkgRegistryUrl
   result.defaultSourceName = pkgDefaultSourceName
-  result.ensurePkgSource()
+  if ensureSource:
+    result.ensurePkgSource()
 
 proc pkgInstall*(cfg: DatpkgrConfig, spec: string, url = "",
     verbose = true): bool =

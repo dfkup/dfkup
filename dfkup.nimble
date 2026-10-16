@@ -20,7 +20,7 @@ requires "datpkgr >= 0.1.9"
 # mostly required for exporting as libraries
 requires "openparser >= 0.3.10"
 requires "marvdown >= 0.2.4"
-requires "mimedb >= 0.1.1"
+requires "mimedb >= 0.1.4"
 requires "supranim >= 0.1.11"
 requires "blackpaper >= 0.2.0"
 requires "nimcypher >= 0.2.5"
