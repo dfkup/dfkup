@@ -16,6 +16,7 @@ binDir        = "bin"
 requires "nim >= 2.2.0"
 requires "vancode >= 0.2.14"
 requires "datpkgr >= 0.1.9"
+requires "dynasm >= 0.1.0"
 
 # mostly required for exporting as libraries
 requires "openparser >= 0.3.10"
@@ -156,7 +157,7 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
     # See plans/stdlib-dylibs.md.
     let cmd = nimExe & " c --app:lib --threads:on --mm:arc -d:release --opt:speed" &
       " --hints:off --verbosity:0" &
-      " -d:vancodeJitDynasm -d:nimPreviewHashRef" &
+      " -d:vancodeJitDynasm -d:vancodeJitNim -d:nimPreviewHashRef" &
       " -d:supranimUseGlobalOnRequest" &
       pathArgs & " --path:\"src\"" &
       " --out:" & outLib & " " & genFile

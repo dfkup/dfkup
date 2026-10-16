@@ -4,4 +4,5 @@ switch("path", "/Users/georgelemon/Development/packages/voodoo/src")
 switch("path", "/Users/georgelemon/Development/packages/openparser/src")
 switch("path", "/Users/georgelemon/Development/toys/datpkgr/src")
 --define:vancodeJitDynasm
+--define:vancodeJitNim
 --define:supranimUseGlobalOnRequest

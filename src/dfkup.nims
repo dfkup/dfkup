@@ -1,4 +1,5 @@
 --define:vancodeJitDynasm
+--define:vancodeJitNim
 # Threaded runtime: datpkgr (package manager) links into the host binary
 # and its install path spawns worker threads, so the host builds with
 # threads on. Every image in the process (host + all stdlib dylibs, see
