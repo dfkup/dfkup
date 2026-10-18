@@ -9,8 +9,11 @@
 # - `dfkupStdlibSetVm` only exists for libs that need the host VM
 #   (libhttp: server callbacks re-enter the VM through the JIT bridge,
 #   whose globals live per-image and must point at the host VM)
+# - `dfkupConfig*` only exists for libconfig (the `conf` command reads
+#   the active config back across the dylib boundary)
 #
-# `system` and `config` stay statically linked in the core binary.
+# `system` stays statically linked in the core binary; everything else
+# (including `config`) ships as a shard dylib loaded on first import.
 
 # transformers FIRST (before std/ and vancode imports): it extends vancode's
 # NodeKind (nkEnumDef...) via voodoo, and the extension only lands in vancode
@@ -20,13 +23,35 @@
 import lang/transformers
 
 import std/options
-import pkg/vancode/interpreter/[chunk, sym]
+import pkg/vancode/interpreter/[chunk, sym, value]
 import lang/lowlibs/%%MODULE%%
 
 proc NimMain {.cdecl, importc.}
 
 var pluginLastErr {.global.}: string
   ## Holds the latest init failure message so `outErr` never dangles.
+
+var shardRaiseFn {.global.}: proc(msg: cstring) {.cdecl, gcsafe.}
+  ## Host error sink, installed via `dfkupStdlibSetRaise` before init
+  ## (see `loadStdlibModule`). Exceptions cannot cross the dylib
+  ## boundary — each image owns its own handler chain, so a shard raise
+  ## would miss every host handler and kill the process. Every foreign
+  ## proc registered below is therefore wrapped: a shard raise is
+  ## caught in-image and re-raised through this host sink, preserving
+  ## static-linking semantics (message intact, catchable as usual).
+
+proc shardGuard(orig: ForeignProc): ForeignProc =
+  ## Wrap one foreign impl so shard raises never cross the boundary.
+  ## (Top-level so the closure does not inherit the `.dynlib` push
+  ## below — nested `.dynlib` procs are rejected by the compiler.)
+  result =
+    proc(args: StackView, argc: int): Value =
+      try:
+        orig(args, argc)
+      except CatchableError as e:
+        let msg = e.msg
+        shardRaiseFn(msg.cstring)
+        return nil # unreachable: the sink raises host-natively
 
 {.push exportc, cdecl, dynlib.}
 proc dfkupStdlibAbi*(): uint32 =
@@ -37,11 +62,29 @@ proc dfkupStdlibNim*(): cstring =
 
 proc dfkupStdlibInit*(script: pointer, sysmod: pointer,
     outModule: ptr pointer, outErr: ptr cstring): cint =
+  # NimMain first, before any other dylib call (pluginkit protocol: the
+  # host initializes the dylib runtime via its init entry). The
+  # `--app:lib` constructor may also run it at dlopen; calling it here
+  # is the documented pattern and keeps init working when the
+  # constructor is absent or stripped.
   NimMain()
   try:
+    let sc = cast[Script](script)
+    let before = sc.procs.len
     let m = newModule("%%NAME%%", some"%%NAME%%.dfkup")
+    # Retain the module: it escapes as a raw pointer below, so ARC would
+    # otherwise destroy it at the end of this proc (use-after-free on the
+    # host side, and its cell recycled into the dylib heap while the host
+    # still references it). Run-once CLI: the leak is intentional, matching
+    # the host's own GC_ref(gen) retain for dylib runs.
+    GC_ref(m)
     m.importModule(cast[Module](sysmod), "system")
     %%INIT%%(cast[Script](script), m)
+    if shardRaiseFn != nil:
+      for i in before ..< sc.procs.len:
+        let pr = sc.procs[i]
+        if pr != nil and pr.kind == pkForeign and pr.foreign != nil:
+          pr.foreign = shardGuard(pr.foreign)
     outModule[] = cast[pointer](m)
     return 0
   except CatchableError as e:
@@ -49,6 +92,11 @@ proc dfkupStdlibInit*(script: pointer, sysmod: pointer,
     outErr[] = pluginLastErr.cstring
     return 1
 
+proc dfkupStdlibSetRaise*(fn: pointer) =
+  ## Install the host error sink. Called before `dfkupStdlibInit`.
+  shardRaiseFn = cast[proc(msg: cstring) {.cdecl, gcsafe.}](fn)
+
 %%CLEANUP%%
 %%SETVM%%
+%%EXTRA%%
 {.pop.}

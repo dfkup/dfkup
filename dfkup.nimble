@@ -47,8 +47,8 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
   ## ~/.nimble registry is involved.
   ## Run with: clue task stdlibs
   # (name, lowlib module, init proc). Full rollout: every entry of
-  # `dfkupStdlibNames` (stdlib_loader.nim) except `system`/`config`,
-  # which stay statically linked in the core binary.
+  # `dfkupStdlibNames` (stdlib_loader.nim) except `system`, which stays
+  # statically linked in the core binary.
   const stdlibMap = [("json", "libjson", "initJson"),
     ("httpclient", "libhttpclient", "initHttpClient"),
     ("http", "libhttp", "initHttp"),
@@ -58,6 +58,7 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
     ("strings", "libstrings", "initStrings"),
     ("sequtils", "libsequtils", "initSequtils"),
     ("cli", "libcli", "initCliLib"),
+    ("config", "libconfig", "initConfig"),
     ("regex", "libregex", "initRegex"),
     ("toml", "libtoml", "initToml"),
     ("uuid", "libuuid", "initUuid"),
@@ -82,7 +83,7 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
   # keeps the heap contract sound, so `http`/`browser` build as dylibs
   # too (their threads-bound deps used to rule that out).
   const stdlibLibs = ["json", "httpclient", "fswatch", "browser",
-    "yaml", "strings", "sequtils", "cli", "regex", "toml", "uuid",
+    "yaml", "strings", "sequtils", "cli", "config", "regex", "toml", "uuid",
     "dotenv", "csv", "bson", "colors", "qr", "nanoid", "llm", "xml",
     "feed", "ical", "css", "svg", "markdown", "strongpwd", "twofa",
     "algos", "http", "bench"]
@@ -124,7 +125,7 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
   for p in paths:
     pathArgs.add(" --path:\"" & p & "\"")
   for name in stdlibLibs:
-    var module, initProc, cleanup, setvm = ""
+    var module, initProc, cleanup, setvm, extra = ""
     for entry in stdlibMap:
       if entry[0] == name:
         module = entry[1]
@@ -139,10 +140,33 @@ task stdlibs, "Build dfkup stdlib dylibs into bin/stdlib":
       # JIT-bridge globals; the host pushes its VM after creating it
       # (see setStdlibVms in src/lang/stdlib_loader.nim).
       setvm = "proc dfkupStdlibSetVm*(vm: pointer) =\n    setHttpHostVm(vm)\n"
+    if name == "config":
+      # The `conf` command reads the active config back across the dylib
+      # boundary (see config helpers in src/lang/stdlib_loader.nim).
+      # Results travel as opaque pointers / cstrings with a global holder
+      # so no dangling pointer ever crosses the boundary. Take is a peek:
+      # it keeps the dylib-global reference alive (a raw pointer carries
+      # no ARC ownership, so a destructive move would free the object on
+      # return); the host releases via clear (its `finally` already does).
+      extra = "var configLastResult {.global.}: string\n" &
+        "proc dfkupConfigTakeActive*(): pointer =\n" &
+        "    cast[pointer](peekActiveConfig())\n" &
+        "proc dfkupConfigClearActive*() =\n" &
+        "    clearActiveConfig()\n" &
+        "proc dfkupConfigFindCommand*(cfg: pointer, name: cstring): cstring =\n" &
+        "    try:\n" &
+        "      configLastResult = findConfigCommand(cast[Value](cfg), $name)\n" &
+        "      return configLastResult.cstring\n" &
+        "    except CatchableError as e:\n" &
+        "      pluginLastErr = e.msg\n" &
+        "      return nil\n" &
+        "proc dfkupConfigTakeErr*(): cstring =\n" &
+        "    pluginLastErr.cstring\n"
     let genFile = "bin/stdlib_gen/stdlib_" & name & ".nim"
     writeFile(genFile, tmpl.replace("%%NAME%%", name)
       .replace("%%MODULE%%", module).replace("%%INIT%%", initProc)
-      .replace("%%CLEANUP%%", cleanup).replace("%%SETVM%%", setvm))
+      .replace("%%CLEANUP%%", cleanup).replace("%%SETVM%%", setvm)
+      .replace("%%EXTRA%%", extra))
     # Drop any stale dylib first: same-second rewrites can otherwise
     # look up-to-date to nim's incremental check and silently skip.
     let outLib = "bin/stdlib/libdfkup_" & name & ".dylib"

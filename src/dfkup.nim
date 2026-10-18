@@ -16,19 +16,17 @@ import pkg/vancode/interpreter/jit/jit
 import ./lang/[parser]
 import ./lang/stdlib_loader
 import ./pkg/pkgman
-import ./lang/lowlibs/[libsystem, libstrings, libsequtils,
-                  libbench,
-                  libcli, libconfig, libyaml, libregex,
-                  libtoml, libuuid, libdotenv,
-                  libcsv, libbson, libcolors, libqr, libnanoid, libllm,
-                  libxml, libfeed, libical, libcss, libsvg,
-                  libmarkdown, libstrongpwd, libalgos, libtwofa]
-## NB: `libjson` and `libhttpclient` are deliberately NOT imported
-## here. Both stdlibs resolve at runtime through `stdlibLoader`
-## (dylib pilot); importing them would statically link their
-## dependency chains into every `dfkup` process — notably
-## `powpow/net/tls` (`-lssl -lcrypto`), which dyld then loads and
-## initializes on every startup, even for `echo 1`.
+import ./lang/lowlibs/libsystem
+## NB: only `libsystem` is statically linked. Every other stdlib
+## (`json`, `yaml`, `strings`, `sequtils`, `http`, `cli`, `config`,
+## `regex`, `browser`, `toml`, `uuid`, `dotenv`, `csv`, `bson`,
+## `colors`, `qr`, `nanoid`, `llm`, `httpclient`, `xml`, `feed`,
+## `ical`, `css`, `svg`, `markdown`, `strongpwd`, `twofa`, `fswatch`,
+## `algos`, `bench`) resolves at runtime through `stdlibLoader`
+## (dylib shards built with `clue task stdlibs`); importing them here
+## would statically link their dependency chains into every `dfkup`
+## process — notably `powpow/net/tls` (`-lssl -lcrypto`), which dyld
+## then loads and initializes on every startup, even for `echo 1`.
 
 import pkg/openparser/json
 
@@ -74,174 +72,17 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
 
   var stdlibs: StandardLibrary = newTable[string, ModuleLibrary]()
 
-  # pilot: `json` and `httpclient` load from dylibs via `stdlibLoader`
-  # below (see `src/lang/stdlib_loader.nim`). The rest stay static
-  # until the rollout reaches them.
-
-  stdlibs["yaml"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("yaml", some"yaml.dfkup")
-    m.importModule(sysMod, "system")
-    initYaml(scr, m)
-    return m
-
-  stdlibs["strings"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("strings", some"strings.dfkup")
-    m.importModule(sysMod, "system")
-    initStrings(scr, m)
-    return m
-
-  stdlibs["sequtils"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("sequtils", some"sequtils.dfkup")
-    m.importModule(sysMod, "system")
-    initSequtils(scr, m)
-    return m
-
-  stdlibs["bench"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("bench", some"bench.dfkup")
-    m.importModule(sysMod, "system")
-    initBench(scr, m)
-    return m
-
-  # `http` loads from a dylib (its supranim/powpow chain needs
-  # threads, incompatible with the dylib boundary heap contract).
-
-  stdlibs["cli"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("cli", some"cli.dfkup")
-    m.importModule(sysMod, "system")
-    initCliLib(scr, m)
-    return m
-
-  stdlibs["config"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("config", some"config.dfkup")
-    m.importModule(sysMod, "system")
-    initConfig(scr, m)
-    return m
-
-  stdlibs["regex"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("regex", some"regex.dfkup")
-    m.importModule(sysMod, "system")
-    initRegex(scr, m)
-    return m
-
-  # `browser` loads from a dylib (its chopchop chain needs threads).
-
-  stdlibs["toml"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("toml", some"toml.dfkup")
-    m.importModule(sysMod, "system")
-    initToml(scr, m)
-    return m
-
-  stdlibs["uuid"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("uuid", some"uuid.dfkup")
-    m.importModule(sysMod, "system")
-    initUuid(scr, m)
-    return m
-
-  stdlibs["dotenv"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("dotenv", some"dotenv.dfkup")
-    m.importModule(sysMod, "system")
-    initDotenv(scr, m)
-    return m
-
-  stdlibs["csv"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("csv", some"csv.dfkup")
-    m.importModule(sysMod, "system")
-    initCsv(scr, m)
-    return m
-
-  stdlibs["bson"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("bson", some"bson.dfkup")
-    m.importModule(sysMod, "system")
-    initBson(scr, m)
-    return m
-
-  stdlibs["colors"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("colors", some"colors.dfkup")
-    m.importModule(sysMod, "system")
-    initColors(scr, m)
-    return m
-
-  stdlibs["qr"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("qr", some"qr.dfkup")
-    m.importModule(sysMod, "system")
-    initQr(scr, m)
-    return m
-
-  stdlibs["nanoid"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("nanoid", some"nanoid.dfkup")
-    m.importModule(sysMod, "system")
-    initNanoId(scr, m)
-    return m
-
-  stdlibs["llm"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("llm", some"llm.dfkup")
-    m.importModule(sysMod, "system")
-    initLlm(scr, m)
-    return m
-
-  # pilot: `httpclient` loads from a dylib, see above.
-
-  stdlibs["xml"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("xml", some"xml.dfkup")
-    m.importModule(sysMod, "system")
-    initXml(scr, m)
-    return m
-
-  stdlibs["feed"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("feed", some"feed.dfkup")
-    m.importModule(sysMod, "system")
-    initFeed(scr, m)
-    return m
-
-  stdlibs["ical"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("ical", some"ical.dfkup")
-    m.importModule(sysMod, "system")
-    initIcal(scr, m)
-    return m
-
-  stdlibs["css"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("css", some"css.dfkup")
-    m.importModule(sysMod, "system")
-    initCss(scr, m)
-    return m
-
-  stdlibs["svg"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("svg", some"svg.dfkup")
-    m.importModule(sysMod, "system")
-    initSvg(scr, m)
-    return m
-
-  stdlibs["markdown"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("markdown", some"markdown.dfkup")
-    m.importModule(sysMod, "system")
-    initMarkdown(scr, m)
-    return m
-
-  stdlibs["strongpwd"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("strongpwd", some"strongpwd.dfkup")
-    m.importModule(sysMod, "system")
-    initStrongpwd(scr, m)
-    return m
-
-  # stdlibs["algos"] = proc(scr: Script, sysMod: Module): Module =
-  #   let m = newModule("algos", some"algos.dfkup")
-  #   m.importModule(sysMod, "system")
-  #   initAlgos(scr, m)
-  #   return m
-
-  stdlibs["twofa"] = proc(scr: Script, sysMod: Module): Module =
-    let m = newModule("twofa", some"twofa.dfkup")
-    m.importModule(sysMod, "system")
-    initTwofa(scr, m)
-    return m
-
-  # `fswatch` loads from a dylib (its powpow/loop chain needs threads).
+  # Every stdlib except `system` loads from a shard dylib via
+  # `stdlibLoader` (see `src/lang/stdlib_loader.nim`). Scripts that
+  # import nothing pay nothing; the table above stays empty and only
+  # fills with vancode's own cache entries as dylibs load.
 
   if autoloadConfig:
     # `conf` mode makes `config({...})` available without an explicit
     # `import "std/config"`. Ordinary scripts still resolve `config` only
-    # through that import.
-    module.importModule(stdlibs["config"](script, systemModule), "config")
+    # through that import. The dylib loads here, before compilation.
+    module.importModule(loadStdlibModule("config", script, systemModule),
+      "config")
 
   script.stdpos = script.procs.high
 

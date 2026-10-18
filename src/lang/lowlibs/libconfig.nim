@@ -48,6 +48,12 @@ proc takeActiveConfig*(): Value =
   result = activeConfig
   activeConfig = nil
 
+proc peekActiveConfig*(): Value =
+  ## Non-destructive read for the shard boundary: a raw pointer carries
+  ## no ARC ownership, so the dylib must keep its global reference alive
+  ## until the host releases it via `clearActiveConfig`.
+  activeConfig
+
 proc commandName(commands: Value, index: int): string =
   if index < commands.objectVal.keys.len:
     result = commands.objectVal.keys[index]
