@@ -8,8 +8,3 @@ jobs:
     permissions:
       contents: write
     uses: nimbase/setup-nim-action/.github/workflows/docs_clue.yml@main
-    with:
-      # Raw `nim doc` only sees registry/pkgs2 packages, and stdkups is
-      # unpublished: install it from git so `pkg/stdkups` imports in
-      # the host sources resolve during doc generation.
-      pre-docs-command: nimble install -Y https://github.com/dfkup/stdlib

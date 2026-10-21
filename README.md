@@ -16,9 +16,6 @@
 ## What is this?
 This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, indent-based, scripting language, designed to be enjoyable, easy to learn and work with so you **don't f*ck up!**
 
-> [!NOTE]
-> Totally unstable API!
-
 ## Key Features
 - Interpreted language with runtime type checking
 - Compiled to bytecode and executed on a Stack-based Virtual Machine
@@ -39,39 +36,6 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 
 ### Installation
 You need Nim. 
-
-### Build Standard Library
-Only `system` is statically linked into the `dfkup` binary. Every other
-standard module (`json`, `yaml`, `qr`, `http`, … — 30 in total) lives in
-the [stdkups](https://github.com/dfkup/stdlib) package and ships as a
-`libdfkup_<name>` dylib shard, loaded on the first `import "std/<name>"`.
-Scripts that import nothing pay nothing.
-
-Shards are built at workflow level with `tools/build_shards.nim`
-(a plain `nim c -r` program, no nimble task). It generates one wrapper
-per shard from the template and compiles with the same flags as the
-host (`--threads:on --mm:arc`, uniform across the dylib boundary):
-
-```sh
-# from a dfkup checkout (finds ../stdlib or a registered stdkups checkout)
-nim c -r /path/to/stdlib/tools/build_shards.nim \
-  --stdkups=/path/to/stdlib --dfkup-src=. --out=bin/stdlib
-
-# from a stdkups checkout (dfkup resolves via clue, develop wins locally)
-nim c -r tools/build_shards.nim --out=dist/shards
-
-# single shard
-nim c -r tools/build_shards.nim --dfkup-src=. --out=bin/stdlib --libs=qr,json
-```
-
-Requirements: Nim on `PATH`, the shard dependencies resolvable by clue
-(`clue install --depsOnly` in either repo), and the dfkup sources for
-`lang/transformers` and `lang/parser` — a checkout, or the published
-package (`clue install dfkup --build`). Built shards land in `--out`
-(`bin/stdlib/`, also the release-archive layout) and are installed to
-`~/.dfkup/libraries` (`DFKUP_HOME`-aware). The host locates them via
-`stdlibLibPath`: home libraries first, then next to the binary. On
-Windows the extension is `.dll`, on Linux `.so`.
 
 ### Examples
 ```
@@ -103,6 +67,39 @@ Codegen & Debugging
   -h, --help              show this help
   --version               show version
 ```
+
+
+### Build Standard Library
+Only `system` is statically linked into the `dfkup` binary. Every other
+standard module (`json`, `yaml`, `qr`, `http`, ... — 30 in total) ships as
+a prebuilt `libdfkup_<name>` dylib shard inside the release archive,
+loaded on the first `import "std/<name>"`. Scripts that import nothing
+pay nothing.
+
+The shards are built from the [stdlib](https://github.com/dfkup/stdlib)
+repo at workflow level (no nimble task, and no `requires "stdkups"` in
+`dfkup.nimble`). Each release packages them next to the binary, and the
+host locates them via `stdlibLibPath`: home libraries first
+(`~/.dfkup/libraries`, `DFKUP_HOME`-aware), then next to the binary. On
+Windows the extension is `.dll`, on Linux `.so`.
+
+Low-level users can build the shards themselves from a stdlib checkout
+(a plain `nim c -r` program; it generates one wrapper per shard from the
+template and compiles with the same flags as the host,
+`--threads:on --mm:arc`, uniform across the dylib boundary):
+
+```sh
+# from a stdkups checkout (dfkup resolves via clue, develop wins locally)
+nim c -r tools/build_shards.nim --out=dist/shards
+
+# single shard, explicit dfkup sources
+nim c -r tools/build_shards.nim --dfkup-src=../dfkup --out=dist/shards --libs=qr,json
+```
+
+Requirements: Nim on `PATH`, the shard dependencies resolvable by clue
+(`clue install --depsOnly` in the stdlib checkout), and the dfkup
+sources for `lang/transformers` and `lang/parser` — a checkout, or the
+published package (`clue install dfkup --build`).
 
 ### Packages
 Powered by [datpkgr](https://github.com/openpeeps/datpkgr). The first `pkg`

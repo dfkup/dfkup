@@ -19,13 +19,10 @@ requires "datpkgr >= 0.1.9"
 requires "dynasm >= 0.1.0"
 requires "openparser >= 0.3.10"
 requires "voodoo >= 0.2.3"
-requires "stdkups >= 0.1.0"
 
-# Mostly required by the stdkups shards (resolved transitively through
-# stdkups now, so they are not listed here anymore):
-# marvdown, mimedb, supranim, blackpaper, nimcypher, twofa, powpow,
-# money, chopchop, chachachat. Shard dylibs are built at workflow level
-# (stdlib `tools/build_shards.nim`); there is no `task stdlibs` here.
+# Shard dylibs are built at workflow level from the separate stdkups repo
+# (dfkup/stdlib `tools/build_shards.nim`); dfkup itself has no package
+# dependency on stdkups. See "Build Standard Library" in the README.
 
 # Pinned: flysystem 0.2.1 rewired the local driver onto POSIX-only
 # securejoin with no Windows fallback (undeclared `sandboxPassthrough`

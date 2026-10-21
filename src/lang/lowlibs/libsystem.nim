@@ -12,7 +12,7 @@ import ../sysinfo as sys
 
 import pkg/openparser/json
 
-import pkg/stdkups/compileutils
+import ../compileutils
 export compileutils
 
 const InlineCode* = """
