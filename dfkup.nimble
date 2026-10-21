@@ -5,7 +5,7 @@ import std/[os, strutils]
 version       = "0.1.0"
 author        = "OpenPeeps"
 description   = "A tiny scripting language. Enjoyable, easy to learn and work with so you don't f*ck up"
-license       = "LGPL-3.0-or-later"
+license       = "MIT"
 srcDir        = "src"
 bin           = @["dfkup"]
 binDir        = "bin"
