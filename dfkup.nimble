@@ -25,7 +25,7 @@ requires "stdkups >= 0.1.0"
 # stdkups now, so they are not listed here anymore):
 # marvdown, mimedb, supranim, blackpaper, nimcypher, twofa, powpow,
 # money, chopchop, chachachat. Shard dylibs are built at workflow level
-# (stdlib `tools/build_shards.py`); there is no `task stdlibs` here.
+# (stdlib `tools/build_shards.nim`); there is no `task stdlibs` here.
 
 # Pinned: flysystem 0.2.1 rewired the local driver onto POSIX-only
 # securejoin with no Windows fallback (undeclared `sandboxPassthrough`

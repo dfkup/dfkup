@@ -68,7 +68,7 @@ var loadedStdlibLibs: seq[tuple[name: string, handle: LibHandle,
     cleanup: DfkupStdlibCleanupFn, setVm: DfkupStdlibSetVmFn]] = @[]
 
 proc stdlibLibExt*(): string =
-  ## Platform shard extension. Must match what `tools/build_shards.py`
+  ## Platform shard extension. Must match what `tools/build_shards.nim`
   ## in the stdkups repo emits (`.dylib` macOS, `.dll` Windows, `.so`
   ## elsewhere) so release archives bundle loadable shards per target.
   when defined(windows):

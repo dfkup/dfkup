@@ -14,5 +14,4 @@ jobs:
         git clone --depth 1 https://github.com/dfkup/stdlib.git /tmp/stdkups
         cd /tmp/stdkups && clue develop
       pre-test-command: |
-        PYBIN="$(command -v python3 || command -v python)"
-        "$PYBIN" /tmp/stdkups/tools/build_shards.py --dfkup-src "$GITHUB_WORKSPACE" --out "$GITHUB_WORKSPACE/bin/stdlib"
+        nim c --hints:off --verbosity:0 -r /tmp/stdkups/tools/build_shards.nim --stdkups=/tmp/stdkups --dfkup-src="$GITHUB_WORKSPACE" --out="$GITHUB_WORKSPACE/bin/stdlib"
