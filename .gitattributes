@@ -2,3 +2,14 @@
 # assert on exact parsed values, and CRLF conversion (Windows autocrlf)
 # would otherwise change what the parsers see.
 tests/fixtures/** text eol=lf
+
+# Benchmark sources exist only to be run by the comparison harness
+# (tests/bench/runall.sh); they are not part of the language itself, so
+# keep them out of GitHub's language statistics.
+tests/bench/**/*.lua linguist-vendored
+tests/bench/**/*.js linguist-vendored
+tests/bench/**/*.py linguist-vendored
+tests/bench/**/*.rb linguist-vendored
+tests/bench/**/*.php linguist-vendored
+tests/bench/**/*.sh linguist-vendored
+tests/bench/**/*.dfkup linguist-vendored
