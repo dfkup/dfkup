@@ -14,8 +14,8 @@ import pkg/powpow/proto/http
 import pkg/powpow/proto/httpserver
 import pkg/powpow/loop
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
-import ../src/lang/[parser, lowlibs/libsystem, lowlibs/libjson,
-                   lowlibs/libhttpclient]
+import ../src/lang/[parser, lowlibs/libsystem]
+import pkg/stdkups/[libhttpclient, libjson]
 
 proc interpret(code: string): Value =
   var program: Ast

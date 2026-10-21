@@ -6,3 +6,13 @@ jobs:
     with:
       nim-version: stable
       os: '[{"os":"ubuntu-latest"},{"os":"macos-latest"}]'
+      # The stdkups shards live in a separate repo (github.com/dfkup/stdlib).
+      # Register them as a develop package so `requires "stdkups"` resolves,
+      # then build every shard before `clue test`: the config/runtime tests
+      # execute scripts through `src/dfkup.exec`, which loads dylibs.
+      pre-install-command: |
+        git clone --depth 1 https://github.com/dfkup/stdlib.git /tmp/stdkups
+        cd /tmp/stdkups && clue develop
+      pre-test-command: |
+        PYBIN="$(command -v python3 || command -v python)"
+        "$PYBIN" /tmp/stdkups/tools/build_shards.py --dfkup-src "$GITHUB_WORKSPACE" --out "$GITHUB_WORKSPACE/bin/stdlib"

@@ -1,7 +1,8 @@
 import std/[unittest, options]
 import ../src/lang/transformers
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
-import ../src/lang/[parser, lowlibs/libsystem, lowlibs/libbench]
+import ../src/lang/[parser, lowlibs/libsystem]
+import pkg/stdkups/[libbench]
 
 proc interpret(code: string): Value =
   var program: Ast

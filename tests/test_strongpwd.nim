@@ -1,7 +1,8 @@
 import std/[unittest, options, strutils]
 import ../src/lang/transformers
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value]
-import ../src/lang/[parser, lowlibs/libsystem, lowlibs/libjson, lowlibs/libstrongpwd]
+import ../src/lang/[parser, lowlibs/libsystem]
+import pkg/stdkups/[libjson, libstrongpwd]
 
 proc run(code: string): string =
   var program: Ast

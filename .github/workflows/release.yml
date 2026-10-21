@@ -11,3 +11,15 @@ jobs:
     with:
       nim-version: stable
       app-name: dfkup
+      # Shards are built at workflow level (no nimble task): clone the
+      # stdlib repo, register it, re-resolve deps (the reusable's earlier
+      # `clue install` only warns on the not-yet-registered stdkups),
+      # then build every shard for this target. `extra-files` flattens
+      # them next to the binary; the loader probes the binary's own dir.
+      pre-build-command: |
+        git clone --depth 1 https://github.com/dfkup/stdlib.git /tmp/stdkups
+        cd /tmp/stdkups && clue develop
+        clue install --depsOnly
+        PYBIN="$(command -v python3 || command -v python)"
+        "$PYBIN" /tmp/stdkups/tools/build_shards.py --dfkup-src "$GITHUB_WORKSPACE" --out "$GITHUB_WORKSPACE/bin/stdlib"
+      extra-files: 'LICENSE README.md bin/stdlib/*'

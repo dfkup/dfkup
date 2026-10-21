@@ -2,7 +2,7 @@
 # Threaded runtime: datpkgr (package manager) links into the host binary
 # and its install path spawns worker threads, so the host builds with
 # threads on. Every image in the process (host + all stdlib dylibs, see
-# `clue task stdlibs`) must share these flags: the cross-image heap
+# stdkups `tools/build_shards.py`) must share these flags: the cross-image
 # contract is uniform `--threads:on --mm:arc` everywhere (mixed settings
 # fault — region-heap mismatch segfaults, useMalloc breaks dylib init).
 # Re-verify the dylib boundary matrix (plans/stdlib-dylibs.md) whenever

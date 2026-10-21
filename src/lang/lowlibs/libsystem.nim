@@ -8,20 +8,12 @@
 import std/[json, os, options, osproc, strutils, envvars, tables]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, value, vm]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
-import ../parser
 import ../sysinfo as sys
 
 import pkg/openparser/json
 
-proc compileCode*(script: Script, module: Module, code: string) =
-  ## Parse and compile inline dfkup source into the given script and module.
-  var astProgram: Ast
-  try:
-    parseScript(astProgram, code)
-  except DfkupParserError:
-    return
-  var gen = initCodeGen(script, module, script.mainChunk)
-  gen.genScript(astProgram, none(string), emitHalt = false)
+import pkg/stdkups/compileutils
+export compileutils
 
 const InlineCode* = """
 iterator range*(min: int, max: int): int =

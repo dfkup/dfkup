@@ -67,17 +67,34 @@ proc dfkupHostRaise*(msg: cstring) {.cdecl.} =
 var loadedStdlibLibs: seq[tuple[name: string, handle: LibHandle,
     cleanup: DfkupStdlibCleanupFn, setVm: DfkupStdlibSetVmFn]] = @[]
 
+proc stdlibLibExt*(): string =
+  ## Platform shard extension. Must match what `tools/build_shards.py`
+  ## in the stdkups repo emits (`.dylib` macOS, `.dll` Windows, `.so`
+  ## elsewhere) so release archives bundle loadable shards per target.
+  when defined(windows):
+    ".dll"
+  elif defined(macosx):
+    ".dylib"
+  else:
+    ".so"
+
 proc stdlibLibPath*(name: string): string =
-  ## Filesystem path of `libdfkup_<name>.dylib`, "" when absent.
+  ## Filesystem path of the `libdfkup_<name>` shard, "" when absent.
   ## `~/.dfkup/libraries` is the package-manager-owned shared-library dir
   ## (`DFKUP_HOME` overrides the home); next to the binary is the dev
-  ## fallback (`clue task stdlibs` builds there).
-  let file = "libdfkup_" & name & ".dylib"
+  ## fallback (the shard build script writes `bin/stdlib/` there).
+  ## Release archives lay the shards flat next to the binary (the archive
+  ## step cannot preserve directories), so the binary's own dir is also
+  ## probed.
+  let file = "libdfkup_" & name & stdlibLibExt()
   let home = getEnv("DFKUP_HOME", getHomeDir() / ".dfkup")
   result = home / "libraries" / file
   if fileExists(result):
     return result
   result = getAppDir() / "stdlib" / file
+  if fileExists(result):
+    return result
+  result = getAppDir() / file
   if fileExists(result):
     return result
   return ""

@@ -23,7 +23,8 @@ import ./lang/lowlibs/libsystem
 ## `colors`, `qr`, `nanoid`, `llm`, `httpclient`, `xml`, `feed`,
 ## `ical`, `css`, `svg`, `markdown`, `strongpwd`, `twofa`, `fswatch`,
 ## `algos`, `bench`) resolves at runtime through `stdlibLoader`
-## (dylib shards built with `clue task stdlibs`); importing them here
+## (dylib shards built by stdkups `tools/build_shards.py`, invoked from
+## the GitHub workflows); importing them here
 ## would statically link their dependency chains into every `dfkup`
 ## process — notably `powpow/net/tls` (`-lssl -lcrypto`), which dyld
 ## then loads and initializes on every startup, even for `echo 1`.
