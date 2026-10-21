@@ -19,7 +19,7 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 ## Key Features
 - Interpreted language with runtime type checking
 - Compiled to bytecode and executed on a Stack-based Virtual Machine
-- JIT Compilation powered by **DynASM JIT** assembling code at runtime!
+- JIT Compilation [powered by DynASM JIT](https://github.com/nimbase/dynasm-nim) assembling code at runtime!
 - Pratt parser for expressive and flexible syntax
 - **Compilation policy** settings to restrict features: deny std modules, `for` loops, conditionals, or any other language construct
 - Control flow: `if`/`elif`/`else`, `for` loops, `while` loops
@@ -31,6 +31,7 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 - Array and object storage (JSON-like) literals
 - Built-in JSON support: parse, dump, pretty-print, field access
 - Doc comments (`##`) and line comments (`#`)
+- Built-in DFS (depth-first search) package manager (same engine used at [pkg/clue](https://github.com/openpeeps/clue))
 - Powered by [VanCode language framework](https://github.com/openpeeps/vancode)
 - Written in [Nim](https://github.com/nim-lang/nim)
 
