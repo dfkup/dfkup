@@ -17,5 +17,5 @@ jobs:
         git clone --depth 1 https://github.com/dfkup/stdlib.git /tmp/stdkups
         cd /tmp/stdkups && clue install --depsOnly
       pre-test-command: |
-        clue build --hints:off --verbosity:0 /tmp/stdkups/tools/build_shards.nim --stdkups=/tmp/stdkups --dfkup-src="$GITHUB_WORKSPACE" --out="$GITHUB_WORKSPACE/bin/stdlib" &&
-        $GITHUB_WORKSPACE/bin/stdlib
+        clue build /tmp/stdkups/tools/build_shards.nim -o /tmp/build_shards &&
+        /tmp/build_shards --stdkups=/tmp/stdkups --dfkup-src="$GITHUB_WORKSPACE" --out="$GITHUB_WORKSPACE/bin/stdlib"

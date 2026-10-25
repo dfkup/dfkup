@@ -11,6 +11,7 @@ jobs:
     with:
       nim-version: stable
       app-name: dfkup
+      target-matrix: '[{"os":"ubuntu-latest","arch":"x86_64"},{"os":"ubuntu-24.04-arm","arch":"arm64"},{"os":"macos-14","arch":"arm64"},{"os":"macos-15-intel","arch":"x86_64"},{"os":"windows-latest","arch":"x86_64"},{"os":"windows-11-arm","arch":"arm64"}]'
       # Shards are built at workflow level (no nimble task): clone the
       # stdlib repo as plain sources (dfkup has no `requires "stdkups"`)
       # and build every shard for this target. `clue install --depsOnly`
@@ -21,5 +22,6 @@ jobs:
       pre-build-command: |
         git clone --depth 1 https://github.com/dfkup/stdlib.git /tmp/stdkups
         cd /tmp/stdkups && clue install --depsOnly
-        nim c --hints:off --verbosity:0 -r /tmp/stdkups/tools/build_shards.nim --stdkups=/tmp/stdkups --dfkup-src="$GITHUB_WORKSPACE" --out="$GITHUB_WORKSPACE/bin/stdlib"
+        clue build /tmp/stdkups/tools/build_shards.nim -o /tmp/build_shards &&
+        /tmp/build_shards --stdkups=/tmp/stdkups --dfkup-src="$GITHUB_WORKSPACE" --out="$GITHUB_WORKSPACE/bin/stdlib"
       extra-files: 'LICENSE README.md bin/stdlib/*'
