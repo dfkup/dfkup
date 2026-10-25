@@ -475,6 +475,8 @@ proc parseIdentDefs(p: var Parser): Node {.rule.} =
           if p.next is tkIdentifier:
             ty.varType = ast.newIdent(p.next.value)
             walk p, 2
+            if p.curr is tkLB:
+              ty.varType = p.parseGenericType(ty.varType)
       of tkAssign:
         walk p
         val = p.parseExpression(minPrec = 0)
@@ -529,10 +531,15 @@ proc parseGenericType(p: var Parser, lhs: Node): Node =
   walk p
   let genericType = p.parseIdent()
   caseNotNil genericType:
-    result = ast.newNode(nkIndex).add(lhs)
-    result.add(genericType)
+    # A `[` after the element belongs to the element itself, so nesting
+    # associates right (`array[array[int]]` is `array` of `array[int]`).
+    # Wrapping the accumulated result instead builds `(array[array])[int]`,
+    # which no lookup can instantiate correctly.
+    var elem = genericType
     if p.curr is tkLB:
-      result = p.parseGenericType(result)
+      elem = p.parseGenericType(genericType)
+    result = ast.newNode(nkIndex).add(lhs)
+    result.add(elem)
     expectWalk(tkRB)
 
 proc parseFunctionHead(p: var Parser, isAnon: bool;
@@ -563,6 +570,8 @@ proc parseFunctionHead(p: var Parser, isAnon: bool;
   if p.curr is tkColon and p.next in {tkIdentifier, tkLitObject}:
     walk p
     formalParams[0] = p.parseTypeName()
+    if p.curr is tkLB:
+      formalParams[0] = p.parseGenericType(formalParams[0])
 
 prefixHandle parseFunction:
   let fnpos = p.curr.col
