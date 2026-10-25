@@ -1,0 +1,111 @@
+name: release-npm
+# Manual releases only: native addons cannot be cross-compiled, so
+# publishing to npm must be a deliberate manual step. Dispatch this
+# workflow by hand and enter the version to publish (e.g. `0.1.1`).
+#
+# The run builds the NAPI addon for macOS (arm64/x64) and Linux
+# (x64/arm64), with the standard library statically linked in, attaches
+# the binaries to the GitHub Release, and publishes `dfkup` to npm.
+#
+# NB: never compile `src/dfkup.nim` directly for the addon (`nim c` /
+# `nimble build` hit the CLI path). The build goes through `clue task
+# napi`, which runs denim with `-d:napibuild`.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release and publish to npm (e.g. 0.1.1)'
+        required: true
+        type: string
+jobs:
+  napi:
+    name: napi addons
+    uses: nimbase/setup-nim-action/.github/workflows/release_clue.yml@main
+    with:
+      app-name: node_addon
+      nim-version: 'stable'
+      package-manager: clue
+      test: false
+      # The stdkups clone seeds clue's package cache: denim resolves
+      # the addon dependency closure itself (nimble/clue --path
+      # resolution) and `clue install --depsOnly` makes the stdkups
+      # closure — including the feature-gated stdlib — installed and
+      # resolvable on the runner. No shards are compiled; the addon
+      # carries no dylibs.
+      pre-build-command: >-
+        git clone --depth 1 https://github.com/dfkup/stdlib.git /tmp/stdkups &&
+        (cd /tmp/stdkups && clue install --depsOnly) &&
+        nimble install denim -y
+      build-command: >-
+        clue task napi &&
+        npm test --prefix addons/dfkup_napi
+      binary: bin/dfkup.node
+      target-matrix: '[{"os":"macos-14","arch":"arm64"},{"os":"macos-15-intel","arch":"x86_64"},{"os":"ubuntu-24.04","arch":"x86_64"},{"os":"ubuntu-24.04-arm","arch":"arm64"}]'
+      create-release: true
+
+  npm-publish:
+    name: npm publish
+    runs-on: ubuntu-latest
+    needs: napi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: artifact-*
+          path: dist
+          merge-multiple: true
+
+      - name: Assemble per-arch binaries
+        shell: bash
+        run: |
+          set -eu
+          pkg=addons/dfkup_napi
+          declare -A slots=(
+            [node_addon_macos-arm64.tar.gz]=darwin-arm64
+            [node_addon_macos-x86_64.tar.gz]=darwin-x64
+            [node_addon_linux-x86_64.tar.gz]=linux-x64
+            [node_addon_linux-arm64.tar.gz]=linux-arm64
+          )
+          for archive in "${!slots[@]}"; do
+            [[ -f "dist/${archive}" ]] || { echo "ERROR: missing ${archive}"; exit 1; }
+            work="$(mktemp -d)"
+            tar xzf "dist/${archive}" -C "${work}"
+            node_bin="$(find "${work}" -name 'dfkup.node' | head -n 1)"
+            [[ -n "${node_bin}" ]] || { echo "ERROR: no dfkup.node in ${archive}"; exit 1; }
+            dest="${pkg}/bin/${slots[${archive}]}"
+            mkdir -p "${dest}"
+            cp "${node_bin}" "${dest}/dfkup.node"
+            rm -rf "${work}"
+          done
+          find "${pkg}/bin" -name '*.node' | sort
+
+      - name: Sync version from input
+        working-directory: addons/dfkup_napi
+        shell: bash
+        run: |
+          set -eu
+          version="${VERSION#v}"
+          echo "Syncing npm version to ${version}"
+          npm pkg set version="${version}"
+          node -p "require('./package.json').version"
+        env:
+          VERSION: ${{ inputs.version }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Smoke test assembled package
+        shell: bash
+        run: npm test --prefix addons/dfkup_napi
+
+      - name: Publish to npm
+        working-directory: addons/dfkup_napi
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
