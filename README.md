@@ -198,15 +198,19 @@ Multi-language benchmark results live in [benchmarks/README.md](./benchmarks/REA
 
 
 ### Notes
-DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https://github.com/openpeeps/vancode) written in Nim. The JIT compiler is powered by [DynASM](https://staff.fnwi.uva.nl/h.vandermeer/docs/lua/luajit/dynasm_features.html).
+DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https://github.com/openpeeps/vancode) written in Nim. The JIT compiler is powered by a pure Nim [DynASM (dynamic assembler)](https://github.com/nimbase/dynasm-nim).
 
 ## Roadmap
+- [x] Lexer (`tests/test_lexer.nim`)
+- [x] Parser with AST output (`dfkup ast`, `tests/test_parser.nim`)
+- [x] VanCode wiring — bytecode compiler, VM and JIT, on by default (`--nojit` opts out; `tests/test_vm.nim`)
+- [x] Standard library — 30 `std/*` modules, 5 linked in, rest as dylib shards
+- [x] Package manager (`pkg/` imports, `dfkup pkg` on datpkgr)
+- [x] Config files (`config.kup` via `dfkup conf`)
+- [x] Node.js native addon via denim (`dfkup` on npm)
 - [ ] Add more tests
-- [ ] A stable VM
-- [ ] A stable JIT compiler
 - [ ] Add more benchmarks (including languages)
 - [ ] Publish a [Booyaka](https://github.com/openpeeps/booyaka) Documentation
-- [x] Implement VanCode package manager API (`pkg/` imports via `pkgResolver`, `dfkup pkg` on datpkgr)
 
 ### ❤ Contributions & Support
 - 🐛 Found a bug? [Create a new Issue](https://github.com/dfkup/dfkup/issues)
