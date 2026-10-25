@@ -17,9 +17,10 @@ import ./lang/[parser]
 import ./lang/stdlib_loader
 import ./pkg/pkgman
 import ./lang/lowlibs/libsystem
-## NB: only `libsystem` is statically linked. Every other stdlib
-## (`json`, `yaml`, `strings`, `sequtils`, `http`, `cli`, `config`,
-## `regex`, `browser`, `toml`, `uuid`, `dotenv`, `csv`, `bson`,
+## NB: `system`, `json`, `strings`, `sequtils` and `regex` are
+## statically linked (`lang/lowlibs`). Every other stdlib
+## (`yaml`, `http`, `cli`, `config`,
+## `browser`, `toml`, `uuid`, `dotenv`, `csv`, `bson`,
 ## `colors`, `qr`, `nanoid`, `llm`, `httpclient`, `xml`, `feed`,
 ## `ical`, `css`, `svg`, `markdown`, `strongpwd`, `twofa`, `fswatch`,
 ## `algos`, `bench`) resolves at runtime through `stdlibLoader`
@@ -73,10 +74,11 @@ proc exec*(code: string, sourcePath: string, allowExprResult, enableHotCodeDetec
 
   var stdlibs: StandardLibrary = newTable[string, ModuleLibrary]()
 
-  # Every stdlib except `system` loads from a shard dylib via
-  # `stdlibLoader` (see `src/lang/stdlib_loader.nim`). Scripts that
-  # import nothing pay nothing; the table above stays empty and only
-  # fills with vancode's own cache entries as dylibs load.
+  # Every stdlib except `system`, `json`, `strings`, `sequtils` and
+  # `regex` loads from a shard dylib via `stdlibLoader`
+  # (see `src/lang/stdlib_loader.nim`); those five are served in-image.
+  # Scripts that import nothing pay nothing; the table above stays empty
+  # and only fills with vancode's own cache entries as dylibs load.
 
   if autoloadConfig:
     # `conf` mode makes `config({...})` available without an explicit
@@ -158,18 +160,21 @@ proc runConfigFile*(path: string, command = "",
   ## Without `command`, this behaves like `runFile` for a config source. With
   ## `command`, it executes the matching string from the config's `commands`
   ## object through the system shell and returns the captured output.
-  clearActiveConfig()
+  ##
+  ## Loader calls are module-qualified: the napibuild `liball` include
+  ## pulls identically-named `stdkups/libconfig` helpers into this scope.
+  stdlib_loader.clearActiveConfig()
   try:
     result = exec(readFile(path), path, false, enableHotCodeDetection,
       autoloadConfig = true)
     if command.len == 0:
       return result
-    let cfg = takeActiveConfig()
+    let cfg = stdlib_loader.takeActiveConfig()
     if cfg == nil:
       raise newException(DfkupError, path & ": no config declaration found")
     let commandText =
       try:
-        findConfigCommand(cfg, command)
+        stdlib_loader.findConfigCommand(cfg, command)
       except ValueError as e:
         raise newException(DfkupError, path & ": " & e.msg)
     let shellResult = osproc.execCmdEx(commandText,
@@ -180,9 +185,9 @@ proc runConfigFile*(path: string, command = "",
         shellResult.output)
     result = shellResult.output
   finally:
-    clearActiveConfig()
+    stdlib_loader.clearActiveConfig()
 
-when isMainModule:
+when isMainModule and not defined(napibuild):
   #
   # The CLI application
   #
@@ -491,3 +496,7 @@ when isMainModule:
       return 1
 
   quit(main())
+  
+when defined(napibuild):
+  import denim
+  include ./lang/napi_bridge
