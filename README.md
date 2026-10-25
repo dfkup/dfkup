@@ -38,7 +38,7 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 ### Installation
 You need Nim. 
 
-### Examples
+### CLI usage
 ```
 A tiny scripting language. Enjoyable, easy to learn and work with so you don't f*ck up
   (c) OpenPeeps | LGPL-3.0-or-later License
@@ -69,6 +69,58 @@ Codegen & Debugging
   --version               show version
 ```
 
+### Examples
+
+`var` is mutable, `let` is immutable, `const` is compile-time:
+```
+var score = 42
+score = score + 8
+let name = "dfkup"
+const max = 100
+var total: int = 0
+```
+
+Infix expressions for arithmetic, comparison, logic and strings:
+```
+echo 1 + 2 * 3        # 7
+echo 10 - 4           # 6
+echo 42 == 42         # true
+echo true and false   # false
+echo "Hi, " & "you"   # Hi, you
+```
+
+Branching with `if` / `elif` / `else`:
+```
+var temperature = 75
+if temperature > 80:
+  echo "hot"
+elif temperature > 60:
+  echo "nice"
+else:
+  echo "cool"
+```
+
+`for` loops over ranges and iterators:
+```
+for i in 1..5:
+  echo i
+```
+
+`while` loops with a mutable counter:
+```
+var i = 1
+while i <= 5:
+  echo i
+  i = i + 1
+```
+
+Functions with typed parameters and a return type (`result` carries it):
+```
+fn add(a, b: int): int =
+  result = a + b
+
+echo add(10, 20)      # 30
+```
 
 ### Build Standard Library
 Only `system` is statically linked into the `dfkup` binary. Every other
