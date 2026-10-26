@@ -1042,7 +1042,10 @@ prefixHandle parseStmt:
     case p.curr.kind
     of tkIdentifier:
       if p.next.line == p.curr.line and p.next is tkLP:
-        parseCall
+        # A call can continue with an infix operator (`f(x) & y`), so go
+        # through the full expression path: for a plain call with no
+        # trailing operator it produces the identical nkCall node.
+        parseExpression
       elif p.next.kind in Assignables and (p.next.line == p.curr.line or p.next.col > p.curr.col):
         parseCall
       else:
