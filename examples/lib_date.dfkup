@@ -1,0 +1,19 @@
+import "std/date"
+
+echo "now:       " & format(now(), "yyyy-MM-dd HH:mm:ss")
+echo "epoch:     " & $now()
+echo "year:      " & $year(now())
+echo "month:     " & $month(now())
+echo "day:       " & $day(now())
+echo "weekday:   " & weekdayName(now())
+
+let t = dateTime(2024, 1, 15, 10, 30, 0)
+echo "formatted: " & format(t, "yyyy-MM-dd HH:mm")
+echo "iso:       " & toIso(t)
+echo "addDays:   " & format(addDays(t, 10), "yyyy-MM-dd")
+echo "diffDays:  " & $diffDays(addDays(t, 10), t)
+echo "parsed:    " & format(parse("2024-01-15", "yyyy-MM-dd"), "yyyy-MM-dd")
+echo "leap 2024: " & $isLeapYear(2024)
+echo "daysInMonth Feb 2024: " & $daysInMonth(2024, 2)
+echo "monthName: " & monthName(t)
+echo "startOfDay:" & format(startOfDay(t), "yyyy-MM-dd HH:mm:ss")

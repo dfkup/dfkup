@@ -1,0 +1,12 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "hello"
+msgstr "hola"
+
+msgid "one apple"
+msgid_plural "%d apples"
+msgstr[0] "una manzana"
+msgstr[1] "%d manzanas"

@@ -1,0 +1,10 @@
+import "std/plist"
+import "std/json"
+
+let xml = "<plist><dict><key>name</key><string>Ada</string><key>age</key><integer>36</integer><key>tags</key><array><string>a</string><string>b</string></array></dict></plist>"
+let p = parsePlist(xml)
+echo dumpJson(p)
+echo ""
+echo toXmlPlist(p)
+echo ""
+echo "round-trip parseXmlPlistFile not shown (needs file)"

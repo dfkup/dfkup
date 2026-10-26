@@ -1,0 +1,8 @@
+import "std/diff"
+
+echo "sameText: " & $sameText("a\nb", "a\nb")
+echo ""
+echo diffUnified("a\nb\nc\n", "a\nB\nc\nd\n")
+echo ""
+echo "stats: " & diffStats("a\nb\nc\n", "a\nB\nc\nd\n")
+echo "summary: " & diffSummary("a\nb\nc\n", "a\nB\nc\n")

@@ -1,0 +1,9 @@
+import "std/fuzzy"
+import "std/json"
+
+echo "score('ab','aXbXc'): " & $fuzzyScore("ab", "aXbXc")
+echo "matched('ab','xyz'): " & $fuzzyMatched("ab", "xyz")
+echo "positions('ab','aXbXc'): " & fuzzyPositions("ab", "aXbXc")
+echo ""
+echo "search 'ab' over candidates:"
+echo dumpJson(fuzzySearch("ab", "cab\ncar\nabc\nxab\nzzz"))

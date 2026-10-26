@@ -1,0 +1,8 @@
+import "std/locale"
+import "std/json"
+
+let c = openPo("examples/locale.po")
+echo translatePo(c, "hello")
+echo ntranslatePo(c, "one apple", "%d apples", 1)
+echo ntranslatePo(c, "one apple", "%d apples", 5)
+echo dumpJson(poHeaders(c))

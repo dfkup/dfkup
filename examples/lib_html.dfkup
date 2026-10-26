@@ -1,0 +1,4 @@
+import "std/html"
+
+let doc = parseHtml("<html><body><h1>Title</h1><p>Hello <b>world</b>!</p></body></html>")
+echo "innerText: " & htmlInnerText(doc)

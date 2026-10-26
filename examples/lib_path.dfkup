@@ -1,0 +1,20 @@
+import "std/path"
+
+let p = parsePath("https://example.com:8080/a/b?q=1&x=2#frag")
+echo "scheme:    " & pathScheme(p)
+echo "host:      " & pathHost(p)
+echo "port:      " & $pathPort(p)
+echo "segments:  " & pathSegments(p)
+echo "query:     " & pathQuery(p)
+echo "fragment:  " & pathFragment(p)
+echo "ext:       " & pathExt(p)
+echo "raw:       " & pathRaw(p)
+echo "isAbs:     " & $pathIsAbsolute(p)
+echo "kind:      " & pathKind(p)
+echo "toString:  " & pathToString(p)
+
+let lp = parsePath("/usr/local/bin/dfkup")
+echo ""
+echo "local path: " & pathToString(lp)
+echo "segments:   " & pathSegments(lp)
+echo "ext:        " & pathExt(lp)

@@ -41,6 +41,14 @@ import pkg/stdkups/libtwofa
 import pkg/stdkups/libfswatch
 import pkg/stdkups/libalgos
 import pkg/stdkups/libbench
+import pkg/stdkups/libdate
+import pkg/stdkups/liblocale
+import pkg/stdkups/libvcard
+import pkg/stdkups/libplist
+import pkg/stdkups/libfuzzy
+import pkg/stdkups/libdiff
+import pkg/stdkups/libhtml
+import pkg/stdkups/libpath
 
 export libjson
 export libyaml
@@ -72,3 +80,11 @@ export libtwofa
 export libfswatch
 export libalgos
 export libbench
+export libdate
+export liblocale
+export libvcard
+export libplist
+export libfuzzy
+export libdiff
+export libhtml
+export libpath

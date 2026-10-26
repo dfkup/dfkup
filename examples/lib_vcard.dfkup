@@ -1,0 +1,20 @@
+import "std/vcard"
+
+let input = "BEGIN:VCARD\nVERSION:4.0\nFN:Alice Smith\nEMAIL:alice@example.com\nTEL:+1-555-1234\nORG:Acme Corp\nEND:VCARD"
+let c = parseVCard(input)
+echo "FN:       " & vcardFn(c)
+echo "version:  " & vcardVersion(c)
+echo "emails:   " & vcardEmails(c)
+echo "tels:     " & vcardTels(c)
+echo "org:      " & vcardOrg(c)
+echo "uid:      " & vcardUid(c)
+echo "bday:     " & vcardBday(c)
+echo "categories: " & vcardCategories(c)
+echo "urls:     " & vcardUrls(c)
+echo ""
+echo "round-trip:"
+echo toVCard(c)
+echo ""
+echo "isVCardDate(\"20240115\"): " & $isVCardDate("20240115")
+echo "escape:   " & escapeVCardText("a,b;c")
+echo "unescape: " & unescapeVCardText("a\\,b\\;c")

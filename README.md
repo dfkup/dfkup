@@ -221,7 +221,7 @@ DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https
 - [x] Lexer (`tests/test_lexer.nim`)
 - [x] Parser with AST output (`dfkup ast`, `tests/test_parser.nim`)
 - [x] VanCode wiring — bytecode compiler, VM and JIT, on by default (`--nojit` opts out; `tests/test_vm.nim`)
-- [x] Standard library — 30 `std/*` modules, 5 linked in, rest as dylib shards
+- [x] Standard library — 39 `std/*` modules, 5 linked in, rest as dylib shards
 - [x] Package manager (`pkg/` imports, `dfkup pkg` on datpkgr)
 - [x] Config files (`config.kup` via `dfkup conf`)
 - [x] Node.js native addon via denim (`dfkup` on npm, lives in the [dfkup-js](https://github.com/dfkup/dfkup-js) repo)

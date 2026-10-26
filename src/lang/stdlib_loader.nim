@@ -44,7 +44,8 @@ const dfkupStdlibNames* = ["json", "yaml", "strings", "sequtils",
   "http", "cli", "config", "regex", "browser", "toml", "uuid", "dotenv",
   "csv", "bson", "colors", "qr", "nanoid", "llm", "httpclient", "xml",
   "feed", "ical", "css", "svg", "markdown", "strongpwd", "twofa",
-  "fswatch", "algos", "bench"]
+  "fswatch", "algos", "bench", "date", "locale", "vcard", "plist",
+  "fuzzy", "diff", "html", "path"]
   ## Every stdlib name `import "std/<name>"` resolves. `system`, `json`
   ## and `strings` are served from `lang/lowlibs` in-image; the rest
   ## load from dylib shards (CLI) or the static bundle (napibuild).
@@ -172,6 +173,14 @@ proc loadStdlibModule*(name: string, script: Script,
     of "fswatch": staticLibs.initFswatch(script, result)
     of "algos": staticLibs.initAlgos(script, result)
     of "bench": staticLibs.initBench(script, result)
+    of "date": staticLibs.initDate(script, result)
+    of "locale": staticLibs.initLocale(script, result)
+    of "vcard": staticLibs.initVcard(script, result)
+    of "plist": staticLibs.initPlist(script, result)
+    of "fuzzy": staticLibs.initFuzzy(script, result)
+    of "diff": staticLibs.initDiff(script, result)
+    of "html": staticLibs.initHtml(script, result)
+    of "path": staticLibs.initPath(script, result)
     else:
       raise newException(StdlibLoadError,
         "std \"" & name & "\" is not available")
