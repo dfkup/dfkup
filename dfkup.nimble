@@ -19,7 +19,7 @@ requires "datpkgr >= 0.1.9"
 requires "dynasm >= 0.1.0"
 requires "openparser >= 0.3.10"
 requires "voodoo >= 0.2.3"
-requires "https://github.com/dfkup/stdkups"
+# requires "https://github.com/dfkup/stdkups"
 
 # Shard dylibs are built at workflow level from the separate stdkups repo
 # (dfkup/stdlib `tools/build_shards.nim`); the CLI never links stdkups
