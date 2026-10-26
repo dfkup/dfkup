@@ -125,6 +125,13 @@ proc initSystem*(script: Script, module: Module) =
       if not args[0].boolVal:
         raise newException(ValueError, "assertion failed"))
 
+  #
+  # OS constants
+  #
+  script.addVar(module, "windows", ttyBool, initValue(hostOS == "windows"))
+  script.addVar(module, "linux", ttyBool, initValue(hostOS == "linux"))
+  script.addVar(module, "osx", ttyBool, initValue(hostOS == "macosx"))
+
   script.addProc(module, "&", @[paramDef("a", ttyString), paramDef("b", ttyString)], ttyString,
     proc (args: StackView, argc: int): Value =
       result = initValue(args[0].stringVal[] & args[1].stringVal[]))
