@@ -24,7 +24,7 @@ This is DFkup, /diː ɛf kʌp/ (or simply: "dee-ef-cup") &bullet; A functional, 
 - **Compilation policy** settings to restrict features: deny std modules, `for` loops, conditionals, or any other language construct
 - Control flow: `if`/`elif`/`else`, `for` loops, `while` loops
 - Variable declarations: `var` (mutable), `const` (compile-time)
-- Function definitions with named parameters, `return` types, and **generics**
+- Function definitions with named parameters, `return` types, and **generics** (`[T]`, `[T: string]`, `[T: array[string]]`, `[T: string, X: int]`)
 - First-class function calls with positional and named arguments
 - Data literals: integers, floats, strings (single/double/triple-quoted, backtick)
 - String interpolation with $var syntax
@@ -120,6 +120,23 @@ fn add(a, b: int): int =
   result = a + b
 
 echo add(10, 20)      # 30
+```
+
+Generic functions take type parameters in brackets, with an optional
+constraint after a colon. Constraints are checked at the call site:
+```
+func hello[T: string](name: T): T =
+  return name
+
+func first[T: array[string]](xs: T): string =
+  return xs[0]
+
+func pair[T: string, X: int](a: T, b: X): X =
+  return b
+
+echo hello("world")     # world
+echo first(["a", "b"])  # a
+echo pair("hi", 42)     # 42
 ```
 
 ### Build Standard Library
