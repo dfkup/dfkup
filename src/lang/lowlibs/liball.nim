@@ -3,15 +3,13 @@
 # The CLI loads every stdlib except `system`, `json`, `strings`,
 # `sequtils` and `regex` from a dylib shard at runtime
 # (see `lang/stdlib_loader`): those five live in `lang/lowlibs` and are
-# always linked in. The node addon links the
+# always linked in. The node addon (dfkup-js repo) links the
 # remaining `stdkups/lib*` sources statically on top: this file imports
 # them all and re-exports them so `lang/stdlib_loader` can serve them
 # without dlopen.
 #
-# Usable both as a module (`lang/stdlib_loader` imports it under
-# `napibuild`) and included into `src/dfkup.nim` through
-# `lang/napi_bridge` (same scope); either way the init procs below are
-# what `loadStaticStdlibModule` calls.
+# Used as a module: `lang/stdlib_loader` imports it under `napibuild`.
+# The init procs below are what `loadStaticStdlibModule` calls.
 
 import ./libjson
 import ./libstrings

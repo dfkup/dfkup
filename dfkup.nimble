@@ -24,8 +24,9 @@ requires "https://github.com/dfkup/stdkups"
 # Shard dylibs are built at workflow level from the separate stdkups repo
 # (dfkup/stdlib `tools/build_shards.nim`); the CLI never links stdkups
 # (the `stdkups` feature above stays inactive so plain installs never see
-# it). The node addon statically links the same sources under `napibuild`
-# instead — see `src/dfkup.nims` and `src/lang/lowlibs/liball.nim`.
+# it). The node addon (dfkup-js repo) statically links the same sources
+# under `napibuild` instead — see `src/dfkup.nims` and
+# `src/lang/lowlibs/liball.nim`.
 # See "Build Standard Library" in the README.
 
 # Pinned: flysystem 0.2.1 rewired the local driver onto POSIX-only
@@ -34,11 +35,3 @@ requires "https://github.com/dfkup/stdkups"
 # gone from the registry (only 0.2.2 is published now), so the floor
 # moves to 0.2.2 — re-pin if the Windows fallback regresses again.
 requires "flysystem >= 0.2.2"
-
-task napi, "Build the Node.js native addon (.node) via denim":
-  ## Run with `clue task napi` (not bare `denim build`): denim shells out
-  ## to a plain `nim c`, which cannot see clue's develop checkouts on its
-  ## own. `clue task` exposes the resolved dependency paths to every child
-  ## `nim` through XDG_CONFIG_HOME, so the inner compile resolves.
-  exec "denim build src/dfkup.nim --cmake -y --verbose"
-  exec "node addons/dfkup_napi/scripts/place-binary.js"

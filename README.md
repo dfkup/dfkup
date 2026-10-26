@@ -224,7 +224,7 @@ DFkup is built on top of [VanCode, a modular CodeGen, VM and JIT compiler](https
 - [x] Standard library — 30 `std/*` modules, 5 linked in, rest as dylib shards
 - [x] Package manager (`pkg/` imports, `dfkup pkg` on datpkgr)
 - [x] Config files (`config.kup` via `dfkup conf`)
-- [x] Node.js native addon via denim (`dfkup` on npm)
+- [x] Node.js native addon via denim (`dfkup` on npm, lives in the [dfkup-js](https://github.com/dfkup/dfkup-js) repo)
 - [ ] Add more tests
 - [ ] Add more benchmarks (including languages)
 - [ ] Publish a [Booyaka](https://github.com/openpeeps/booyaka) Documentation

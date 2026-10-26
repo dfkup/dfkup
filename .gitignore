@@ -13,3 +13,6 @@ nimble.paths
 nimbledeps
 /plans
 clue.lock
+
+# Native build outputs
+denim_build/

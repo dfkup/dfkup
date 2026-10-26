@@ -13,6 +13,18 @@ import pkg/vancode/interpreter/[ast, codegen, chunk, sym, vm, value,
   resolver, manager]
 import pkg/vancode/interpreter/jit/jit
 
+# Re-exported for out-of-package embedders (the dfkup-js node addon
+# builds against this module): the bridge needs exactly these three
+# from dfkup's own scope. Selective on purpose — a blanket
+# `export json` would drag openparser's `JsonNode`/`getStr` into every
+# importer's scope and collide with `std/json`.
+from pkg/vancode/interpreter/ast import Ast
+export Ast
+from ./lang/parser import parseScript
+export parseScript
+from pkg/openparser/json import toJson
+export toJson
+
 import ./lang/[parser]
 import ./lang/stdlib_loader
 import ./pkg/pkgman
@@ -161,8 +173,9 @@ proc runConfigFile*(path: string, command = "",
   ## `command`, it executes the matching string from the config's `commands`
   ## object through the system shell and returns the captured output.
   ##
-  ## Loader calls are module-qualified: the napibuild `liball` include
-  ## pulls identically-named `stdkups/libconfig` helpers into this scope.
+  ## Loader calls are module-qualified (`stdlib_loader.clearActiveConfig`,
+  ## etc.): the static stdlib bundle (`lang/lowlibs/liball`) provides
+  ## identically-named helpers, so bare names would be ambiguous.
   stdlib_loader.clearActiveConfig()
   try:
     result = exec(readFile(path), path, false, enableHotCodeDetection,
@@ -496,7 +509,3 @@ when isMainModule and not defined(napibuild):
       return 1
 
   quit(main())
-  
-when defined(napibuild):
-  import denim
-  include ./lang/napi_bridge
