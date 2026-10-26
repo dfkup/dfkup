@@ -1,4 +1,4 @@
-import std/unittest
+import std/[unittest, strutils]
 import ../src/dfkup
 
 # `json` and `strings` are owned by dfkup (`src/lang/lowlibs`) and served
@@ -25,6 +25,14 @@ suite "Internal stdlib - json":
   test "keys joined":
     check run("import \"std/json\"\n" &
       "let d = parseJson(\"{\\\"a\\\":1,\\\"b\\\":2}\")\njoin(keys(d), \",\")") == "a,b"
+
+  test "dot access on json is rejected":
+    try:
+      discard run("import \"std/json\"\n" &
+        "let d = parseJson(\"{\\\"a\\\":1}\")\necho $d.a")
+      check false
+    except CatchableError as e:
+      check "bracket notation" in e.msg
 
 suite "Internal stdlib - strings":
   test "case conversion":
