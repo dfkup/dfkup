@@ -2,7 +2,7 @@
 
 import std/[os, strutils]
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "OpenPeeps"
 description   = "A tiny scripting language. Enjoyable, easy to learn and work with so you don't f*ck up"
 license       = "MIT"
