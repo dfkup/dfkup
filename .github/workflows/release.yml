@@ -9,21 +9,26 @@ jobs:
       contents: write
     uses: nimbase/setup-nim-action/.github/workflows/release_clue.yml@main
     with:
-      nim-version: stable
+      # Pinned: the stdkups shard releases pin the same version, and the
+      # loader rejects shards built with another Nim version.
+      nim-version: '2.4.0'
       app-name: dfkup
       target-matrix: '[{"os":"ubuntu-latest","arch":"x86_64"},{"os":"ubuntu-24.04-arm","arch":"arm64"},{"os":"macos-15","arch":"arm64"},{"os":"macos-15-intel","arch":"x86_64"},{"os":"windows-latest","arch":"x86_64"},{"os":"windows-11-arm","arch":"arm64"}]'
-      # Shards are built at workflow level (no nimble task): clone the
-      # stdlib repo as plain sources (dfkup has no `requires "stdkups"`)
-      # and build every shard for this target. `clue install --depsOnly`
-      # inside the clone resolves the shard dependencies; the reusable's
-      # earlier `clue install` only sees dfkup's own deps. Shards land in
-      # `libraries/`, which the archive keeps as a directory next to the
-      # binary. Install = move it to `~/.dfkup/libraries`
-      # (`DFKUP_HOME` overrides the home); the loader probes that dir
-      # first, so one `libraries/` serves every installed dfkup binary.
+      # Shards are NOT built here: they come prebuilt from the stdkups
+      # (github.com/dfkup/stdlib) release for this exact target, which
+      # ships one `stdlib_<os>-<arch>.tar.gz` per target holding a
+      # `libraries/` dir. The archive below keeps that dir next to the
+      # binary; install = move it to `~/.dfkup/libraries`
+      # (`DFKUP_HOME` overrides the home). Both releases pin Nim 2.4.0,
+      # which the loader requires (it rejects shards built with another
+      # Nim version). No tag = latest stdkups release; add one to
+      # `gh release download` for reproducible rebuilds.
       pre-build-command: |
-        git clone --depth 1 https://github.com/dfkup/stdlib.git /tmp/stdkups
-        cd /tmp/stdkups && clue install --depsOnly
-        clue build /tmp/stdkups/tools/build_shards.nim -o /tmp/build_shards &&
-        /tmp/build_shards --stdkups=/tmp/stdkups --dfkup-src="$GITHUB_WORKSPACE" --out="$GITHUB_WORKSPACE/libraries"
+        suffix="$(echo "${RUNNER_OS}-${RUNNER_ARCH}" | tr '[:upper:]' '[:lower:]')"
+        GH_TOKEN="${{ github.token }}" gh release download \
+          --repo github.com/dfkup/stdlib \
+          --pattern "stdlib_${suffix}.tar.gz" --dir /tmp/stdlib
+        mkdir -p "$GITHUB_WORKSPACE/libraries"
+        tar xzf "/tmp/stdlib/stdlib_${suffix}.tar.gz" -C /tmp/stdlib
+        cp /tmp/stdlib/libraries/* "$GITHUB_WORKSPACE/libraries/"
       extra-files: 'LICENSE README.md libraries'
