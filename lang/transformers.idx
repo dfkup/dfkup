@@ -1,1 +1,2 @@
 nimTitle	transformers	lang/transformers.html	module lang/transformers		0
+nim	CodegenModule	lang/transformers.html#CodegenModule	const CodegenModule		19

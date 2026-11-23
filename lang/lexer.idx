@@ -64,6 +64,7 @@ nim	tkAnd	lang/lexer.html#tkAnd	TokenKind.tkAnd		11
 nim	tkOr	lang/lexer.html#tkOr	TokenKind.tkOr		11
 nim	tkType	lang/lexer.html#tkType	TokenKind.tkType		11
 nim	tkLitObject	lang/lexer.html#tkLitObject	TokenKind.tkLitObject		11
+nim	tkEnum	lang/lexer.html#tkEnum	TokenKind.tkEnum		11
 nim	tkFn	lang/lexer.html#tkFn	TokenKind.tkFn		11
 nim	tkIterator	lang/lexer.html#tkIterator	TokenKind.tkIterator		11
 nim	tkMacro	lang/lexer.html#tkMacro	TokenKind.tkMacro		11
@@ -77,12 +78,18 @@ nim	tkAssert	lang/lexer.html#tkAssert	TokenKind.tkAssert		11
 nim	tkYield	lang/lexer.html#tkYield	TokenKind.tkYield		11
 nim	tkIs	lang/lexer.html#tkIs	TokenKind.tkIs		11
 nim	tkIsNot	lang/lexer.html#tkIsNot	TokenKind.tkIsNot		11
+nim	tkCoroutine	lang/lexer.html#tkCoroutine	TokenKind.tkCoroutine		11
 nim	tkUnknown	lang/lexer.html#tkUnknown	TokenKind.tkUnknown		11
+nim	tkWhen	lang/lexer.html#tkWhen	TokenKind.tkWhen		11
+nim	tkNot	lang/lexer.html#tkNot	TokenKind.tkNot		11
+nim	tkAwait	lang/lexer.html#tkAwait	TokenKind.tkAwait		11
+nim	tkThen	lang/lexer.html#tkThen	TokenKind.tkThen		11
+nim	tkDollar	lang/lexer.html#tkDollar	TokenKind.tkDollar		11
 nim	TokenKind	lang/lexer.html#TokenKind	enum TokenKind		11
-nim	TokenTuple	lang/lexer.html#TokenTuple	tuple TokenTuple		28
-nim	Lexer	lang/lexer.html#Lexer	object Lexer		36
-nim	DfkupLexerError	lang/lexer.html#DfkupLexerError	object DfkupLexerError		42
-nim	newLexer	lang/lexer.html#newLexer,string	proc newLexer(input: string): Lexer		44
-nim	error	lang/lexer.html#error,Lexer,string	proc error(l: var Lexer; msg: string)		79
-nim	nextToken	lang/lexer.html#nextToken,Lexer	proc nextToken(lex: var Lexer): TokenTuple		122
-nim	getToken	lang/lexer.html#getToken,Lexer	proc getToken(lex: var Lexer): TokenTuple		510
+nim	TokenTuple	lang/lexer.html#TokenTuple	tuple TokenTuple		29
+nim	Lexer	lang/lexer.html#Lexer	object Lexer		37
+nim	DfkupLexerError	lang/lexer.html#DfkupLexerError	object DfkupLexerError		43
+nim	newLexer	lang/lexer.html#newLexer,string	proc newLexer(input: string): Lexer		45
+nim	error	lang/lexer.html#error,Lexer,string	proc error(l: var Lexer; msg: string)		80
+nim	nextToken	lang/lexer.html#nextToken,Lexer	proc nextToken(lex: var Lexer): TokenTuple		123
+nim	getToken	lang/lexer.html#getToken,Lexer	proc getToken(lex: var Lexer): TokenTuple		544

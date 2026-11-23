@@ -1,0 +1,16 @@
+nimTitle	pkgman	pkg/pkgman.html	module pkg/pkgman		0
+nim	pkgManifestFileName	pkg/pkgman.html#pkgManifestFileName	const pkgManifestFileName		30
+nim	pkgRegistryUrl	pkg/pkgman.html#pkgRegistryUrl	const pkgRegistryUrl		33
+nim	pkgDefaultSourceName	pkg/pkgman.html#pkgDefaultSourceName	const pkgDefaultSourceName		37
+nim	dfkupHome	pkg/pkgman.html#dfkupHome	proc dfkupHome(): string		40
+nim	findPackageKup	pkg/pkgman.html#findPackageKup,string	proc findPackageKup(dir: string): string		44
+nim	ensurePkgSource	pkg/pkgman.html#ensurePkgSource,DatpkgrConfig	proc ensurePkgSource(cfg: DatpkgrConfig)		71
+nim	newDfkupPkgConfig	pkg/pkgman.html#newDfkupPkgConfig,string	proc newDfkupPkgConfig(rootPath = ""; debug = false; ensureSource = true): DatpkgrConfig		108
+nim	pkgInstall	pkg/pkgman.html#pkgInstall,DatpkgrConfig,string,string	proc pkgInstall(cfg: DatpkgrConfig; spec: string; url = ""; verbose = true): bool		130
+nim	pkgRemove	pkg/pkgman.html#pkgRemove,DatpkgrConfig,string,string	proc pkgRemove(cfg: DatpkgrConfig; name: string; version = ""): bool		141
+nim	pkgUpdate	pkg/pkgman.html#pkgUpdate,DatpkgrConfig,string	proc pkgUpdate(cfg: DatpkgrConfig; name = ""; verbose = true): bool		147
+nim	pkgDevelop	pkg/pkgman.html#pkgDevelop,DatpkgrConfig,string	proc pkgDevelop(cfg: DatpkgrConfig; dir: string): bool		155
+nim	pkgPrune	pkg/pkgman.html#pkgPrune,DatpkgrConfig	proc pkgPrune(cfg: DatpkgrConfig)		160
+nim	pkgList	pkg/pkgman.html#pkgList,DatpkgrConfig	proc pkgList(cfg: DatpkgrConfig)		164
+nim	packageEntryPoint	pkg/pkgman.html#packageEntryPoint,DatpkgrConfig,string,string	proc packageEntryPoint(cfg: DatpkgrConfig; root, name: string): string		195
+nim	resolvePkgImport	pkg/pkgman.html#resolvePkgImport,DatpkgrConfig,string	proc resolvePkgImport(cfg: DatpkgrConfig; spec: string): Option[string]		214

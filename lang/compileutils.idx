@@ -1,0 +1,2 @@
+nimTitle	compileutils	lang/compileutils.html	module lang/compileutils		0
+nim	compileCode	lang/compileutils.html#compileCode,Script,Module,string	proc compileCode(script: Script; module: Module; code: string)		19

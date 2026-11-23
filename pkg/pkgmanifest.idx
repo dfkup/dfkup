@@ -1,0 +1,3 @@
+nimTitle	pkgmanifest	pkg/pkgmanifest.html	module pkg/pkgmanifest		0
+nim	PackageManifestError	pkg/pkgmanifest.html#PackageManifestError	object PackageManifestError		42
+nim	parsePackageManifest	pkg/pkgmanifest.html#parsePackageManifest,string,string	proc parsePackageManifest(content: string; path: string): Manifest		101

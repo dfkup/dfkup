@@ -16,10 +16,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4QQQEwksSS9ZWwAAAk1JREFUWMPtll2ITVEUx39nn/O7Y5qR8f05wtCUUr6ZIS++8pEnkZInPImneaCQ5METNdOkeFBKUhMPRIkHKfEuUZSUlGlKPN2TrgfncpvmnntnmlEyq1Z7t89/rf9a6+y99oZxGZf/XeIq61EdtgKXgdXA0xrYAvBjOIF1AI9zvjcC74BSpndrJPkBWDScTF8Aa4E3wDlgHbASaANmVqlcCnwHvgDvgVfAJ+AikAAvgfVZwLnSVZHZaOuKoQi3ZOMi4NkYkpe1p4J7A8BpYAD49hfIy/oqG0+hLomiKP2L5L+1ubn5115S+3OAn4EnwBlgMzCjyt6ZAnQCJ4A7wOs88iRJHvw50HoujuPBoCKwHWiosy8MdfZnAdcHk8dxXFJ3VQbQlCTJvRBCGdRbD4M6uc5glpY3eAihpN5S5w12diSEcCCEcKUO4ljdr15T76ur1FDDLIQQ3qv71EdDOe3Kxj3leRXyk+pxdWnFWod6Wt2bY3de3aSuUHcPBVimHs7mK9WrmeOF6lR1o9qnzskh2ar2qm1qizpfXaPeVGdlmGN5pb09qMxz1Xb1kLqgzn1RyH7JUXW52lr5e/Kqi9qpto7V1atuUzfnARrV7jEib1T76gG2qxdGmXyiekkt1GswPTtek0aBfJp6YySGBfWg2tPQ0FAYgf1stUfdmdcjarbYJEniKIq6gY/Aw+zWHAC+p2labGpqiorFYgGYCEzN7oQdQClN07O1/EfDyGgC0ALMBdYAi4FyK+4H3gLPsxfR1zRNi+NP7nH5J+QntnXe5B5mpfQAAAAASUVORK5CYII=">
 
 <!-- CSS -->
-<link rel="stylesheet" type="text/css" href="nimdoc.out.css?v=2.2.10">
+<link rel="stylesheet" type="text/css" href="nimdoc.out.css?v=2.4.2">
 
 <!-- JS -->
-<script type="text/javascript" src="dochack.js?v=2.2.10"></script>
+<script type="text/javascript" src="dochack.js?v=2.4.2"></script>
 </head>
 <body>
   <div class="document" id="documentId">
@@ -28,24 +28,62 @@
     <label for="nav-toggle" id="nav-overlay"></label>
     <div class="container">
       <h1 class="title">Index</h1>
-      Modules: <a href="index.html">dfkup</a>, <a href="lang/lexer.html">lang/lexer</a>, <a href="lang/lowlibs/libcli.html">lang/lowlibs/libcli</a>, <a href="lang/lowlibs/libhttp.html">lang/lowlibs/libhttp</a>, <a href="lang/lowlibs/libjson.html">lang/lowlibs/libjson</a>, <a href="lang/lowlibs/libregex.html">lang/lowlibs/libregex</a>, <a href="lang/lowlibs/libsequtils.html">lang/lowlibs/libsequtils</a>, <a href="lang/lowlibs/libstrings.html">lang/lowlibs/libstrings</a>, <a href="lang/lowlibs/libsystem.html">lang/lowlibs/libsystem</a>, <a href="lang/lowlibs/libyaml.html">lang/lowlibs/libyaml</a>, <a href="lang/parser.html">lang/parser</a>, <a href="lang/transformers.html">lang/transformers</a>.<br/><p /><h2>API symbols</h2>
-<dl><dt><a name="astCommand" href="#astCommand"><span>astCommand:</span></a></dt><dd><ul class="simple">
+      Modules: <a href="index.html">dfkup</a>, <a href="lang/compileutils.html">lang/compileutils</a>, <a href="lang/lexer.html">lang/lexer</a>, <a href="lang/lowlibs/libjson.html">lang/lowlibs/libjson</a>, <a href="lang/lowlibs/libregex.html">lang/lowlibs/libregex</a>, <a href="lang/lowlibs/libsequtils.html">lang/lowlibs/libsequtils</a>, <a href="lang/lowlibs/libstrings.html">lang/lowlibs/libstrings</a>, <a href="lang/lowlibs/libsystem.html">lang/lowlibs/libsystem</a>, <a href="lang/parser.html">lang/parser</a>, <a href="lang/staticeval.html">lang/staticeval</a>, <a href="lang/stdlib_loader.html">lang/stdlib_loader</a>, <a href="lang/sysinfo.html">lang/sysinfo</a>, <a href="lang/transformers.html">lang/transformers</a>, <a href="pkg/pkgman.html">pkg/pkgman</a>, <a href="pkg/pkgmanifest.html">pkg/pkgmanifest</a>.<br/><p /><h2>API symbols</h2>
+<dl><dt><a name="cleanupStdlibs" href="#cleanupStdlibs"><span>cleanupStdlibs:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="dfkup: proc astCommand(v: Values)" href="index.html#astCommand%2CValues">dfkup: proc astCommand(v: Values)</a></li>
+          data-doc-search-tag="stdlib_loader: proc cleanupStdlibs()" href="lang/stdlib_loader.html#cleanupStdlibs">stdlib_loader: proc cleanupStdlibs()</a></li>
           </ul></dd>
-<dt><a name="callCallback" href="#callCallback"><span>callCallback:</span></a></dt><dd><ul class="simple">
+<dt><a name="clearActiveConfig" href="#clearActiveConfig"><span>clearActiveConfig:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="libhttp: proc callCallback(procScript: cstring; procId: int32; flatArgs: ptr int64;
-             argc: int32; argTypes: ptr int32): int64" href="lang/lowlibs/libhttp.html#callCallback%2Ccstring%2Cint32%2Cptr.int64%2Cint32%2Cptr.int32">libhttp: proc callCallback(procScript: cstring; procId: int32; flatArgs: ptr int64;
-             argc: int32; argTypes: ptr int32): int64</a></li>
+          data-doc-search-tag="stdlib_loader: proc clearActiveConfig()" href="lang/stdlib_loader.html#clearActiveConfig">stdlib_loader: proc clearActiveConfig()</a></li>
+          </ul></dd>
+<dt><a name="CodegenModule" href="#CodegenModule"><span>CodegenModule:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="transformers: const CodegenModule" href="lang/transformers.html#CodegenModule">transformers: const CodegenModule</a></li>
+          </ul></dd>
+<dt><a name="collectSystemInfo" href="#collectSystemInfo"><span>collectSystemInfo:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="sysinfo: proc collectSystemInfo(): SystemInfo" href="lang/sysinfo.html#collectSystemInfo">sysinfo: proc collectSystemInfo(): SystemInfo</a></li>
           </ul></dd>
 <dt><a name="compileCode" href="#compileCode"><span>compileCode:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="libsystem: proc compileCode(script: Script; module: Module; code: string)" href="lang/lowlibs/libsystem.html#compileCode%2CScript%2CModule%2Cstring">libsystem: proc compileCode(script: Script; module: Module; code: string)</a></li>
+          data-doc-search-tag="compileutils: proc compileCode(script: Script; module: Module; code: string)" href="lang/compileutils.html#compileCode%2CScript%2CModule%2Cstring">compileutils: proc compileCode(script: Script; module: Module; code: string)</a></li>
+          </ul></dd>
+<dt><a name="configLibHandle" href="#configLibHandle"><span>configLibHandle:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc configLibHandle(): LibHandle" href="lang/stdlib_loader.html#configLibHandle">stdlib_loader: proc configLibHandle(): LibHandle</a></li>
+          </ul></dd>
+<dt><a name="defined" href="#defined"><span>defined:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: proc defined(symbol: string): bool" href="lang/staticeval.html#defined%2Cstring">staticeval: proc defined(symbol: string): bool</a></li>
+          </ul></dd>
+<dt><a name="DfkupConfigClearFn" href="#DfkupConfigClearFn"><span>DfkupConfigClearFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupConfigClearFn" href="lang/stdlib_loader.html#DfkupConfigClearFn">stdlib_loader: type DfkupConfigClearFn</a></li>
+          </ul></dd>
+<dt><a name="DfkupConfigErrFn" href="#DfkupConfigErrFn"><span>DfkupConfigErrFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupConfigErrFn" href="lang/stdlib_loader.html#DfkupConfigErrFn">stdlib_loader: type DfkupConfigErrFn</a></li>
+          </ul></dd>
+<dt><a name="DfkupConfigFindFn" href="#DfkupConfigFindFn"><span>DfkupConfigFindFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupConfigFindFn" href="lang/stdlib_loader.html#DfkupConfigFindFn">stdlib_loader: type DfkupConfigFindFn</a></li>
+          </ul></dd>
+<dt><a name="DfkupConfigTakeFn" href="#DfkupConfigTakeFn"><span>DfkupConfigTakeFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupConfigTakeFn" href="lang/stdlib_loader.html#DfkupConfigTakeFn">stdlib_loader: type DfkupConfigTakeFn</a></li>
           </ul></dd>
 <dt><a name="DfkupError" href="#DfkupError"><span>DfkupError:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="dfkup: object DfkupError" href="index.html#DfkupError">dfkup: object DfkupError</a></li>
+          </ul></dd>
+<dt><a name="dfkupHome" href="#dfkupHome"><span>dfkupHome:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc dfkupHome(): string" href="pkg/pkgman.html#dfkupHome">pkgman: proc dfkupHome(): string</a></li>
+          </ul></dd>
+<dt><a name="dfkupHostRaise" href="#dfkupHostRaise"><span>dfkupHostRaise:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc dfkupHostRaise(msg: cstring)" href="lang/stdlib_loader.html#dfkupHostRaise%2Ccstring">stdlib_loader: proc dfkupHostRaise(msg: cstring)</a></li>
           </ul></dd>
 <dt><a name="DfkupLexerError" href="#DfkupLexerError"><span>DfkupLexerError:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -55,33 +93,91 @@
 <li><a class="reference external"
           data-doc-search-tag="parser: object DfkupParserError" href="lang/parser.html#DfkupParserError">parser: object DfkupParserError</a></li>
           </ul></dd>
+<dt><a name="DfkupStdlibAbiFn" href="#DfkupStdlibAbiFn"><span>DfkupStdlibAbiFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupStdlibAbiFn" href="lang/stdlib_loader.html#DfkupStdlibAbiFn">stdlib_loader: type DfkupStdlibAbiFn</a></li>
+          </ul></dd>
+<dt><a name="dfkupStdlibAbiVersion" href="#dfkupStdlibAbiVersion"><span>dfkupStdlibAbiVersion:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: const dfkupStdlibAbiVersion" href="lang/stdlib_loader.html#dfkupStdlibAbiVersion">stdlib_loader: const dfkupStdlibAbiVersion</a></li>
+          </ul></dd>
+<dt><a name="DfkupStdlibCleanupFn" href="#DfkupStdlibCleanupFn"><span>DfkupStdlibCleanupFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupStdlibCleanupFn" href="lang/stdlib_loader.html#DfkupStdlibCleanupFn">stdlib_loader: type DfkupStdlibCleanupFn</a></li>
+          </ul></dd>
+<dt><a name="DfkupStdlibInitFn" href="#DfkupStdlibInitFn"><span>DfkupStdlibInitFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupStdlibInitFn" href="lang/stdlib_loader.html#DfkupStdlibInitFn">stdlib_loader: type DfkupStdlibInitFn</a></li>
+          </ul></dd>
+<dt><a name="dfkupStdlibNames" href="#dfkupStdlibNames"><span>dfkupStdlibNames:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: const dfkupStdlibNames" href="lang/stdlib_loader.html#dfkupStdlibNames">stdlib_loader: const dfkupStdlibNames</a></li>
+          </ul></dd>
+<dt><a name="DfkupStdlibNimFn" href="#DfkupStdlibNimFn"><span>DfkupStdlibNimFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupStdlibNimFn" href="lang/stdlib_loader.html#DfkupStdlibNimFn">stdlib_loader: type DfkupStdlibNimFn</a></li>
+          </ul></dd>
+<dt><a name="DfkupStdlibSetRaiseFn" href="#DfkupStdlibSetRaiseFn"><span>DfkupStdlibSetRaiseFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupStdlibSetRaiseFn" href="lang/stdlib_loader.html#DfkupStdlibSetRaiseFn">stdlib_loader: type DfkupStdlibSetRaiseFn</a></li>
+          </ul></dd>
+<dt><a name="DfkupStdlibSetVmFn" href="#DfkupStdlibSetVmFn"><span>DfkupStdlibSetVmFn:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: type DfkupStdlibSetVmFn" href="lang/stdlib_loader.html#DfkupStdlibSetVmFn">stdlib_loader: type DfkupStdlibSetVmFn</a></li>
+          </ul></dd>
+<dt><a name="DfkupVersion" href="#DfkupVersion"><span>DfkupVersion:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: const DfkupVersion" href="lang/staticeval.html#DfkupVersion">staticeval: const DfkupVersion</a></li>
+          </ul></dd>
+<dt><a name="ensurePkgSource" href="#ensurePkgSource"><span>ensurePkgSource:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc ensurePkgSource(cfg: DatpkgrConfig)" href="pkg/pkgman.html#ensurePkgSource%2CDatpkgrConfig">pkgman: proc ensurePkgSource(cfg: DatpkgrConfig)</a></li>
+          </ul></dd>
 <dt><a name="error" href="#error"><span>error:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: proc error(l: var Lexer; msg: string)" href="lang/lexer.html#error%2CLexer%2Cstring">lexer: proc error(l: var Lexer; msg: string)</a></li>
           </ul></dd>
+<dt><a name="evalStatic" href="#evalStatic"><span>evalStatic:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: proc evalStatic(node: Node): StaticValue" href="lang/staticeval.html#evalStatic%2CNode">staticeval: proc evalStatic(node: Node): StaticValue</a></li>
+          </ul></dd>
+<dt><a name="evalStaticBool" href="#evalStaticBool"><span>evalStaticBool:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: proc evalStaticBool(node: Node): bool" href="lang/staticeval.html#evalStaticBool%2CNode">staticeval: proc evalStaticBool(node: Node): bool</a></li>
+          </ul></dd>
 <dt><a name="exec" href="#exec"><span>exec:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="dfkup: proc exec(code: string; sourcePath: string;
-     allowExprResult, enableHotCodeDetection: bool): string" href="index.html#exec%2Cstring%2Cstring%2Cbool%2Cbool">dfkup: proc exec(code: string; sourcePath: string;
-     allowExprResult, enableHotCodeDetection: bool): string</a></li>
+     allowExprResult, enableHotCodeDetection: bool; autoloadConfig = false): string" href="index.html#exec%2Cstring%2Cstring%2Cbool%2Cbool">dfkup: proc exec(code: string; sourcePath: string;
+     allowExprResult, enableHotCodeDetection: bool; autoloadConfig = false): string</a></li>
           </ul></dd>
-<dt><a name="execCallback" href="#execCallback"><span>execCallback:</span></a></dt><dd><ul class="simple">
+<dt><a name="findConfigCommand" href="#findConfigCommand"><span>findConfigCommand:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="libhttp: proc execCallback(procScript: cstring; procId: int32; flatArgs: ptr int64;
-             argc: int32; argTypes: ptr int32): int64" href="lang/lowlibs/libhttp.html#execCallback%2Ccstring%2Cint32%2Cptr.int64%2Cint32%2Cptr.int32">libhttp: proc execCallback(procScript: cstring; procId: int32; flatArgs: ptr int64;
-             argc: int32; argTypes: ptr int32): int64</a></li>
+          data-doc-search-tag="stdlib_loader: proc findConfigCommand(cfg: pointer; name: string): string" href="lang/stdlib_loader.html#findConfigCommand%2Cpointer%2Cstring">stdlib_loader: proc findConfigCommand(cfg: pointer; name: string): string</a></li>
+          </ul></dd>
+<dt><a name="findPackageKup" href="#findPackageKup"><span>findPackageKup:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc findPackageKup(dir: string): string" href="pkg/pkgman.html#findPackageKup%2Cstring">pkgman: proc findPackageKup(dir: string): string</a></li>
           </ul></dd>
 <dt><a name="getToken" href="#getToken"><span>getToken:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: proc getToken(lex: var Lexer): TokenTuple" href="lang/lexer.html#getToken%2CLexer">lexer: proc getToken(lex: var Lexer): TokenTuple</a></li>
           </ul></dd>
-<dt><a name="initCliLib" href="#initCliLib"><span>initCliLib:</span></a></dt><dd><ul class="simple">
+<dt><a name="hasStdlibLib" href="#hasStdlibLib"><span>hasStdlibLib:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="libcli: proc initCliLib(script: Script; module: Module)" href="lang/lowlibs/libcli.html#initCliLib%2CScript%2CModule">libcli: proc initCliLib(script: Script; module: Module)</a></li>
+          data-doc-search-tag="stdlib_loader: proc hasStdlibLib(name: string): bool" href="lang/stdlib_loader.html#hasStdlibLib%2Cstring">stdlib_loader: proc hasStdlibLib(name: string): bool</a></li>
           </ul></dd>
-<dt><a name="initHttp" href="#initHttp"><span>initHttp:</span></a></dt><dd><ul class="simple">
+<dt><a name="HostCPU" href="#HostCPU"><span>HostCPU:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="libhttp: proc initHttp(script: Script; module: Module)" href="lang/lowlibs/libhttp.html#initHttp%2CScript%2CModule">libhttp: proc initHttp(script: Script; module: Module)</a></li>
+          data-doc-search-tag="staticeval: const HostCPU" href="lang/staticeval.html#HostCPU">staticeval: const HostCPU</a></li>
+          </ul></dd>
+<dt><a name="HostEndian" href="#HostEndian"><span>HostEndian:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: const HostEndian" href="lang/staticeval.html#HostEndian">staticeval: const HostEndian</a></li>
+          </ul></dd>
+<dt><a name="HostOS" href="#HostOS"><span>HostOS:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: const HostOS" href="lang/staticeval.html#HostOS">staticeval: const HostOS</a></li>
           </ul></dd>
 <dt><a name="initJson" href="#initJson"><span>initJson:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -103,17 +199,29 @@
 <li><a class="reference external"
           data-doc-search-tag="libsystem: proc initSystem(script: Script; module: Module)" href="lang/lowlibs/libsystem.html#initSystem%2CScript%2CModule">libsystem: proc initSystem(script: Script; module: Module)</a></li>
           </ul></dd>
-<dt><a name="initYaml" href="#initYaml"><span>initYaml:</span></a></dt><dd><ul class="simple">
-<li><a class="reference external"
-          data-doc-search-tag="libyaml: proc initYaml(script: Script; module: Module)" href="lang/lowlibs/libyaml.html#initYaml%2CScript%2CModule">libyaml: proc initYaml(script: Script; module: Module)</a></li>
-          </ul></dd>
 <dt><a name="InlineCode" href="#InlineCode"><span>InlineCode:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="libsystem: const InlineCode" href="lang/lowlibs/libsystem.html#InlineCode">libsystem: const InlineCode</a></li>
           </ul></dd>
+<dt><a name="isTrue" href="#isTrue"><span>isTrue:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: proc isTrue(v: StaticValue): bool" href="lang/staticeval.html#isTrue%2CStaticValue">staticeval: proc isTrue(v: StaticValue): bool</a></li>
+          </ul></dd>
 <dt><a name="Lexer" href="#Lexer"><span>Lexer:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: object Lexer" href="lang/lexer.html#Lexer">lexer: object Lexer</a></li>
+          </ul></dd>
+<dt><a name="loadStdlibFactory" href="#loadStdlibFactory"><span>loadStdlibFactory:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc loadStdlibFactory(name: string): ModuleLibrary" href="lang/stdlib_loader.html#loadStdlibFactory%2Cstring">stdlib_loader: proc loadStdlibFactory(name: string): ModuleLibrary</a></li>
+          </ul></dd>
+<dt><a name="loadStdlibModule" href="#loadStdlibModule"><span>loadStdlibModule:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc loadStdlibModule(name: string; script: Script; sysmod: Module): Module" href="lang/stdlib_loader.html#loadStdlibModule%2Cstring%2CScript%2CModule">stdlib_loader: proc loadStdlibModule(name: string; script: Script; sysmod: Module): Module</a></li>
+          </ul></dd>
+<dt><a name="newDfkupPkgConfig" href="#newDfkupPkgConfig"><span>newDfkupPkgConfig:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc newDfkupPkgConfig(rootPath = &quot;&quot;; debug = false; ensureSource = true): DatpkgrConfig" href="pkg/pkgman.html#newDfkupPkgConfig%2Cstring">pkgman: proc newDfkupPkgConfig(rootPath = &quot;&quot;; debug = false; ensureSource = true): DatpkgrConfig</a></li>
           </ul></dd>
 <dt><a name="newLexer" href="#newLexer"><span>newLexer:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -123,6 +231,18 @@
 <li><a class="reference external"
           data-doc-search-tag="lexer: proc nextToken(lex: var Lexer): TokenTuple" href="lang/lexer.html#nextToken%2CLexer">lexer: proc nextToken(lex: var Lexer): TokenTuple</a></li>
           </ul></dd>
+<dt><a name="packageEntryPoint" href="#packageEntryPoint"><span>packageEntryPoint:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc packageEntryPoint(cfg: DatpkgrConfig; root, name: string): string" href="pkg/pkgman.html#packageEntryPoint%2CDatpkgrConfig%2Cstring%2Cstring">pkgman: proc packageEntryPoint(cfg: DatpkgrConfig; root, name: string): string</a></li>
+          </ul></dd>
+<dt><a name="PackageManifestError" href="#PackageManifestError"><span>PackageManifestError:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgmanifest: object PackageManifestError" href="pkg/pkgmanifest.html#PackageManifestError">pkgmanifest: object PackageManifestError</a></li>
+          </ul></dd>
+<dt><a name="parsePackageManifest" href="#parsePackageManifest"><span>parsePackageManifest:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgmanifest: proc parsePackageManifest(content: string; path: string): Manifest" href="pkg/pkgmanifest.html#parsePackageManifest%2Cstring%2Cstring">pkgmanifest: proc parsePackageManifest(content: string; path: string): Manifest</a></li>
+          </ul></dd>
 <dt><a name="Parser" href="#Parser"><span>Parser:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="parser: object Parser" href="lang/parser.html#Parser">parser: object Parser</a></li>
@@ -131,13 +251,57 @@
 <li><a class="reference external"
           data-doc-search-tag="parser: proc parseScript(astProgram: var Ast; code: string)" href="lang/parser.html#parseScript%2CAst%2Cstring">parser: proc parseScript(astProgram: var Ast; code: string)</a></li>
           </ul></dd>
+<dt><a name="pkgDefaultSourceName" href="#pkgDefaultSourceName"><span>pkgDefaultSourceName:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: const pkgDefaultSourceName" href="pkg/pkgman.html#pkgDefaultSourceName">pkgman: const pkgDefaultSourceName</a></li>
+          </ul></dd>
+<dt><a name="pkgDevelop" href="#pkgDevelop"><span>pkgDevelop:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc pkgDevelop(cfg: DatpkgrConfig; dir: string): bool" href="pkg/pkgman.html#pkgDevelop%2CDatpkgrConfig%2Cstring">pkgman: proc pkgDevelop(cfg: DatpkgrConfig; dir: string): bool</a></li>
+          </ul></dd>
+<dt><a name="pkgInstall" href="#pkgInstall"><span>pkgInstall:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc pkgInstall(cfg: DatpkgrConfig; spec: string; url = &quot;&quot;; verbose = true): bool" href="pkg/pkgman.html#pkgInstall%2CDatpkgrConfig%2Cstring%2Cstring">pkgman: proc pkgInstall(cfg: DatpkgrConfig; spec: string; url = &quot;&quot;; verbose = true): bool</a></li>
+          </ul></dd>
+<dt><a name="pkgList" href="#pkgList"><span>pkgList:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc pkgList(cfg: DatpkgrConfig)" href="pkg/pkgman.html#pkgList%2CDatpkgrConfig">pkgman: proc pkgList(cfg: DatpkgrConfig)</a></li>
+          </ul></dd>
+<dt><a name="pkgManifestFileName" href="#pkgManifestFileName"><span>pkgManifestFileName:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: const pkgManifestFileName" href="pkg/pkgman.html#pkgManifestFileName">pkgman: const pkgManifestFileName</a></li>
+          </ul></dd>
+<dt><a name="pkgPrune" href="#pkgPrune"><span>pkgPrune:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc pkgPrune(cfg: DatpkgrConfig)" href="pkg/pkgman.html#pkgPrune%2CDatpkgrConfig">pkgman: proc pkgPrune(cfg: DatpkgrConfig)</a></li>
+          </ul></dd>
+<dt><a name="pkgRegistryUrl" href="#pkgRegistryUrl"><span>pkgRegistryUrl:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: const pkgRegistryUrl" href="pkg/pkgman.html#pkgRegistryUrl">pkgman: const pkgRegistryUrl</a></li>
+          </ul></dd>
+<dt><a name="pkgRemove" href="#pkgRemove"><span>pkgRemove:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc pkgRemove(cfg: DatpkgrConfig; name: string; version = &quot;&quot;): bool" href="pkg/pkgman.html#pkgRemove%2CDatpkgrConfig%2Cstring%2Cstring">pkgman: proc pkgRemove(cfg: DatpkgrConfig; name: string; version = &quot;&quot;): bool</a></li>
+          </ul></dd>
+<dt><a name="pkgUpdate" href="#pkgUpdate"><span>pkgUpdate:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="pkgman: proc pkgUpdate(cfg: DatpkgrConfig; name = &quot;&quot;; verbose = true): bool" href="pkg/pkgman.html#pkgUpdate%2CDatpkgrConfig%2Cstring">pkgman: proc pkgUpdate(cfg: DatpkgrConfig; name = &quot;&quot;; verbose = true): bool</a></li>
+          </ul></dd>
+<dt><a name="PosixOS" href="#PosixOS"><span>PosixOS:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: const PosixOS" href="lang/staticeval.html#PosixOS">staticeval: const PosixOS</a></li>
+          </ul></dd>
 <dt><a name="PrefixFunction" href="#PrefixFunction"><span>PrefixFunction:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="parser: type PrefixFunction" href="lang/parser.html#PrefixFunction">parser: type PrefixFunction</a></li>
           </ul></dd>
-<dt><a name="runCommand" href="#runCommand"><span>runCommand:</span></a></dt><dd><ul class="simple">
+<dt><a name="resolvePkgImport" href="#resolvePkgImport"><span>resolvePkgImport:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
-          data-doc-search-tag="dfkup: proc runCommand(v: Values)" href="index.html#runCommand%2CValues">dfkup: proc runCommand(v: Values)</a></li>
+          data-doc-search-tag="pkgman: proc resolvePkgImport(cfg: DatpkgrConfig; spec: string): Option[string]" href="pkg/pkgman.html#resolvePkgImport%2CDatpkgrConfig%2Cstring">pkgman: proc resolvePkgImport(cfg: DatpkgrConfig; spec: string): Option[string]</a></li>
+          </ul></dd>
+<dt><a name="runConfigFile" href="#runConfigFile"><span>runConfigFile:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="dfkup: proc runConfigFile(path: string; command = &quot;&quot;; enableHotCodeDetection: bool = true): string" href="index.html#runConfigFile%2Cstring%2Cstring%2Cbool">dfkup: proc runConfigFile(path: string; command = &quot;&quot;; enableHotCodeDetection: bool = true): string</a></li>
           </ul></dd>
 <dt><a name="runFile" href="#runFile"><span>runFile:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -148,6 +312,70 @@
           data-doc-search-tag="dfkup: proc runScript(code: string; sourcePath = &quot;script.dfkup&quot;;
           enableHotCodeDetection: bool = true): string" href="index.html#runScript%2Cstring%2Cstring%2Cbool">dfkup: proc runScript(code: string; sourcePath = &quot;script.dfkup&quot;;
           enableHotCodeDetection: bool = true): string</a></li>
+          </ul></dd>
+<dt><a name="setStdlibVms" href="#setStdlibVms"><span>setStdlibVms:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc setStdlibVms(vm: pointer)" href="lang/stdlib_loader.html#setStdlibVms%2Cpointer">stdlib_loader: proc setStdlibVms(vm: pointer)</a></li>
+          </ul></dd>
+<dt><a name="skBool" href="#skBool"><span>skBool:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: StaticKind.skBool" href="lang/staticeval.html#skBool">staticeval: StaticKind.skBool</a></li>
+          </ul></dd>
+<dt><a name="skFloat" href="#skFloat"><span>skFloat:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: StaticKind.skFloat" href="lang/staticeval.html#skFloat">staticeval: StaticKind.skFloat</a></li>
+          </ul></dd>
+<dt><a name="skInt" href="#skInt"><span>skInt:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: StaticKind.skInt" href="lang/staticeval.html#skInt">staticeval: StaticKind.skInt</a></li>
+          </ul></dd>
+<dt><a name="skNil" href="#skNil"><span>skNil:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: StaticKind.skNil" href="lang/staticeval.html#skNil">staticeval: StaticKind.skNil</a></li>
+          </ul></dd>
+<dt><a name="skObject" href="#skObject"><span>skObject:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: StaticKind.skObject" href="lang/staticeval.html#skObject">staticeval: StaticKind.skObject</a></li>
+          </ul></dd>
+<dt><a name="skString" href="#skString"><span>skString:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: StaticKind.skString" href="lang/staticeval.html#skString">staticeval: StaticKind.skString</a></li>
+          </ul></dd>
+<dt><a name="StaticEvalError" href="#StaticEvalError"><span>StaticEvalError:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: object StaticEvalError" href="lang/staticeval.html#StaticEvalError">staticeval: object StaticEvalError</a></li>
+          </ul></dd>
+<dt><a name="StaticKind" href="#StaticKind"><span>StaticKind:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: enum StaticKind" href="lang/staticeval.html#StaticKind">staticeval: enum StaticKind</a></li>
+          </ul></dd>
+<dt><a name="StaticValue" href="#StaticValue"><span>StaticValue:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="staticeval: object StaticValue" href="lang/staticeval.html#StaticValue">staticeval: object StaticValue</a></li>
+          </ul></dd>
+<dt><a name="stdlibDynlibLoaded" href="#stdlibDynlibLoaded"><span>stdlibDynlibLoaded:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc stdlibDynlibLoaded(): bool" href="lang/stdlib_loader.html#stdlibDynlibLoaded">stdlib_loader: proc stdlibDynlibLoaded(): bool</a></li>
+          </ul></dd>
+<dt><a name="stdlibLibExt" href="#stdlibLibExt"><span>stdlibLibExt:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc stdlibLibExt(): string" href="lang/stdlib_loader.html#stdlibLibExt">stdlib_loader: proc stdlibLibExt(): string</a></li>
+          </ul></dd>
+<dt><a name="stdlibLibPath" href="#stdlibLibPath"><span>stdlibLibPath:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc stdlibLibPath(name: string): string" href="lang/stdlib_loader.html#stdlibLibPath%2Cstring">stdlib_loader: proc stdlibLibPath(name: string): string</a></li>
+          </ul></dd>
+<dt><a name="StdlibLoadError" href="#StdlibLoadError"><span>StdlibLoadError:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: object StdlibLoadError" href="lang/stdlib_loader.html#StdlibLoadError">stdlib_loader: object StdlibLoadError</a></li>
+          </ul></dd>
+<dt><a name="SystemInfo" href="#SystemInfo"><span>SystemInfo:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="sysinfo: object SystemInfo" href="lang/sysinfo.html#SystemInfo">sysinfo: object SystemInfo</a></li>
+          </ul></dd>
+<dt><a name="takeActiveConfig" href="#takeActiveConfig"><span>takeActiveConfig:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="stdlib_loader: proc takeActiveConfig(): pointer" href="lang/stdlib_loader.html#takeActiveConfig">stdlib_loader: proc takeActiveConfig(): pointer</a></li>
           </ul></dd>
 <dt><a name="tkAmp" href="#tkAmp"><span>tkAmp:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -176,6 +404,10 @@
 <dt><a name="tkAt" href="#tkAt"><span>tkAt:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkAt" href="lang/lexer.html#tkAt">lexer: TokenKind.tkAt</a></li>
+          </ul></dd>
+<dt><a name="tkAwait" href="#tkAwait"><span>tkAwait:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="lexer: TokenKind.tkAwait" href="lang/lexer.html#tkAwait">lexer: TokenKind.tkAwait</a></li>
           </ul></dd>
 <dt><a name="tkBacktick" href="#tkBacktick"><span>tkBacktick:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -217,6 +449,10 @@
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkContinueCmd" href="lang/lexer.html#tkContinueCmd">lexer: TokenKind.tkContinueCmd</a></li>
           </ul></dd>
+<dt><a name="tkCoroutine" href="#tkCoroutine"><span>tkCoroutine:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="lexer: TokenKind.tkCoroutine" href="lang/lexer.html#tkCoroutine">lexer: TokenKind.tkCoroutine</a></li>
+          </ul></dd>
 <dt><a name="tkDiscardCmd" href="#tkDiscardCmd"><span>tkDiscardCmd:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkDiscardCmd" href="lang/lexer.html#tkDiscardCmd">lexer: TokenKind.tkDiscardCmd</a></li>
@@ -228,6 +464,10 @@
 <dt><a name="tkDoc" href="#tkDoc"><span>tkDoc:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkDoc" href="lang/lexer.html#tkDoc">lexer: TokenKind.tkDoc</a></li>
+          </ul></dd>
+<dt><a name="tkDollar" href="#tkDollar"><span>tkDollar:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="lexer: TokenKind.tkDollar" href="lang/lexer.html#tkDollar">lexer: TokenKind.tkDollar</a></li>
           </ul></dd>
 <dt><a name="tkDot" href="#tkDot"><span>tkDot:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -244,6 +484,10 @@
 <dt><a name="tkElse" href="#tkElse"><span>tkElse:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkElse" href="lang/lexer.html#tkElse">lexer: TokenKind.tkElse</a></li>
+          </ul></dd>
+<dt><a name="tkEnum" href="#tkEnum"><span>tkEnum:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="lexer: TokenKind.tkEnum" href="lang/lexer.html#tkEnum">lexer: TokenKind.tkEnum</a></li>
           </ul></dd>
 <dt><a name="tkEof" href="#tkEof"><span>tkEof:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -381,6 +625,10 @@
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkNil" href="lang/lexer.html#tkNil">lexer: TokenKind.tkNil</a></li>
           </ul></dd>
+<dt><a name="tkNot" href="#tkNot"><span>tkNot:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="lexer: TokenKind.tkNot" href="lang/lexer.html#tkNot">lexer: TokenKind.tkNot</a></li>
+          </ul></dd>
 <dt><a name="tkOf" href="#tkOf"><span>tkOf:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkOf" href="lang/lexer.html#tkOf">lexer: TokenKind.tkOf</a></li>
@@ -441,6 +689,10 @@
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkTernary" href="lang/lexer.html#tkTernary">lexer: TokenKind.tkTernary</a></li>
           </ul></dd>
+<dt><a name="tkThen" href="#tkThen"><span>tkThen:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="lexer: TokenKind.tkThen" href="lang/lexer.html#tkThen">lexer: TokenKind.tkThen</a></li>
+          </ul></dd>
 <dt><a name="tkTrue" href="#tkTrue"><span>tkTrue:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkTrue" href="lang/lexer.html#tkTrue">lexer: TokenKind.tkTrue</a></li>
@@ -456,6 +708,10 @@
 <dt><a name="tkVar" href="#tkVar"><span>tkVar:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
           data-doc-search-tag="lexer: TokenKind.tkVar" href="lang/lexer.html#tkVar">lexer: TokenKind.tkVar</a></li>
+          </ul></dd>
+<dt><a name="tkWhen" href="#tkWhen"><span>tkWhen:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="lexer: TokenKind.tkWhen" href="lang/lexer.html#tkWhen">lexer: TokenKind.tkWhen</a></li>
           </ul></dd>
 <dt><a name="tkWhile" href="#tkWhile"><span>tkWhile:</span></a></dt><dd><ul class="simple">
 <li><a class="reference external"
@@ -473,11 +729,15 @@
 <li><a class="reference external"
           data-doc-search-tag="lexer: tuple TokenTuple" href="lang/lexer.html#TokenTuple">lexer: tuple TokenTuple</a></li>
           </ul></dd>
+<dt><a name="totalMemoryBytes" href="#totalMemoryBytes"><span>totalMemoryBytes:</span></a></dt><dd><ul class="simple">
+<li><a class="reference external"
+          data-doc-search-tag="sysinfo: proc totalMemoryBytes(): int64" href="lang/sysinfo.html#totalMemoryBytes">sysinfo: proc totalMemoryBytes(): int64</a></li>
+          </ul></dd>
 </dl>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2026-07-14 09:30:19 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2026-11-23 14:48:57 UTC</small>
       </div>
     </div>
   </div>

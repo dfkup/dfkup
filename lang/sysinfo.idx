@@ -1,0 +1,4 @@
+nimTitle	sysinfo	lang/sysinfo.html	module lang/sysinfo		0
+nim	SystemInfo	lang/sysinfo.html#SystemInfo	object SystemInfo		19
+nim	totalMemoryBytes	lang/sysinfo.html#totalMemoryBytes	proc totalMemoryBytes(): int64		83
+nim	collectSystemInfo	lang/sysinfo.html#collectSystemInfo	proc collectSystemInfo(): SystemInfo		97

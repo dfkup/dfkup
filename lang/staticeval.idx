@@ -1,0 +1,19 @@
+nimTitle	staticeval	lang/staticeval.html	module lang/staticeval		0
+nim	skBool	lang/staticeval.html#skBool	StaticKind.skBool		22
+nim	skInt	lang/staticeval.html#skInt	StaticKind.skInt		22
+nim	skFloat	lang/staticeval.html#skFloat	StaticKind.skFloat		22
+nim	skString	lang/staticeval.html#skString	StaticKind.skString		22
+nim	skNil	lang/staticeval.html#skNil	StaticKind.skNil		22
+nim	skObject	lang/staticeval.html#skObject	StaticKind.skObject		22
+nim	StaticKind	lang/staticeval.html#StaticKind	enum StaticKind		22
+nim	StaticValue	lang/staticeval.html#StaticValue	object StaticValue		25
+nim	StaticEvalError	lang/staticeval.html#StaticEvalError	object StaticEvalError		38
+nim	HostOS	lang/staticeval.html#HostOS	const HostOS		44
+nim	HostCPU	lang/staticeval.html#HostCPU	const HostCPU		45
+nim	HostEndian	lang/staticeval.html#HostEndian	const HostEndian		46
+nim	DfkupVersion	lang/staticeval.html#DfkupVersion	const DfkupVersion		47
+nim	PosixOS	lang/staticeval.html#PosixOS	const PosixOS		49
+nim	defined	lang/staticeval.html#defined,string	proc defined(symbol: string): bool		51
+nim	isTrue	lang/staticeval.html#isTrue,StaticValue	proc isTrue(v: StaticValue): bool		96
+nim	evalStatic	lang/staticeval.html#evalStatic,Node	proc evalStatic(node: Node): StaticValue		165
+nim	evalStaticBool	lang/staticeval.html#evalStaticBool,Node	proc evalStaticBool(node: Node): bool		299

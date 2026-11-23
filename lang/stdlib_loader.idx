@@ -1,0 +1,27 @@
+nimTitle	stdlib_loader	lang/stdlib_loader.html	module lang/stdlib_loader		0
+nim	dfkupStdlibAbiVersion	lang/stdlib_loader.html#dfkupStdlibAbiVersion	const dfkupStdlibAbiVersion		40
+nim	dfkupStdlibNames	lang/stdlib_loader.html#dfkupStdlibNames	const dfkupStdlibNames		43
+nim	StdlibLoadError	lang/stdlib_loader.html#StdlibLoadError	object StdlibLoadError		54
+nim	DfkupStdlibInitFn	lang/stdlib_loader.html#DfkupStdlibInitFn	type DfkupStdlibInitFn		55
+nim	DfkupStdlibCleanupFn	lang/stdlib_loader.html#DfkupStdlibCleanupFn	type DfkupStdlibCleanupFn		57
+nim	DfkupStdlibSetVmFn	lang/stdlib_loader.html#DfkupStdlibSetVmFn	type DfkupStdlibSetVmFn		58
+nim	DfkupStdlibAbiFn	lang/stdlib_loader.html#DfkupStdlibAbiFn	type DfkupStdlibAbiFn		59
+nim	DfkupStdlibNimFn	lang/stdlib_loader.html#DfkupStdlibNimFn	type DfkupStdlibNimFn		60
+nim	DfkupStdlibSetRaiseFn	lang/stdlib_loader.html#DfkupStdlibSetRaiseFn	type DfkupStdlibSetRaiseFn		61
+nim	DfkupConfigTakeFn	lang/stdlib_loader.html#DfkupConfigTakeFn	type DfkupConfigTakeFn		62
+nim	DfkupConfigClearFn	lang/stdlib_loader.html#DfkupConfigClearFn	type DfkupConfigClearFn		63
+nim	DfkupConfigFindFn	lang/stdlib_loader.html#DfkupConfigFindFn	type DfkupConfigFindFn		64
+nim	DfkupConfigErrFn	lang/stdlib_loader.html#DfkupConfigErrFn	type DfkupConfigErrFn		65
+nim	dfkupHostRaise	lang/stdlib_loader.html#dfkupHostRaise,cstring	proc dfkupHostRaise(msg: cstring)		67
+nim	stdlibLibExt	lang/stdlib_loader.html#stdlibLibExt	proc stdlibLibExt(): string		82
+nim	stdlibLibPath	lang/stdlib_loader.html#stdlibLibPath,string	proc stdlibLibPath(name: string): string		93
+nim	hasStdlibLib	lang/stdlib_loader.html#hasStdlibLib,string	proc hasStdlibLib(name: string): bool		116
+nim	loadStdlibModule	lang/stdlib_loader.html#loadStdlibModule,string,Script,Module	proc loadStdlibModule(name: string; script: Script; sysmod: Module): Module		125
+nim	loadStdlibFactory	lang/stdlib_loader.html#loadStdlibFactory,string	proc loadStdlibFactory(name: string): ModuleLibrary		253
+nim	cleanupStdlibs	lang/stdlib_loader.html#cleanupStdlibs	proc cleanupStdlibs()		268
+nim	setStdlibVms	lang/stdlib_loader.html#setStdlibVms,pointer	proc setStdlibVms(vm: pointer)		282
+nim	stdlibDynlibLoaded	lang/stdlib_loader.html#stdlibDynlibLoaded	proc stdlibDynlibLoaded(): bool		298
+nim	configLibHandle	lang/stdlib_loader.html#configLibHandle	proc configLibHandle(): LibHandle		303
+nim	clearActiveConfig	lang/stdlib_loader.html#clearActiveConfig	proc clearActiveConfig()		310
+nim	takeActiveConfig	lang/stdlib_loader.html#takeActiveConfig	proc takeActiveConfig(): pointer		326
+nim	findConfigCommand	lang/stdlib_loader.html#findConfigCommand,pointer,string	proc findConfigCommand(cfg: pointer; name: string): string		345
