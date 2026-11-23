@@ -5,10 +5,13 @@
 #          https://dfkup.dev
 #          https://github.com/dfkup/dfkup
 
-import std/[json, os, options, osproc, strutils, envvars, tables]
+import std/[json, os, options, strutils, tables]
+when not defined(wasm):
+  import std/[osproc, envvars]
 import pkg/vancode/interpreter/[ast, codegen, chunk, sym, value, vm]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
-import ../sysinfo as sys
+when not defined(wasm):
+  import ../sysinfo as sys
 
 import pkg/openparser/json
 
@@ -61,6 +64,18 @@ iterator items*(data: array[bool]): bool =
     i = i + 1
 """
 
+when defined(wasm):
+  var wasmEchoBuf* {.global.}: string
+    ## Captured `echo` output for the wasm bridge (`dfkupRun` returns it).
+    ## The WASI `fd_write` shim discards guest stdout, so without this
+    ## playground scripts would print into the void.
+  template sysEcho(s: string) =
+    wasmEchoBuf.add(s)
+    wasmEchoBuf.add("\n")
+else:
+  template sysEcho(s: string) =
+    echo s
+
 proc initSystem*(script: Script, module: Module) =
   module.initSystemTypes()
   script.initSystemOps(module)
@@ -73,49 +88,49 @@ proc initSystem*(script: Script, module: Module) =
   script.addProc(module, "echo", @[paramDef("x", ttyString)], ttyVoid,
     proc (args: StackView, argc: int): Value =
       if likely(args[0].typeId == tyString):
-        echo args[0].stringVal[]
+        sysEcho(args[0].stringVal[])
       else:
-        echo "<nil>"
+        sysEcho("<nil>")
     )
 
   script.addProc(module, "echo", @[paramDef("x", ttyInt)], ttyVoid,
     proc (args: StackView, argc: int): Value =
-      echo args[0].intVal)
+      sysEcho($args[0].intVal))
 
   script.addProc(module, "echo", @[paramDef("x", ttyFloat)], ttyVoid,
     proc (args: StackView, argc: int): Value =
-      echo args[0].floatVal)
+      sysEcho($args[0].floatVal))
 
   script.addProc(module, "echo", @[paramDef("x", ttyBool)], ttyVoid,
     proc (args: StackView, argc: int): Value =
-      echo args[0].boolVal)
+      sysEcho($args[0].boolVal))
 
   script.addProc(module, "echo", @[paramDef("x", ttyNil)], ttyVoid,
     proc (args: StackView, argc: int): Value =
-      echo "nil")
+      sysEcho("nil"))
 
   script.addProc(module, "echo", @[paramDef("x", ttyJson)], ttyVoid,
     proc (args: StackView, argc: int): Value =
       let j = args[0].jsonVal
       if j.kind == JString:
-        echo j.getStr()
+        sysEcho(j.getStr())
       else:
-        echo $j)
+        sysEcho($j))
 
   script.addProc(module, "echo", @[paramDef("x", ttyPointer)], ttyVoid,
     proc (args: StackView, argc: int): Value =
-      echo $args[0])
+      sysEcho($args[0]))
 
   script.addProc(module, "echo", @[paramDef("x", ttyArray)], ttyVoid,
     proc (args: StackView, argc: int): Value =
       var vs = newSeq[Value](args[0].objectVal.fields.len)
       for i, f in args[0].objectVal.fields: vs[i] = f.toValue
-      echo toJson(vs)
+      sysEcho(toJson(vs))
   )
 
   script.addProc(module, "echo", @[paramDef("x", ttyObject)], ttyVoid,
     proc (args: StackView, argc: int): Value =
-      echo toJsonStr(args[0])
+      sysEcho(toJsonStr(args[0]))
       # var obj = newJObject()
       # for i, f in args[0].objectVal.fields: echo f
   )
@@ -136,136 +151,138 @@ proc initSystem*(script: Script, module: Module) =
     proc (args: StackView, argc: int): Value =
       result = initValue(args[0].stringVal[] & args[1].stringVal[]))
 
-  #
-  # File operations
-  #
-  script.addProc(module, "fileExists", @[paramDef("path", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.fileExists(args[0].stringVal[])))
+  when not defined(wasm):
+    #
+    # File operations
+    #
+    script.addProc(module, "fileExists", @[paramDef("path", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.fileExists(args[0].stringVal[])))
 
-  script.addProc(module, "dirExists", @[paramDef("path", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.dirExists(args[0].stringVal[])))
+    script.addProc(module, "dirExists", @[paramDef("path", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.dirExists(args[0].stringVal[])))
 
-  script.addProc(module, "readFile", @[paramDef("path", ttyString)], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(readFile(args[0].stringVal[])))
+    script.addProc(module, "readFile", @[paramDef("path", ttyString)], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(readFile(args[0].stringVal[])))
 
-  script.addProc(module, "writeFile", @[paramDef("path", ttyString), paramDef("content", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      writeFile(args[0].stringVal[], args[1].stringVal[]))
+    script.addProc(module, "writeFile", @[paramDef("path", ttyString), paramDef("content", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        writeFile(args[0].stringVal[], args[1].stringVal[]))
 
-  script.addProc(module, "copyFile", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      os.copyFile(args[0].stringVal[], args[1].stringVal[]))
+    script.addProc(module, "copyFile", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        os.copyFile(args[0].stringVal[], args[1].stringVal[]))
 
-  script.addProc(module, "moveFile", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      os.moveFile(args[0].stringVal[], args[1].stringVal[]))
+    script.addProc(module, "moveFile", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        os.moveFile(args[0].stringVal[], args[1].stringVal[]))
 
-  script.addProc(module, "removeFile", @[paramDef("path", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      os.removeFile(args[0].stringVal[]))
+    script.addProc(module, "removeFile", @[paramDef("path", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        os.removeFile(args[0].stringVal[]))
 
-  script.addProc(module, "createDir", @[paramDef("path", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      os.createDir(args[0].stringVal[]))
+    script.addProc(module, "createDir", @[paramDef("path", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        os.createDir(args[0].stringVal[]))
 
-  script.addProc(module, "removeDir", @[paramDef("path", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      os.removeDir(args[0].stringVal[]))
+    script.addProc(module, "removeDir", @[paramDef("path", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        os.removeDir(args[0].stringVal[]))
 
-  #
-  # Directory listing
-  #
-  script.addProc(module, "listDir", @[paramDef("path", ttyString)], ttyJson,
-    proc (args: StackView, argc: int): Value =
-      var arr = newJArray()
-      for kind, name in os.walkDir(args[0].stringVal[]):
-        var entry = newJObject()
-        entry["kind"] = %($kind)
-        entry["name"] = %name
-        arr.add(entry)
-      result = initValue(arr))
+    #
+    # Directory listing
+    #
+    script.addProc(module, "listDir", @[paramDef("path", ttyString)], ttyJson,
+      proc (args: StackView, argc: int): Value =
+        var arr = newJArray()
+        for kind, name in os.walkDir(args[0].stringVal[]):
+          var entry = newJObject()
+          entry["kind"] = %($kind)
+          entry["name"] = %name
+          arr.add(entry)
+        result = initValue(arr))
 
-  let arrStrTy = module.sym("array").clone
-  arrStrTy.arrayTy = module.sym("string")
+    let arrStrTy = module.sym("array").clone
+    arrStrTy.arrayTy = module.sym("string")
 
-  script.addProc(module, "ls", @[paramDef("path", ttyString)], ttyArray,
-    proc (args: StackView, argc: int): Value =
-      var names: seq[string]
-      for kind, name in os.walkDir(args[0].stringVal[]):
-        names.add(name)
-      result = initArray(names.len)
-      for i, n in names:
-        result.objectVal.fields[i] = initValue(n).toStorage
-    , returnTySym = arrStrTy)
+    script.addProc(module, "ls", @[paramDef("path", ttyString)], ttyArray,
+      proc (args: StackView, argc: int): Value =
+        var names: seq[string]
+        for kind, name in os.walkDir(args[0].stringVal[]):
+          names.add(name)
+        result = initArray(names.len)
+        for i, n in names:
+          result.objectVal.fields[i] = initValue(n).toStorage
+      , returnTySym = arrStrTy)
 
-  #
-  # Short utility aliases
-  #
-  script.addProc(module, "cd", @[paramDef("path", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      try:
-        os.setCurrentDir(args[0].stringVal[])
-        result = initValue(true)
-      except:
-        result = initValue(false))
-
-  script.addProc(module, "cp", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      try:
-        os.copyFile(args[0].stringVal[], args[1].stringVal[])
-        result = initValue(true)
-      except:
-        result = initValue(false))
-
-  script.addProc(module, "mv", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      try:
-        os.moveFile(args[0].stringVal[], args[1].stringVal[])
-        result = initValue(true)
-      except:
-        result = initValue(false))
-
-  script.addProc(module, "rm", @[paramDef("path", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      try:
-        os.removeFile(args[0].stringVal[])
-        result = initValue(true)
-      except:
+    #
+    # Short utility aliases
+    #
+    script.addProc(module, "cd", @[paramDef("path", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
         try:
-          os.removeDir(args[0].stringVal[])
+          os.setCurrentDir(args[0].stringVal[])
           result = initValue(true)
         except:
           result = initValue(false))
 
-  script.addProc(module, "findExe", @[paramDef("exe", ttyString)], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.findExe(args[0].stringVal[])))
+    script.addProc(module, "cp", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
+        try:
+          os.copyFile(args[0].stringVal[], args[1].stringVal[])
+          result = initValue(true)
+        except:
+          result = initValue(false))
 
-  script.addProc(module, "pwd", @[], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.getCurrentDir()))
+    script.addProc(module, "mv", @[paramDef("src", ttyString), paramDef("dest", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
+        try:
+          os.moveFile(args[0].stringVal[], args[1].stringVal[])
+          result = initValue(true)
+        except:
+          result = initValue(false))
 
-  script.addProc(module, "putEnv", @[paramDef("key", ttyString), paramDef("val", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      envvars.putEnv(args[0].stringVal[], args[1].stringVal[]))
+    script.addProc(module, "rm", @[paramDef("path", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
+        try:
+          os.removeFile(args[0].stringVal[])
+          result = initValue(true)
+        except:
+          try:
+            os.removeDir(args[0].stringVal[])
+            result = initValue(true)
+          except:
+            result = initValue(false))
 
-  script.addProc(module, "delEnv", @[paramDef("key", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      envvars.delEnv(args[0].stringVal[]))
+    script.addProc(module, "findExe", @[paramDef("exe", ttyString)], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.findExe(args[0].stringVal[])))
+
+    script.addProc(module, "pwd", @[], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.getCurrentDir()))
+
+    script.addProc(module, "putEnv", @[paramDef("key", ttyString), paramDef("val", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        envvars.putEnv(args[0].stringVal[], args[1].stringVal[]))
+
+    script.addProc(module, "delEnv", @[paramDef("key", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        envvars.delEnv(args[0].stringVal[]))
 
   #
   # Path operations
   #
-  script.addProc(module, "getCurrentDir", @[], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.getCurrentDir()))
+  when not defined(wasm):
+    script.addProc(module, "getCurrentDir", @[], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.getCurrentDir()))
 
-  script.addProc(module, "setCurrentDir", @[paramDef("path", ttyString)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      os.setCurrentDir(args[0].stringVal[]))
+    script.addProc(module, "setCurrentDir", @[paramDef("path", ttyString)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        os.setCurrentDir(args[0].stringVal[]))
 
   script.addProc(module, "joinPath", @[paramDef("a", ttyString), paramDef("b", ttyString)], ttyString,
     proc (args: StackView, argc: int): Value =
@@ -275,139 +292,145 @@ proc initSystem*(script: Script, module: Module) =
     proc (args: StackView, argc: int): Value =
       result = initValue(os.parentDir(args[0].stringVal[])))
 
-  script.addProc(module, "expandFilename", @[paramDef("path", ttyString)], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.expandFilename(args[0].stringVal[])))
+  when not defined(wasm):
+    script.addProc(module, "expandFilename", @[paramDef("path", ttyString)], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.expandFilename(args[0].stringVal[])))
 
-  script.addProc(module, "absolutePath", @[paramDef("path", ttyString)], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.absolutePath(args[0].stringVal[])))
+    script.addProc(module, "absolutePath", @[paramDef("path", ttyString)], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.absolutePath(args[0].stringVal[])))
 
-  #
-  # Environment
-  #
-  script.addProc(module, "getEnv", @[paramDef("key", ttyString)], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.getEnv(args[0].stringVal[])))
+  when not defined(wasm):
+    #
+    # Environment
+    #
+    script.addProc(module, "getEnv", @[paramDef("key", ttyString)], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.getEnv(args[0].stringVal[])))
 
-  script.addProc(module, "existsEnv", @[paramDef("key", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.existsEnv(args[0].stringVal[])))
+    script.addProc(module, "existsEnv", @[paramDef("key", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.existsEnv(args[0].stringVal[])))
 
-  script.addProc(module, "getAppDir", @[], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.getAppDir()))
+    script.addProc(module, "getAppDir", @[], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.getAppDir()))
 
-  script.addProc(module, "getAppFilename", @[], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.getAppFilename()))
+    script.addProc(module, "getAppFilename", @[], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.getAppFilename()))
 
-  #
-  # System
-  #
-  script.addProc(module, "sleep", @[paramDef("milliseconds", ttyInt)], ttyVoid,
-    proc (args: StackView, argc: int): Value =
-      os.sleep(args[0].intVal.int))
+  when not defined(wasm):
+    #
+    # System
+    #
+    script.addProc(module, "sleep", @[paramDef("milliseconds", ttyInt)], ttyVoid,
+      proc (args: StackView, argc: int): Value =
+        os.sleep(args[0].intVal.int))
 
-  script.addProc(module, "getCurrentProcessId", @[], ttyInt,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.getCurrentProcessId().int64))
+    script.addProc(module, "getCurrentProcessId", @[], ttyInt,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.getCurrentProcessId().int64))
 
-  #
-  # System information
-  #
-  # The return type is a real object symbol carrying `objectFields`, not the
-  # builtin `object`. dfkup is built without `vancodeGradualTypes`, so type
-  # checking is strict: a foreign proc returning the builtin `object` resolves
-  # to a type with no declared fields, and `info.cpuCores` would then be
-  # rejected as a non-existent field at compile time. Declaring the fields the
-  # way `genObject` does is what makes dot access resolve to an `opcGetF`
-  # index. The field order here is the runtime layout.
-  #
-  let sysInfoFields: array[6, string] = ["osName", "arch", "cpuCores",
-      "cpuEndian", "totalMemory", "executablePath"]
-  let
-    stringTy = module.sym("string")
-    intTy = module.sym("int")
-    sysInfoTy = newType(ttyObject, ast.newIdent("SystemInfo"))
-  sysInfoTy.objectId = globalTypeCounter
-  inc(globalTypeCounter)
-  for i, fieldName in sysInfoFields:
-    sysInfoTy.objectFields[fieldName] = (
-      id: i,
-      name: ast.newIdent(fieldName),
-      ty: if fieldName in ["cpuCores", "totalMemory"]: intTy else: stringTy,
-      implVal: nil
-    )
-  discard module.add(sysInfoTy, ast.newIdent("SystemInfo"))
+  when not defined(wasm):
+    #
+    # System information
+    #
+    # The return type is a real object symbol carrying `objectFields`, not the
+    # builtin `object`. dfkup is built without `vancodeGradualTypes`, so type
+    # checking is strict: a foreign proc returning the builtin `object` resolves
+    # to a type with no declared fields, and `info.cpuCores` would then be
+    # rejected as a non-existent field at compile time. Declaring the fields the
+    # way `genObject` does is what makes dot access resolve to an `opcGetF`
+    # index. The field order here is the runtime layout.
+    #
+    let sysInfoFields: array[6, string] = ["osName", "arch", "cpuCores",
+        "cpuEndian", "totalMemory", "executablePath"]
+    let
+      stringTy = module.sym("string")
+      intTy = module.sym("int")
+      sysInfoTy = newType(ttyObject, ast.newIdent("SystemInfo"))
+    sysInfoTy.objectId = globalTypeCounter
+    inc(globalTypeCounter)
+    for i, fieldName in sysInfoFields:
+      sysInfoTy.objectFields[fieldName] = (
+        id: i,
+        name: ast.newIdent(fieldName),
+        ty: if fieldName in ["cpuCores", "totalMemory"]: intTy else: stringTy,
+        implVal: nil
+      )
+    discard module.add(sysInfoTy, ast.newIdent("SystemInfo"))
 
-  script.addProc(module, "getSystemInfo", @[], ttyObject,
-    proc (args: StackView, argc: int): Value =
-      let info = sys.collectSystemInfo()
-      result = initObject(tyObjectStorage, sysInfoFields.len)
-      for i, fieldName in sysInfoFields:
-        result.objectVal.keys.add(fieldName)
-      result.objectVal.fields[0] = initValue(info.osName).toStorage
-      result.objectVal.fields[1] = initValue(info.arch).toStorage
-      result.objectVal.fields[2] = initValue(info.cpuCores.int64).toStorage
-      result.objectVal.fields[3] = initValue(info.cpuEndian).toStorage
-      result.objectVal.fields[4] = initValue(info.totalMemory).toStorage
-      result.objectVal.fields[5] = initValue(info.executablePath).toStorage
-    , returnTySym = sysInfoTy)
+    script.addProc(module, "getSystemInfo", @[], ttyObject,
+      proc (args: StackView, argc: int): Value =
+        let info = sys.collectSystemInfo()
+        result = initObject(tyObjectStorage, sysInfoFields.len)
+        for i, fieldName in sysInfoFields:
+          result.objectVal.keys.add(fieldName)
+        result.objectVal.fields[0] = initValue(info.osName).toStorage
+        result.objectVal.fields[1] = initValue(info.arch).toStorage
+        result.objectVal.fields[2] = initValue(info.cpuCores.int64).toStorage
+        result.objectVal.fields[3] = initValue(info.cpuEndian).toStorage
+        result.objectVal.fields[4] = initValue(info.totalMemory).toStorage
+        result.objectVal.fields[5] = initValue(info.executablePath).toStorage
+      , returnTySym = sysInfoTy)
 
-  #
-  # File info
-  #
-  script.addProc(module, "getFileSize", @[paramDef("path", ttyString)], ttyInt,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(os.getFileSize(args[0].stringVal[]).int64))
+  when not defined(wasm):
+    #
+    # File info
+    #
+    script.addProc(module, "getFileSize", @[paramDef("path", ttyString)], ttyInt,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(os.getFileSize(args[0].stringVal[]).int64))
 
-  #
-  # Shell execution
-  #
-  script.addProc(module, "exec", @[paramDef("cmd", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(osproc.execCmd(args[0].stringVal[]) == 0))
+  when not defined(wasm):
+    #
+    # Shell execution
+    #
+    script.addProc(module, "exec", @[paramDef("cmd", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(osproc.execCmd(args[0].stringVal[]) == 0))
 
-  script.addProc(module, "execOut", @[paramDef("cmd", ttyString)], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(osproc.execCmdEx(args[0].stringVal[]).output))
+    script.addProc(module, "execOut", @[paramDef("cmd", ttyString)], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(osproc.execCmdEx(args[0].stringVal[]).output))
 
-  # `execShell` hands the command to the system shell, so `&&`, pipes and
-  # `$VAR` all work, unlike `exec` which execs directly. That means the command
-  # is shell-interpreted and must come from a trusted source, not user input.
-  #
-  # On Windows `startProcess` hands the command to CreateProcess verbatim
-  # (POSIX wraps it in `/bin/sh -c`), so route through COMSPEC explicitly;
-  # otherwise shell builtins like `exit` fail with "command not found".
-  proc shellWrap(cmd: string): string =
-    when defined(windows):
-      getEnv("COMSPEC", "cmd.exe") & " /c " & cmd
-    else:
-      cmd
+    # `execShell` hands the command to the system shell, so `&&`, pipes and
+    # `$VAR` all work, unlike `exec` which execs directly. That means the command
+    # is shell-interpreted and must come from a trusted source, not user input.
+    #
+    # On Windows `startProcess` hands the command to CreateProcess verbatim
+    # (POSIX wraps it in `/bin/sh -c`), so route through COMSPEC explicitly;
+    # otherwise shell builtins like `exit` fail with "command not found".
+    proc shellWrap(cmd: string): string =
+      when defined(windows):
+        getEnv("COMSPEC", "cmd.exe") & " /c " & cmd
+      else:
+        cmd
 
-  # This deliberately runs through `startProcess` rather than `execCmdEx`:
-  # `execCmdEx` reads the child's output, which is incompatible with
-  # `poParentStreams`, and a build command's output belongs on the terminal
-  # anyway. `execShellOut` below is the capturing counterpart.
-  script.addProc(module, "execShell", @[paramDef("cmd", ttyString)], ttyBool,
-    proc (args: StackView, argc: int): Value =
-      var process = osproc.startProcess(shellWrap(args[0].stringVal[]),
-        options = {poEvalCommand, poUsePath, poParentStreams})
-      defer: close(process)
-      result = initValue(process.waitForExit() == 0))
+    # This deliberately runs through `startProcess` rather than `execCmdEx`:
+    # `execCmdEx` reads the child's output, which is incompatible with
+    # `poParentStreams`, and a build command's output belongs on the terminal
+    # anyway. `execShellOut` below is the capturing counterpart.
+    script.addProc(module, "execShell", @[paramDef("cmd", ttyString)], ttyBool,
+      proc (args: StackView, argc: int): Value =
+        var process = osproc.startProcess(shellWrap(args[0].stringVal[]),
+          options = {poEvalCommand, poUsePath, poParentStreams})
+        defer: close(process)
+        result = initValue(process.waitForExit() == 0))
 
-  # The output-capturing counterpart, so a build script can both report what a
-  # command printed and branch on whether it succeeded. `execCmdEx` already
-  # merges stderr into stdout by default, which is what you want here.
-  script.addProc(module, "execShellOut", @[paramDef("cmd", ttyString)], ttyJson,
-    proc (args: StackView, argc: int): Value =
-      let p = osproc.execCmdEx(shellWrap(args[0].stringVal[]),
-        options = {poEvalCommand, poUsePath})
-      var j = newJObject()
-      j["output"] = %p.output
-      j["exitCode"] = %p.exitCode
-      result = initValue(j))
+    # The output-capturing counterpart, so a build script can both report what a
+    # command printed and branch on whether it succeeded. `execCmdEx` already
+    # merges stderr into stdout by default, which is what you want here.
+    script.addProc(module, "execShellOut", @[paramDef("cmd", ttyString)], ttyJson,
+      proc (args: StackView, argc: int): Value =
+        let p = osproc.execCmdEx(shellWrap(args[0].stringVal[]),
+          options = {poEvalCommand, poUsePath})
+        var j = newJObject()
+        j["output"] = %p.output
+        j["exitCode"] = %p.exitCode
+        result = initValue(j))
 
   #
   # String formatting
@@ -427,19 +450,20 @@ proc initSystem*(script: Script, module: Module) =
         s = s.replace("{" & key & "}", valRep)
       result = initValue(s))
 
-  #
-  # Stdin / pipe support
-  #
-  script.addProc(module, "readStdin", @[], ttyString,
-    proc (args: StackView, argc: int): Value =
-      result = initValue(stdin.readAll()))
+  when not defined(wasm):
+    #
+    # Stdin / pipe support
+    #
+    script.addProc(module, "readStdin", @[], ttyString,
+      proc (args: StackView, argc: int): Value =
+        result = initValue(stdin.readAll()))
 
-  script.addProc(module, "readStdinLines", @[], ttyJson,
-    proc (args: StackView, argc: int): Value =
-      var lines = newJArray()
-      for line in stdin.lines:
-        lines.add(newJString(line))
-      result = initValue(lines))
+    script.addProc(module, "readStdinLines", @[], ttyJson,
+      proc (args: StackView, argc: int): Value =
+        var lines = newJArray()
+        for line in stdin.lines:
+          lines.add(newJString(line))
+        result = initValue(lines))
 
   #
   # Built-in functions needed by iterators

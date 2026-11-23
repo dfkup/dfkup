@@ -6,6 +6,7 @@
 #          https://github.com/dfkup/dfkup
 
 import std/json
+import std/strutils
 import pkg/openparser/json as opjson
 import pkg/vancode/interpreter/[chunk, sym, value]
 import pkg/vancode/interpreter/stdlib/[syslib, utils]
@@ -116,3 +117,71 @@ proc initJson*(script: Script, module: Module) =
         result = initValue(args[0].jsonVal[args[1].stringVal[]])
       else:
         result = initValue(newJString(args[2].stringVal[])))
+
+  script.addProc(module, "getStr", @[paramDef("v", ttyJson)], ttyString,
+    proc (args: StackView, argc: int): Value =
+      let j = args[0].jsonVal
+      if j.kind == JString:
+        result = initValue(j.getStr())
+      else:
+        result = initValue($j))
+
+  script.addProc(module, "getInt", @[paramDef("v", ttyJson)], ttyInt,
+    proc (args: StackView, argc: int): Value =
+      case args[0].jsonVal.kind
+      of JInt:
+        result = initValue(args[0].jsonVal.getInt().int64)
+      of JFloat:
+        result = initValue(args[0].jsonVal.getFloat().int64)
+      of JBool:
+        result = initValue(if args[0].jsonVal.getBool(): 1'i64 else: 0'i64)
+      of JString:
+        try:
+          result = initValue(parseBiggestInt(args[0].jsonVal.getStr()))
+        except ValueError:
+          raise newException(ValueError, "cannot convert JSON string to int: \"" &
+            args[0].jsonVal.getStr() & "\"")
+      else:
+        raise newException(ValueError, "cannot convert JSON " &
+          $args[0].jsonVal.kind & " to int"))
+
+  script.addProc(module, "getFloat", @[paramDef("v", ttyJson)], ttyFloat,
+    proc (args: StackView, argc: int): Value =
+      case args[0].jsonVal.kind
+      of JFloat:
+        result = initValue(args[0].jsonVal.getFloat())
+      of JInt:
+        result = initValue(args[0].jsonVal.getInt().float64)
+      of JBool:
+        result = initValue(if args[0].jsonVal.getBool(): 1.0 else: 0.0)
+      of JString:
+        try:
+          result = initValue(parseFloat(args[0].jsonVal.getStr()))
+        except ValueError:
+          raise newException(ValueError, "cannot convert JSON string to float: \"" &
+            args[0].jsonVal.getStr() & "\"")
+      else:
+        raise newException(ValueError, "cannot convert JSON " &
+          $args[0].jsonVal.kind & " to float"))
+
+  script.addProc(module, "getBool", @[paramDef("v", ttyJson)], ttyBool,
+    proc (args: StackView, argc: int): Value =
+      case args[0].jsonVal.kind
+      of JBool:
+        result = initValue(args[0].jsonVal.getBool())
+      of JInt:
+        result = initValue(args[0].jsonVal.getInt() != 0)
+      of JFloat:
+        result = initValue(args[0].jsonVal.getFloat() != 0.0)
+      of JString:
+        case args[0].jsonVal.getStr()
+        of "true": result = initValue(true)
+        of "false": result = initValue(false)
+        else:
+          raise newException(ValueError, "cannot convert JSON string to bool: \"" &
+            args[0].jsonVal.getStr() & "\"")
+      of JNull:
+        result = initValue(false)
+      else:
+        raise newException(ValueError, "cannot convert JSON " &
+          $args[0].jsonVal.kind & " to bool"))

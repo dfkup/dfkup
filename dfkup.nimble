@@ -35,3 +35,6 @@ requires "voodoo >= 0.2.3"
 # gone from the registry (only 0.2.2 is published now), so the floor
 # moves to 0.2.2 — re-pin if the Windows fallback regresses again.
 requires "flysystem >= 0.2.2"
+
+task wasm, "build dfkup for browsers (wasm32-standalone, no backend needed)":
+  exec "clue build -d:release -d:wasm -o:build/dfkup.wasm src/lang/wasm.nim && cp build/dfkup.wasm examples/wasm/dfkup.wasm && cp bindings/wasm/dfkup.wasm.js examples/wasm/dfkup.wasm.js"

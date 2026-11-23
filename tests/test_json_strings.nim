@@ -34,6 +34,50 @@ suite "Internal stdlib - json":
     except CatchableError as e:
       check "bracket notation" in e.msg
 
+  test "bracket then scalar accessors":
+    check run("import \"std/json\"\n" &
+      "let u = parseJson(\"{\\\"n\\\": 40}\")\nu[\"n\"].getInt()") == "40"
+    check run("import \"std/json\"\n" &
+      "let u = parseJson(\"{\\\"pi\\\": 3.5}\")\nu[\"pi\"].getFloat()") == "3.5"
+    check run("import \"std/json\"\n" &
+      "let u = parseJson(\"{\\\"name\\\": \\\"WASM\\\"}\")\nu[\"name\"].getStr()") == "WASM"
+    check run("import \"std/json\"\n" &
+      "let u = parseJson(\"{\\\"ok\\\": true}\")\nu[\"ok\"].getBool()") == "true"
+    check run("import \"std/json\"\n" &
+      "let u = parseJson(\"{\\\"nothing\\\": null}\")\nu[\"nothing\"].getBool()") == "false"
+
+  test "scalar accessors convert scalar kinds":
+    check run("import \"std/json\"\n" &
+      "parseJson(\"\\\"42\\\"\").getInt()") == "42"
+    check run("import \"std/json\"\n" &
+      "parseJson(\"40\").getFloat()") == "40.0"
+    check run("import \"std/json\"\n" &
+      "parseJson(\"40\").getStr()") == "40"
+    check run("import \"std/json\"\n" &
+      "parseJson(\"1\").getBool()") == "true"
+
+  test "scalar accessors reject containers":
+    try:
+      discard run("import \"std/json\"\n" &
+        "parseJson(\"[1, 2]\").getInt()")
+      check false
+    except CatchableError as e:
+      check "cannot convert JSON JArray to int" in e.msg
+    try:
+      discard run("import \"std/json\"\n" &
+        "parseJson(\"\\\"abc\\\"\").getInt()")
+      check false
+    except CatchableError as e:
+      check "cannot convert JSON string to int" in e.msg
+
+  test "unknown json method is a compile error":
+    try:
+      discard run("import \"std/json\"\n" &
+        "let n = parseJson(\"40\")\necho n.foobar()")
+      check false
+    except CatchableError as e:
+      check "does not exist for <json>" in e.msg
+
 suite "Internal stdlib - strings":
   test "case conversion":
     check run("import \"std/strings\"\ntoUpper(\"hello\")") == "HELLO"

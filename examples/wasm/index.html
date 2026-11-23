@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFkup — browser playground (wasm, no backend)</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; padding: 16px; }
+  header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+  header h1 { font-size: 20px; margin: 0; }
+  #version { opacity: .6; font-size: 13px; }
+  #status { margin-left: auto; font-size: 13px; opacity: .7; }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  label { font-size: 12px; font-weight: 600; opacity: .8; display: flex; justify-content: space-between; }
+  label span { font-weight: 400; opacity: .7; }
+  textarea { width: 100%; font-family: ui-monospace, monospace; font-size: 13px; }
+  #src { min-height: 280px; resize: vertical; padding: 8px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  button { padding: 6px 16px; font-size: 14px; cursor: pointer; }
+  pre { margin: 0; padding: 8px; border: 1px solid #888; overflow: auto; max-height: 420px;
+        font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+  #error { color: #b3261e; background: rgba(179,38,30,.08); border: 1px solid #b3261e;
+           padding: 8px; font-size: 13px; white-space: pre-wrap; display: none; }
+  #error.show { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>DFkup playground</h1>
+  <span id="version">loading dfkup.wasm…</span>
+  <span id="status"></span>
+</header>
+<main>
+  <section>
+    <label>script.dfkup <span>runs fully in the browser — no backend</span></label>
+    <textarea id="src">import "std/json"
+
+let user = parseJson("{\"name\": \"WASM\", \"n\": 40}")
+echo "Hello, " & get(user, "name", "?") & "!"
+echo dumpJson(user)</textarea>
+    <div class="row">
+      <button id="run">Run</button>
+      <button id="ast">Show AST</button>
+    </div>
+  </section>
+  <section>
+    <label>output <span>echo output + trailing expression value</span></label>
+    <div id="error"></div>
+    <pre id="out"></pre>
+  </section>
+</main>
+<script src="./dfkup.wasm.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    version: $('version'), status: $('status'),
+    src: $('src'), run: $('run'), ast: $('ast'),
+    error: $('error'), out: $('out'),
+  };
+  let dfkup = null;
+  let timer = 0;
+
+  function setError(msg) {
+    if (msg) { els.error.textContent = msg; els.error.classList.add('show'); }
+    else { els.error.textContent = ''; els.error.classList.remove('show'); }
+  }
+
+  function exec(fn) {
+    if (!dfkup) return;
+    setError('');
+    const t0 = performance.now();
+    const res = fn(els.src.value);
+    const ms = (performance.now() - t0).toFixed(1);
+    if (res.code !== 0) {
+      setError(res.out);
+      els.out.textContent = '';
+      els.status.textContent = 'error in ' + ms + ' ms';
+      return;
+    }
+    els.out.textContent = res.out;
+    els.status.textContent = 'ok in ' + ms + ' ms';
+  }
+
+  async function init() {
+    try {
+      dfkup = await DfkupWasm.loadDfkupUrl('./dfkup.wasm');
+      const v = dfkup.version();
+      els.version.textContent = v.code === 0 ? 'dfkup ' + v.out + ' · wasm' : 'dfkup.wasm';
+      if (v.code !== 0) { setError(v.out); return; }
+      exec((src) => dfkup.run(src));
+    } catch (e) {
+      els.version.textContent = 'failed to load';
+      setError('Could not load ./dfkup.wasm.\n' +
+        'Build it with `clue task wasm` (Nim 2.4.0 + wasi-sdk 34),\n' +
+        'which also stages dfkup.wasm + dfkup.wasm.js next to this page.\n\n' + e);
+    }
+  }
+
+  els.run.onclick = () => exec((src) => dfkup.run(src));
+  els.ast.onclick = () => exec((src) => dfkup.ast(src));
+  els.src.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => exec((src) => dfkup.run(src)), 400);
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>

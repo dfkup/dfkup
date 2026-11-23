@@ -8,7 +8,8 @@
 # Machine facts shared by parse-time `when` evaluation and the runtime
 # `getSystemInfo()` builtin, so both agree on the same numbers.
 
-import std/[os, osproc]
+when not defined(wasm):
+  import std/[os, osproc]
 
 when defined(linux):
   # Only the `/proc/meminfo` reader below needs these, so they are imported
@@ -96,12 +97,19 @@ proc totalMemoryBytes*(): int64 =
 
 proc collectSystemInfo*(): SystemInfo =
   ## Gather the current machine's facts.
-  result.osName = hostOS
-  result.arch = hostCPU
-  result.cpuCores = osproc.countProcessors()
-  result.cpuEndian = $cpuEndian
-  result.totalMemory = totalMemoryBytes()
-  try:
-    result.executablePath = os.getAppFilename()
-  except OSError:
-    result.executablePath = ""
+  when defined(wasm):
+    # No syscalls, sysctl or /proc in the browser playground: report
+    # static wasm facts instead of probing the host machine.
+    result = SystemInfo(osName: "wasm", arch: hostCPU,
+      cpuEndian: $cpuEndian, executablePath: "", cpuCores: 1,
+      totalMemory: 0)
+  else:
+    result.osName = hostOS
+    result.arch = hostCPU
+    result.cpuCores = osproc.countProcessors()
+    result.cpuEndian = $cpuEndian
+    result.totalMemory = totalMemoryBytes()
+    try:
+      result.executablePath = os.getAppFilename()
+    except OSError:
+      result.executablePath = ""
