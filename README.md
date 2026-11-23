@@ -153,6 +153,17 @@ host locates them via `stdlibLibPath`: home libraries first
 (`~/.dfkup/libraries`, `DFKUP_HOME`-aware), then next to the binary. On
 Windows the extension is `.dll`, on Linux `.so`.
 
+### Install from a release
+Each release archive holds the binary plus a `libraries/` dir with every
+prebuilt shard. Move it into place and every dfkup binary on the machine
+picks the shards up:
+```sh
+tar xzf dfkup_macos-arm64.tar.gz
+mv libraries ~/.dfkup/libraries
+```
+(`DFKUP_HOME` overrides `~/.dfkup`.) Running straight from the extracted
+archive also works — the loader probes `libraries/` beside the binary.
+
 Low-level users can build the shards themselves from a stdlib checkout
 (a plain `nim c -r` program; it generates one wrapper per shard from the
 template and compiles with the same flags as the host,

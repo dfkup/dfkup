@@ -16,12 +16,14 @@ jobs:
       # stdlib repo as plain sources (dfkup has no `requires "stdkups"`)
       # and build every shard for this target. `clue install --depsOnly`
       # inside the clone resolves the shard dependencies; the reusable's
-      # earlier `clue install` only sees dfkup's own deps. `extra-files`
-      # flattens the shards next to the binary; the loader probes the
-      # binary's own dir.
+      # earlier `clue install` only sees dfkup's own deps. Shards land in
+      # `libraries/`, which the archive keeps as a directory next to the
+      # binary. Install = move it to `~/.dfkup/libraries`
+      # (`DFKUP_HOME` overrides the home); the loader probes that dir
+      # first, so one `libraries/` serves every installed dfkup binary.
       pre-build-command: |
         git clone --depth 1 https://github.com/dfkup/stdlib.git /tmp/stdkups
         cd /tmp/stdkups && clue install --depsOnly
         clue build /tmp/stdkups/tools/build_shards.nim -o /tmp/build_shards &&
-        /tmp/build_shards --stdkups=/tmp/stdkups --dfkup-src="$GITHUB_WORKSPACE" --out="$GITHUB_WORKSPACE/bin/stdlib"
-      extra-files: 'LICENSE README.md bin/stdlib/*'
+        /tmp/build_shards --stdkups=/tmp/stdkups --dfkup-src="$GITHUB_WORKSPACE" --out="$GITHUB_WORKSPACE/libraries"
+      extra-files: 'LICENSE README.md libraries'

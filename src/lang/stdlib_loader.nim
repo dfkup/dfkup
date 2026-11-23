@@ -93,17 +93,19 @@ proc stdlibLibExt*(): string =
 proc stdlibLibPath*(name: string): string =
   ## Filesystem path of the `libdfkup_<name>` shard, "" when absent.
   ## `~/.dfkup/libraries` is the package-manager-owned shared-library dir
-  ## (`DFKUP_HOME` overrides the home); next to the binary is the dev
-  ## fallback (the shard build script writes `bin/stdlib/` there).
-  ## Release archives lay the shards flat next to the binary (the archive
-  ## step cannot preserve directories), so the binary's own dir is also
-  ## probed.
+  ## (`DFKUP_HOME` overrides the home) — release archives ship a
+  ## `libraries/` dir for exactly this spot. Next to the binary are the
+  ## dev fallback (the shard build script writes `bin/stdlib/` there)
+  ## and the extracted-archive layout (`libraries/` beside the binary).
   let file = "libdfkup_" & name & stdlibLibExt()
   let home = getEnv("DFKUP_HOME", getHomeDir() / ".dfkup")
   result = home / "libraries" / file
   if fileExists(result):
     return result
   result = getAppDir() / "stdlib" / file
+  if fileExists(result):
+    return result
+  result = getAppDir() / "libraries" / file
   if fileExists(result):
     return result
   result = getAppDir() / file
